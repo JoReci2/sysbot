@@ -6,6 +6,12 @@ content:
   - url: https://gitlab.com/home9344428/app/sysbot/sysbot.git
     branches: HEAD
     start_path: docs
+  - url: https://gitlab.com/home9344428/app/sysbot/sysbotRedhat.git
+    branches: HEAD
+    start_path: docs
+  - url: https://gitlab.com/home9344428/app/sysbot/sysbotWindows.git
+    branches: HEAD
+    start_path: docs
 ui:
   bundle:
     url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
