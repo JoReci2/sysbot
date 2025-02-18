@@ -1,0 +1,6 @@
+name: sysbot
+version: ~
+title: sysbot
+start_page: sysbot:sysbot:index.adoc
+nav:
+- modules/sysbot/nav.adoc

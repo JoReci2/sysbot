@@ -2,10 +2,18 @@ from setuptools import setup, find_packages
 
 setup(
     name="sysbot",
-    version="version",
+    version="0.0.1",
     packages=find_packages(),
     include_package_data=True,
-    install_requires=[],
+    install_requires=[
+        "robotframework",
+        "paramiko",
+        "sshtunnel",
+        "netmiko",
+        "redfish",
+        "pyVmomi",
+        "pywinrm",
+    ],
     author="Thibault SCIRE",
     author_email="thibault.scire@outlook.com",
     description="Sysbot library",
