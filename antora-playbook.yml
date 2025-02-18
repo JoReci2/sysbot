@@ -2,7 +2,6 @@ site:
   title: SysBot
   start_page: sysbot:sysbot:index.adoc
 content:
-  tags: /^[0-9]+\.[0-9]+\.[0-9]+$/
   sources:
   - url: https://<authentication>@gitlab.com/home9344428/app/sysbot/sysbot.git
     branches: HEAD
