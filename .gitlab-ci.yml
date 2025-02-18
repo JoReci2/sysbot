@@ -13,7 +13,6 @@ pages:
   stage: deploy
   script:
     - sed -i 's/<authentication>@/${DEPLOY_USERNAME}:${DEPLOY_PASSWORD}@/' antora-playbook.yml
-    - 
     - antora --fetch --redirect-facility=gitlab --to-dir=public antora-playbook.yml
   artifacts:
     paths:
