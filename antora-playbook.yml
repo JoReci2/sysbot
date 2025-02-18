@@ -1,6 +1,6 @@
 site:
-  title: SysBot Connectors
-  start_page: sysbotConnectors:sysbotConnectors:index.adoc
+  title: SysBot
+  start_page: sysbot:sysbot:index.adoc
 content:
   sources:
   - url: .
