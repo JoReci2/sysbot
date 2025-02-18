@@ -24,9 +24,9 @@ class ConnectorInterface(object):
         Retrieve and instantiate the protocol-specific connector.
         """
         try: 
-            module_name = f"sysbot_lib_connectors.{protocol_name.capitalize()}"
+            module_name = f"sysbot.connectors.{protocol_name.lower()}"
             connector = importlib.import_module(module_name)
-            self.protocol = getattr(connector, protocol_name.capitalize())()
+            self.protocol = getattr(connector, protocol_name.lower())()
         except:
             raise ValueError("Protocol not found")
 
