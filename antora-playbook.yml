@@ -3,7 +3,7 @@ site:
   start_page: sysbot:sysbot:index.adoc
 content:
   sources:
-  - url: .
+  - url: https://gitlab.com/home9344428/app/sysbot/sysbotRedHat.git
     branches: HEAD
     start_path: docs
 ui:
