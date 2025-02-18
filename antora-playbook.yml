@@ -3,13 +3,13 @@ site:
   start_page: sysbot:sysbot:index.adoc
 content:
   sources:
-  - url: https://gitlab.com/home9344428/app/sysbot/sysbot.git
+  - url: https://oauth2:<CI_JOB_TOKEN>@gitlab.com/home9344428/app/sysbot/sysbot.git
     branches: HEAD
     start_path: docs
-  - url: https://gitlab.com/home9344428/app/sysbot/sysbotRedhat.git
+  - url: https://oauth2:<CI_JOB_TOKEN>@gitlab.com/home9344428/app/sysbot/sysbotRedhat.git
     branches: HEAD
     start_path: docs
-  - url: https://gitlab.com/home9344428/app/sysbot/sysbotWindows.git
+  - url: https://oauth2:<CI_JOB_TOKEN>@gitlab.com/home9344428/app/sysbot/sysbotWindows.git
     branches: HEAD
     start_path: docs
 ui:
