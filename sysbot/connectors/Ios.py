@@ -30,7 +30,7 @@ class ios(object):
         except Exception as e:
             raise Exception(f"Failed to open session: {str(e)}")
 
-    def execute_command(self, session, command):
+    def execute_command(self, session, command, options):
         """
         Executes a command on a Cisco IOS device via SSH.
 

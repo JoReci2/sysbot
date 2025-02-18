@@ -28,7 +28,7 @@ class vmware(object):
         except Exception as e:
             raise Exception(f"Failed to open VMware session: {str(e)}")
 
-    def execute_command(self, session, command):
+    def execute_command(self, session, command, options):
         """
         Placeholder for executing a command on a VMware system.
 

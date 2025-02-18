@@ -44,7 +44,7 @@ class neorest(object):
         session_data = {'session': session, 'host': host}
         return session_data
 
-    def execute_command(self, session, command):
+    def execute_command(self, session, command, options):
         """
         Executes a command on a NEO REST API.
 

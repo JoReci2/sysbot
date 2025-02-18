@@ -40,7 +40,7 @@ class winrm(object):
         except Exception as e:
             raise Exception(f"Failed to open WinRM session: {str(e)}")
 
-    def execute_command(self, session, command):
+    def execute_command(self, session, command, options):
         """
         Executes a PowerShell command on a Windows system via WinRM.
 

@@ -30,7 +30,7 @@ class redfish(object):
         except Exception as e:
             raise Exception(f"Failed to open session: {str(e)}")
 
-    def execute_command(self, session, command):
+    def execute_command(self, session, command, options):
         """
         Sends a GET request to a system using the Redfish API.
 

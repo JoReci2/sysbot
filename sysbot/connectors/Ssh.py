@@ -30,13 +30,14 @@ class ssh(object):
         except Exception as e:
             raise Exception(f"Failed to open SSH session: {str(e)}")
 
-    def execute_command(self, session, command):
+    def execute_command(self, session, command, options):
         """
         Executes a command on a system via SSH.
 
         Args:
             session (ConnectHandler): The SSH client session.
             command (str): The command to execute on the system.
+            options (str): Additional options to pass to the command.
 
         Returns:
             str: The output of the command.
