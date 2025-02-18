@@ -1,0 +1,6 @@
+__pycache__/
+.asciidoctor/
+dist/
+*.egg-info/
+.DS_Store
+*.html

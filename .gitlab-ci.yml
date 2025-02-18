@@ -1,0 +1,20 @@
+include:
+  - project: 'home9344428/cicd/templates'
+    ref: 'main'
+    file: '/PyPi/build_and_publish.yml'
+
+stages:
+  - build
+  - release
+  - deploy
+
+pages:
+  image: antora/antora
+  stage: deploy
+  script:
+    - antora --fetch --redirect-facility=gitlab --to-dir=public antora-playbook.yml
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_TAG
