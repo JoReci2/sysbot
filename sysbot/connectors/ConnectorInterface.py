@@ -107,7 +107,7 @@ class ConnectorInterface(object):
                 connection = self.__nested_tunnel__(tunnel_config, target_config)
                 tunnels = connection["tunnels"]
             else:
-                self.protocol = self.__get_protocol__(protocol)
+                self.__get_protocol__(protocol)
                 self.remote_port = int(port)
                 session = self.protocol.open_session(host, int(self.remote_port), login, password)
                 if not session:
