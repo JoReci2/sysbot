@@ -1,0 +1,56 @@
+= Dataloaders
+:toc:
+:toclevels: 1
+
+== Overview
+
+The SysBot Dataloaders Library is a modular data loader designed for use with Robot Framework. It dynamically delegates data loading tasks to appropriate loader modules, making it easy to handle various data formats such as YAML, JSON, and CSV.
+
+== Installation
+
+To install the SysBot Dataloaders Library, you can use pip:
+
+[source,bash]
+----
+pip install sysbotDataloaders
+----
+
+== Usage
+
+[source,python]
+----
+from sysbotDataloaders import Dataloader
+
+data = Dataloader()
+result = data.data_load('csv', file='/path/to/csv')
+----
+
+== Supported Data Formats
+
+[options="header"]
+|===
+| Formats | Description | Parameters
+| CSV | Comma-separated values | file(str)
+| JSON | JavaScript Object Notation | file(str)
+| YAML | YAML Ain't Markup Language | file(str)
+| NDCN user-env | NDCN user environment | token(str),host(str)
+|===
+
+== Design
+
+=== Responsibilities
+
+* Dynamically load and parse data for use in Robot Framework test automation.
+* Provide a unified interface to handle different data sources (e.g., YAML, JSON, CSV).
+* Abstract complexity and reduce the need for format-specific handling within test cases.
+* Ensure robust error handling to manage unsupported formats or data-loading issues.
+
+=== Interaction
+
+* Invoked within Robot Framework test suites via the Data Load keyword.
+* Accepts user-defined parameters (e.g., module type, file paths) to determine how to load the requested data.
+* Delegates data parsing to dynamically resolved modules without exposing their internal logic to the user.
+
+=== Data flow
+
+image::dataloaders_dataflow.svg[]

@@ -1,0 +1,6 @@
+flowchart TD
+    User[Robot Framework User] -->|Invoke Data Load| Dataloader
+    Dataloader -->|Identify Data Source Type| DynamicResolver
+    DynamicResolver -->|Pass Input Arguments| DataParsingProcess
+    DataParsingProcess -->|Load and Parse Data| ParsedData[Parsed Data]
+    ParsedData -->|Return Data to Test| User
