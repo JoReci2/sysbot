@@ -1,6 +1,6 @@
 from netmiko import ConnectHandler
 
-class Ios(object):
+class ios(object):
     """
     This is a class for interacting with Cisco IOS devices.
     It uses the Netmiko library to establish and manage SSH connections.

@@ -1,6 +1,6 @@
 import paramiko
 
-class Ssh(object):
+class ssh(object):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell).
     It uses the Netmiko library to establish and manage SSH connections.

@@ -1,7 +1,7 @@
 import requests
 import json
 
-class NeoRest(object):
+class neorest(object):
     """
     This class provides methods for interacting with a NEO REST API.
     It uses the requests library to establish and manage sessions.
