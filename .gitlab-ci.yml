@@ -12,7 +12,7 @@ pages:
   image: antora/antora
   stage: deploy
   script:
-    - sed -i 's/oauth2:<CI_JOB_TOKEN>@/oauth2:$CI_JOB_TOKEN@/' antora-playbook.yml
+    - sed -i 's/oauth2:<CI_JOB_TOKEN>@/oauth2:$PACKAGE_TOKEN@/' antora-playbook.yml
     - antora --fetch --redirect-facility=gitlab --to-dir=public antora-playbook.yml
   artifacts:
     paths:
