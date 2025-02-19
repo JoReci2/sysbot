@@ -1,3 +1,0 @@
-= Sysbot
-:toc:
-:toclevels: 1
