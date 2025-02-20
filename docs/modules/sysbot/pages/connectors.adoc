@@ -30,7 +30,7 @@ Python 3.7 or higher see: https://www.python.org/downloads/[Python Downloads]
 
 [source,shell]
 ----
-python -m pip install sysbotConnectors
+python -m pip install sysbot
 ----
 
 === Basic Usage
