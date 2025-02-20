@@ -1,3 +1,3 @@
-* index.adoc[Overview]
-** connectors.adoc[Connector]
-** dataloaders.adoc[DataLoader]
+* xref:index.adoc[Overview]
+** xref:connectors.adoc[Connector]
+** xref:dataloaders.adoc[DataLoader]
