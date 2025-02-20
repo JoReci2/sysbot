@@ -3,5 +3,6 @@
 * xref:sdd.adoc[System Design Document]
 * xref:sps.adoc[System Production Specification]
 * Modules
-** xref:connectors.adoc[Connector]
-** xref:dataloaders.adoc[DataLoader]
+** xref:connectors.adoc[sysbot.connectors.ConnectorInterface]
+** xref:dataloaders.adoc[sysbot.dataloaders.DataloaderInterface]
+** xref:helpers.adoc[sysbot.Helpers]

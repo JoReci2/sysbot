@@ -17,13 +17,17 @@ pip install sysbotDataloaders
 
 == Usage
 
-[source,python]
+[source, robotframework]
 ----
-from sysbotDataloaders import Dataloader
+*** Settings ***
+Library    sysbotDataloaders.Dataloader <1>
 
-data = Dataloader()
-result = data.data_load('csv', file='/path/to/csv')
+*** Test Cases ***
+Load CSV Data
+    ${data}=    Data Load    csv    file=/path/to/csv <2>
 ----
+<1> Import the Dataloader class from the sysbotDataloaders package.
+<2> Load data from a CSV file located at `/path/to/csv`.
 
 == Supported Data Formats
 
