@@ -69,4 +69,4 @@ conn.close_all_sessions() <5>
 
 === Data flow
 
-image::dataflow.svg[Data flow diagram, 500, 500]
+image::connectors_dataflow.svg[Data flow diagram, 500, 500]
