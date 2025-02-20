@@ -53,4 +53,4 @@ result = data.data_load('csv', file='/path/to/csv')
 
 === Data flow
 
-image::dataloaders_dataflow.svg[]
+image::dataloaders_dataflow.svg[data flow diagram, 300, 300]
