@@ -15,6 +15,9 @@ content:
   - url: https://<authentication>@gitlab.com/home9344428/app/sysbot/sysbotHardware.git
     branches: HEAD
     start_path: docs
+  - url: https://<authentication>@gitlab.com/home9344428/app/sysbot/sysbotVirtualization.git
+    branches: HEAD
+    start_path: docs
 ui:
   bundle:
     url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
