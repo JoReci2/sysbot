@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="sysbot",
-    version="0.0.1",
+    version="version",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
@@ -13,6 +13,7 @@ setup(
         "redfish",
         "pyVmomi",
         "pywinrm",
+        "openssl"
     ],
     author="Thibault SCIRE",
     author_email="thibault.scire@outlook.com",
