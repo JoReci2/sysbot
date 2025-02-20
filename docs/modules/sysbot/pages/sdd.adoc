@@ -1,3 +1,5 @@
 = System Design Document
 :toc:
 :toclevels: 1
+
+include::partial$overview.adoc[]

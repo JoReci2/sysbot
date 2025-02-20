@@ -1,0 +1,7 @@
+== Overview
+
+SysBot is a suite of Python libraries designed to simplify and optimize the execution of automated tests. It streamlines the test launch, execution, and analysis, reducing development time and accelerating test execution.
+
+SysBot supports request transport and execution with SSH jump host management, enabling seamless interaction with remote and secure infrastructures. This capability allows tests to be executed across distributed environments without compromising performance or security.
+
+By integrating advanced automation and orchestration mechanisms, SysBot enhances the reliability of validation campaigns and adapts to various use cases, from infrastructure testing to complex application validations.
