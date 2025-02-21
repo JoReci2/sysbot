@@ -13,16 +13,6 @@ class DataloaderHandler(object):
     def import_data_from(self, module: str, **kwargs) -> any:
         """
         Loads variables by delegating to a specific loader module.
-        
-        .. code-block:: robotframework
-
-            *** Settings ***
-            Library        Collections
-            Library        sysbot_lib_dataloaders.Dataloader
-
-            *** Variables ***
-
-            ${baseline}=    Data Load    yaml    file=/path/to/my/file.yaml
         """
         module = module.lower()
 
