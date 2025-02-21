@@ -15,12 +15,10 @@ class Listener:
         project:
             name: test
             version: 0.0.1
-        database:
-            type: mysql
-            host: localhost
-            port: 330
-            login: root
-            password: password
+        basicauth:
+            login: admin
+            password: admin
+            
         """
         log.info("Initializing Listener.")
         self.config = self.__load_config__(config_file)
@@ -64,5 +62,3 @@ class Listener:
             ))
         except Exception as e:
             log.error(f"Error inserting test result: {e}")
-
-#class Database:
