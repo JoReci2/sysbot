@@ -28,17 +28,35 @@ class Listener:
         """
         Load the configuration file.
         """
+        if not config_file:
+            raise Exception("Configuration file path is required.")
+
         try:
             with open(config_file, 'r') as file:
-                return yaml.load(file, Loader=yaml.FullLoader)
-        except Exception as e:
-            log.error(f"Error loading config file: {e}")
+                config = yaml.load(file, Loader=yaml.FullLoader)
+                if not isinstance(config, dict):  # Vérifie que le contenu est bien un dict
+                    raise Exception("Invalid YAML format: expected a dictionary.")
+                
+                # Vérification des clés attendues
+                if "project" not in config or "server" not in config:
+                    raise Exception("Invalid configuration file: missing 'project' or 'server' section.")
+                if "name" not in config["project"] or "version" not in config["project"]:
+                    raise Exception("Invalid configuration file: missing 'name' or 'version' in 'project'.")
+                if "url" not in config["server"] or "login" not in config["server"] or "password" not in config["server"]:
+                    raise Exception("Invalid configuration file: missing required fields in 'server'.")
 
+                return config
+        except FileNotFoundError:
+            raise Exception(f"Configuration file '{config_file}' not found.")
+        except yaml.YAMLError as e:
+            raise Exception(f"Error parsing YAML file: {e}")
+        except Exception as e:
+            raise Exception(f"Error loading config file: {e}")
+            
     def start_suite(self, name, attributes):
         """
         Handles the start of a test suite and captures its name.
         """
-        log.info(f"Starting test suite: {name}")
         self.suite_name = attributes.name
         self.suite_source = attributes.source
         self.suite_tags = attributes.tags
@@ -47,7 +65,6 @@ class Listener:
         """
         Handles the end of a test and collects its results.
         """
-        log.info(f"Ending test: {name} with status {attributes.status}")
         try:
             requests.post(
                 url=self.config['server']['url'],
@@ -65,4 +82,4 @@ class Listener:
                 auth=(self.config['server']['login'], self.config['server']['password'])
             )
         except Exception as e:
-            log.error(f"Error inserting test result: {e}")
+            raise Exception(f"Error inserting test result: {e}")
