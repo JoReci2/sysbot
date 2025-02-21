@@ -4,7 +4,7 @@ from robot.api.deco import keyword, library
 from sshtunnel import SSHTunnelForwarder
 
 
-class ConnectorInterface(object):
+class ConnectorHandler(object):
     """
     Interface for managing protocol-specific connections with optional SSH tunneling.
     """

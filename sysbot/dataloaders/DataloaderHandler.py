@@ -1,7 +1,7 @@
 from robot.api.deco import keyword, library
 import importlib
 
-class Dataloader(object):
+class DataloaderHandler(object):
     """
     A modular data loader for Robot Framework that dynamically delegates 
     to appropriate loader modules.
