@@ -1,5 +1,6 @@
 from robot.output.listeners import Listeners
 import yaml
+import requests
 
 class Listener:
     """
@@ -20,9 +21,7 @@ class Listener:
             password: admin
             
         """
-        log.info("Initializing Listener.")
         self.config = self.__load_config__(config_file)
-        self.db = Database(self.config['database'])
 
     def __load_config__(self, config_file: str) -> dict:
         """
