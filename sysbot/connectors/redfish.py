@@ -1,4 +1,4 @@
-import redfish
+import redfish as RedfishLibrary
 import json
 
 class redfish(object):
@@ -10,21 +10,9 @@ class redfish(object):
     def open_session(self, host, port, login, password):
         """
         Opens a session to a system using the Redfish API.
-
-        Args:
-            host (str): Hostname or IP address of the system.
-            port (int): Port of the Redfish API.
-            login (str): Username for the session.
-            password (str): Password for the session.
-
-        Returns:
-            redfish.redfish_client: An authenticated Redfish client session.
-
-        Raises:
-            Exception: If there is an error opening the session.
         """
         try:
-            client = redfish.redfish_client(base_url=f"https://{host}:{port}", username=login, password=password, default_prefix='/redfish/v1/')
+            client = RedfishLibrary.redfish_client(base_url=f"https://{host}:{port}", username=login, password=password, default_prefix='/redfish/v1/')
             client.login(auth="session")
             return client
         except Exception as e:
