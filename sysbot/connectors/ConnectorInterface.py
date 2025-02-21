@@ -91,6 +91,8 @@ class ConnectorInterface(object):
         Open a session to the target host with optional nested SSH tunneling.
         """
         tunnels = []
+        self.__get_protocol__(protocol)
+        self.remote_port = int(port)
         try:
             if tunnel_config:
                 try:
@@ -107,8 +109,6 @@ class ConnectorInterface(object):
                 connection = self.__nested_tunnel__(tunnel_config, target_config)
                 tunnels = connection["tunnels"]
             else:
-                self.__get_protocol__(protocol)
-                self.remote_port = int(port)
                 session = self.protocol.open_session(host, int(self.remote_port), login, password)
                 if not session:
                     raise Exception("Failed to open direct session")
