@@ -16,7 +16,8 @@ class Listener:
         project:
             name: test
             version: 0.0.1
-        basicauth:
+        server:
+            url: http://localhost:5000/api/v1/test_results
             login: admin
             password: admin
             
@@ -36,13 +37,11 @@ class Listener:
     def start_suite(self, name, attributes):
         """
         Handles the start of a test suite and captures its name.
-
-        Args:
-            name (str): The name of the test suite.
-            attributes (object): The attributes of the test suite.
         """
         log.info(f"Starting test suite: {name}")
         self.suite_name = attributes.name
+        self.suite_source = attributes.source
+        self.suite_tags = attributes.tags
 
     def end_test(self, name, attributes):
         """
@@ -50,14 +49,20 @@ class Listener:
         """
         log.info(f"Ending test: {name} with status {attributes.status}")
         try:
-            self.db.insert_campaign_result(CampaignResult(
-                project=self.config['project']['name'],
-                version=self.config['project']['version'],
-                timestamp=datetime.now(),
-                test_suite_name=self.suite_name,
-                test_case_name=attributes.name,
-                test_case_result=attributes.status,
-                test_case_message=attributes.message
-            ))
+            requests.post(
+                url=self.config['server']['url'],
+                json={
+                    'project': self.config['project']['name'],
+                    'version': self.config['project']['version'],
+                    'test_suite_name': self.suite_name,
+                    'test_suite_source': self.suite_source,
+                    'test_suite_tags': self.suite_tags,
+                    'test_case_name': attributes.name,
+                    'test_case_result': attributes.status,
+                    'test_case_message': attributes.message,
+                    'test_case_tags': attributes.tags
+                },
+                auth=(self.config['server']['login'], self.config['server']['password'])
+            )
         except Exception as e:
             log.error(f"Error inserting test result: {e}")
