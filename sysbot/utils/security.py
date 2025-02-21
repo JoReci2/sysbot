@@ -3,7 +3,7 @@ import ssl, socket, datetime
 
 class Security(object):
     
-    def get_certificate_informations(host: str) -> dict[str, str]:
+    def get_certificate_informations(self, host: str) -> dict[str, str]:
         """
         get infomations about web service certificate.
         """
