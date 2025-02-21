@@ -1,1 +1,1 @@
-from .ConnectorInterface import ConnectorInterface
+from .ConnectorHandler import ConnectorHandler
