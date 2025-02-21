@@ -3,14 +3,14 @@ import ssl, socket, datetime
 
 class Security(object):
     
-    def get_certificate_informations(self, host: str) -> dict[str, str]:
+    def get_certificate_informations(self, host: str, port: int) -> dict[str, str]:
         """
         get infomations about web service certificate.
         """
         context = ssl.create_default_context()
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
-        conn = socket.create_connection((host, 443))
+        conn = socket.create_connection((host, port))
         sock = context.wrap_socket(conn, server_hostname=host)
         sock.settimeout(10)
         try:
