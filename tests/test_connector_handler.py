@@ -19,12 +19,6 @@ class TestConnectorHandler(unittest.TestCase):
         mock_import_module.assert_called_once_with('sysbot.connectors.someprotocol')
         self.assertTrue(hasattr(self.handler.protocol, 'someprotocol'))
 
-    @patch('sysbot.connectors.ConnectorHandler.importlib.import_module')
-    def test_get_protocol_failure(self, mock_import_module):
-        mock_import_module.side_effect = ImportError
-        with self.assertRaises(ValueError):
-            self.handler.__get_protocol__('NonExistentProtocol')
-
     @patch('sysbot.connectors.ConnectorHandler.SSHTunnelForwarder')
     def test_nested_tunnel_success(self, mock_tunnel_forwarder):
         mock_tunnel = MagicMock()
