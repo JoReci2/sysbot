@@ -23,12 +23,16 @@ class ConnectorHandler(object):
         """
         Retrieve and instantiate the protocol-specific connector.
         """
-        try: 
+        try:
             module_name = f"sysbot.connectors.{protocol_name.lower()}"
             connector = importlib.import_module(module_name)
             self.protocol = getattr(connector, protocol_name.lower())()
-        except:
-            raise ValueError("Protocol not found")
+        except ImportError as e:
+            raise ImportError(f"Failed to import module '{module_name}': {str(e)}")
+        except AttributeError as e:
+            raise AttributeError(f"Module '{module_name}' does not have the attribute '{protocol_name.lower()}': {str(e)}")
+        except Exception as e:
+            raise Exception(f"An unexpected error occurred while retrieving the protocol: {str(e)}")
 
     def __nested_tunnel__(self, tunnel_config, target_config, index=0, previous_tunnels=None) -> dict:
         """
@@ -128,10 +132,12 @@ class ConnectorHandler(object):
         try:
             connection = self._cache.switch(alias)
             if not connection or 'session' not in connection:
-                raise Exception(f"No valid session found for alias '{alias}'")
+                raise RuntimeError(f"No valid session found for alias '{alias}'")
 
             result = self.protocol.execute_command(connection['session'], command, options)
             return result
+        except ValueError as ve:
+            raise ValueError(f"Alias '{alias}' does not exist: {str(ve)}")
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
 
