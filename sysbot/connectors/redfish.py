@@ -21,16 +21,6 @@ class redfish(object):
     def execute_command(self, session, command, options):
         """
         Sends a GET request to a system using the Redfish API.
-
-        Args:
-            session (redfish.redfish_client): The Redfish client session.
-            command (str): The command (endpoint) to send to the system.
-
-        Returns:
-            dict: The response data of the GET request.
-
-        Raises:
-            Exception: If there is an error executing the command.
         """
         try:
             response = session.get(command)
@@ -41,12 +31,6 @@ class redfish(object):
     def close_session(self, session):
         """
         Closes the session to the Redfish API.
-
-        Args:
-            session (redfish.redfish_client): The Redfish client session to close.
-
-        Raises:
-            Exception: If there is an error closing the session.
         """
         try:
             session.logout()
