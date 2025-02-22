@@ -1,8 +1,7 @@
-import socket, paramiko, json, importlib
+import socket, socks, paramiko, json, importlib
 from robot.utils import ConnectionCache
 from robot.api.deco import keyword, library
 from sshtunnel import SSHTunnelForwarder
-
 
 class ConnectorHandler(object):
     """
@@ -18,6 +17,7 @@ class ConnectorHandler(object):
         """
         self._cache = ConnectionCache('No sessions created')
         self.protocol = None
+        self.client = None
 
     def __get_protocol__(self, protocol_name) -> object:
         """
@@ -34,21 +34,9 @@ class ConnectorHandler(object):
         except Exception as e:
             raise Exception(f"An unexpected error occurred while retrieving the protocol: {str(e)}")
 
-    def __nested_tunnel__(self, tunnel_config, target_config, index=0, previous_tunnels=None) -> dict:
+    def __ssh_tunnel__(self, tunnel_config, target_config, index=0, previous_tunnels=None) -> dict:
         """
         Open nested SSH tunnels and establish the final connection.
-
-        Args:
-            tunnel_config (list): List of intermediate SSH tunnel configurations.
-            target_config (dict): Final target connection configuration.
-            index (int): Current index of the tunnel configuration (default: 0).
-            previous_tunnels (list): List of previously opened tunnels (default: None).
-
-        Returns:
-            dict: Contains the final session and the list of opened tunnels.
-
-        Raises:
-            Exception: If any tunnel fails to open.
         """
         if previous_tunnels is None:
             previous_tunnels = []
@@ -90,28 +78,61 @@ class ConnectorHandler(object):
                 print(f"Closed tunnel to: {tunnel.ssh_address_or_host}")
             raise Exception(f"Failed to establish nested tunnels: {str(e)}")
 
-    def open_session(self, alias: str, protocol: str, host: str, port: int, login: str, password: str, tunnel_config=None) -> None:
+    def __socks5_proxy__(self, proxy_config, target_config, previous_proxies=None):
+        """
+        Establishes chained SOCKS5 proxies.
+        """
+        if previous_proxies is None:
+            previous_proxies = []
+
+        try:
+            for index, config in enumerate(proxy_config):
+                proxy_host, proxy_port = previous_proxies[-1] if previous_proxies else (None, None)
+                ssh_client = paramiko.SSHClient()
+                ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+                if proxy_host and proxy_port:
+                    sock = socks.socksocket()
+                    sock.set_proxy(socks.SOCKS5, proxy_host, proxy_port)
+                    sock.connect((config['ip'], int(config['port'])))
+                    ssh_client.connect(config['ip'], config['port'], config['username'], config['password'], sock=sock)
+                else:
+                    ssh_client.connect(config['ip'], config['port'], config['username'], config['password'])
+
+                local_socks5_port = 1080 + index
+                threading.Thread(target=self.__start_socks5_proxy__, args=(ssh_client, local_socks5_port), daemon=True).start()
+                previous_proxies.append(("127.0.0.1", local_socks5_port))
+            
+            return previous_proxies
+        except Exception as e:
+            raise Exception(f"Failed to establish SOCKS5 proxies: {str(e)}")
+    
+    def open_session(self, alias: str, protocol: str, host: str, port: int, login: str, password: str, ssh_tunnel=None, socks5=None) -> None:
         """
         Open a session to the target host with optional nested SSH tunneling.
         """
         tunnels = []
+        proxy_chain = []
         self.__get_protocol__(protocol)
         self.remote_port = int(port)
         try:
-            if tunnel_config:
-                try:
-                    if type(tunnel_config) is str:
-                        tunnel_config = json.loads(tunnel_config)
-                except Exception as e:
-                    raise Exception(f"Error during importing tunnel as json: {e}")
-                target_config = {
-                    'ip': host,
-                    'port': int(self.remote_port),
-                    'username': login,
-                    'password': password
-                }
-                connection = self.__nested_tunnel__(tunnel_config, target_config)
+            if ssh_tunnel:
+                if isinstance(ssh_tunnel, str):
+                    ssh_tunnel = json.loads(ssh_tunnel)
+                target_config = {'ip': host, 'port': int(self.remote_port), 'username': login, 'password': password}
+                connection = self.__ssh_tunnel__(ssh_tunnel, target_config)
                 tunnels = connection["tunnels"]
+            
+            elif socks5:
+                if isinstance(socks5, str):
+                    socks5 = json.loads(socks5)
+                target_config = {'ip': host, 'port': int(self.remote_port), 'username': login, 'password': password}
+                socks5_proxies = self.__socks5_proxy__(socks5, target_config)
+                socks.set_default_proxy(socks.SOCKS5, socks5_proxies[-1][0], socks5_proxies[-1][1])
+                socket.socket = socks.socksocket
+                session = self.protocol.open_session(host, int(self.remote_port), login, password)
+                connection = {"session": session, "socks5_proxies": socks5_proxies}
+
             else:
                 session = self.protocol.open_session(host, int(self.remote_port), login, password)
                 if not session:
