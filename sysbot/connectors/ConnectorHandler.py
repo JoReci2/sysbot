@@ -125,7 +125,7 @@ class ConnectorHandler(object):
                 print(f"Tunnel closed: {tunnel.ssh_address_or_host}")
             raise Exception(f"Failed to open session: {str(e)}")
 
-    def execute_command(self, alias: str, command: str, options: str = None) -> dict[str, str]:
+    def execute_command(self, alias: str, command: str, options: any = None) -> dict[str, str]:
         """
         Execute a command on the specified session.
         """
