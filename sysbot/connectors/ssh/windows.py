@@ -51,6 +51,37 @@ class Windows(object):
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
 
+    def execute_file(self, session, script):
+        """ 
+        Execute a file on a system via SSH and return json as result
+        """
+        try:
+            script_id = uuid.uuid4()
+            username = session.get_transport().get_username()
+            basepath = f"/home/{username}/.sysbot"
+            filepath = f"/home/{username}/.sysbot/{script_id}"
+
+            sftp = session.open_sftp()
+
+            try:
+                sftp.stat(basepath)
+            except FileNotFoundError:
+                sftp.mkdir(basepath)
+
+            with sftp.file(filepath, "w") as f:
+                f.write(script)
+            sftp.chmod(filepath, 0o755)
+            sftp.close()
+
+            stdin, stdout, stderr = session.exec_command(filepath)
+            return stdout.read().decode().strip()
+        except paramiko.SSHException as e:
+            raise Exception(f"SSH error occurred: {str(e)}")
+        except json.JSONDecodeError as e:
+            raise Exception(f"Failed to parse JSON output: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Failed to execute file: {str(e)}")
+
     def close_session(self, session):
         """
         Closes an open SSH session.
