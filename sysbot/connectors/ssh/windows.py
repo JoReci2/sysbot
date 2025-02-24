@@ -59,7 +59,7 @@ class Windows(object):
             script_id = uuid.uuid4()
             username = session.get_transport().get_username()
             basepath = f"/home/{username}/.sysbot"
-            filepath = f"/home/{username}/.sysbot/{script_id}"
+            filepath = f"/home/{username}/.sysbot/{script_id}.ps1"
 
             sftp = session.open_sftp()
 
@@ -73,7 +73,7 @@ class Windows(object):
             sftp.chmod(filepath, 0o755)
             sftp.close()
 
-            stdin, stdout, stderr = session.exec_command(filepath)
+            stdin, stdout, stderr = session.exec_command(f"powershell.exe -file {filepath}")
             return stdout.read().decode().strip()
         except paramiko.SSHException as e:
             raise Exception(f"SSH error occurred: {str(e)}")
