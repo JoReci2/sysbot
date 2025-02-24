@@ -37,18 +37,6 @@ class ConnectorHandler(object):
     def __nested_tunnel__(self, tunnel_config, target_config, index=0, previous_tunnels=None) -> dict:
         """
         Open nested SSH tunnels and establish the final connection.
-
-        Args:
-            tunnel_config (list): List of intermediate SSH tunnel configurations.
-            target_config (dict): Final target connection configuration.
-            index (int): Current index of the tunnel configuration (default: 0).
-            previous_tunnels (list): List of previously opened tunnels (default: None).
-
-        Returns:
-            dict: Contains the final session and the list of opened tunnels.
-
-        Raises:
-            Exception: If any tunnel fails to open.
         """
         if previous_tunnels is None:
             previous_tunnels = []
