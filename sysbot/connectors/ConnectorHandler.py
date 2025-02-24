@@ -78,7 +78,7 @@ class ConnectorHandler(object):
                 print(f"Closed tunnel to: {tunnel.ssh_address_or_host}")
             raise Exception(f"Failed to establish nested tunnels: {str(e)}")
 
-    def open_session(self, alias: str, protocol: str, product: str, host: str, port: int, login: str=None, password: str=None, options: dict=None, tunnel_config=None) -> None:
+    def open_session(self, alias: str, protocol: str, product: str, host: str, port: int, login: str=None, password: str=None, tunnel_config=None) -> None:
         """
         Open a session to the target host with optional nested SSH tunneling.
         """
