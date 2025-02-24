@@ -26,7 +26,7 @@ class ConnectorHandler(object):
         try:
             module_name = f"sysbot.connectors.{protocol_name.lower()}"
             connector = importlib.import_module(module_name)
-            self.protocol = getattr(connector, protocol_name.lower())()
+            self.protocol = getattr(connector, protocol_name.capitalize())()
         except ImportError as e:
             raise ImportError(f"Failed to import module '{module_name}': {str(e)}")
         except AttributeError as e:

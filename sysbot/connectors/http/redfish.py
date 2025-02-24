@@ -1,7 +1,7 @@
 import redfish as RedfishLibrary
 import json
 
-class redfish(object):
+class Redfish(object):
     """
     This class provides methods for interacting with systems using the Redfish API.
     It uses the redfish library to establish and manage sessions.
