@@ -19,14 +19,14 @@ class ConnectorHandler(object):
         self._cache = ConnectionCache('No sessions created')
         self.protocol = None
 
-    def __get_protocol__(self, protocol_name) -> object:
+    def __get_protocol__(self, protocol_name, product_name) -> object:
         """
         Retrieve and instantiate the protocol-specific connector.
         """
         try:
-            module_name = f"sysbot.connectors.{protocol_name.lower()}"
+            module_name = f"sysbot.connectors.{protocol_name.lower()}.{product_name.lower()}"
             connector = importlib.import_module(module_name)
-            self.protocol = getattr(connector, protocol_name.lower())()
+            self.protocol = getattr(connector, product_name.capitalize())()
         except ImportError as e:
             raise ImportError(f"Failed to import module '{module_name}': {str(e)}")
         except AttributeError as e:
@@ -37,18 +37,6 @@ class ConnectorHandler(object):
     def __nested_tunnel__(self, tunnel_config, target_config, index=0, previous_tunnels=None) -> dict:
         """
         Open nested SSH tunnels and establish the final connection.
-
-        Args:
-            tunnel_config (list): List of intermediate SSH tunnel configurations.
-            target_config (dict): Final target connection configuration.
-            index (int): Current index of the tunnel configuration (default: 0).
-            previous_tunnels (list): List of previously opened tunnels (default: None).
-
-        Returns:
-            dict: Contains the final session and the list of opened tunnels.
-
-        Raises:
-            Exception: If any tunnel fails to open.
         """
         if previous_tunnels is None:
             previous_tunnels = []
@@ -90,12 +78,12 @@ class ConnectorHandler(object):
                 print(f"Closed tunnel to: {tunnel.ssh_address_or_host}")
             raise Exception(f"Failed to establish nested tunnels: {str(e)}")
 
-    def open_session(self, alias: str, protocol: str, host: str, port: int, login: str, password: str, tunnel_config=None) -> None:
+    def open_session(self, alias: str, protocol: str, product: str, host: str, port: int, login: str=None, password: str=None, tunnel_config=None) -> None:
         """
         Open a session to the target host with optional nested SSH tunneling.
         """
         tunnels = []
-        self.__get_protocol__(protocol)
+        self.__get_protocol__(protocol, product)
         self.remote_port = int(port)
         try:
             if tunnel_config:
@@ -125,7 +113,7 @@ class ConnectorHandler(object):
                 print(f"Tunnel closed: {tunnel.ssh_address_or_host}")
             raise Exception(f"Failed to open session: {str(e)}")
 
-    def execute_command(self, alias: str, command: str, options: any = None) -> dict[str, str]:
+    def execute_command(self, alias: str, command: str, options: any = None) -> any:
         """
         Execute a command on the specified session.
         """
@@ -140,6 +128,22 @@ class ConnectorHandler(object):
             raise ValueError(f"Alias '{alias}' does not exist: {str(ve)}")
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
+
+    def execute_file(self, alias: str, script: str) -> dict:
+        """
+        Execute a file on the specified session and return the result as a dictionary.
+        """
+        try:
+            connection = self._cache.switch(alias)
+            if not connection or 'session' not in connection:
+                raise RuntimeError(f"No valid session found for alias '{alias}'")
+
+            result = self.protocol.execute_file(connection['session'], script)
+            return result
+        except ValueError as ve:
+            raise ValueError(f"Alias '{alias}' does not exist: {str(ve)}")
+        except Exception as e:
+            raise Exception(f"Failed to execute file: {str(e)}")
 
     def close_all_sessions(self) -> None:
         """

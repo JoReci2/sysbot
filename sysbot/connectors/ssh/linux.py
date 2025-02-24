@@ -1,6 +1,8 @@
 import paramiko
+import uuid
+import json
 
-class ssh(object):
+class Linux(object):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell).
     It uses the Netmiko library to establish and manage SSH connections.
@@ -30,26 +32,46 @@ class ssh(object):
         except Exception as e:
             raise Exception(f"Failed to open SSH session: {str(e)}")
 
-    def execute_command(self, session, command, options):
+    def execute_command(self, session, command):
         """
         Executes a command on a system via SSH.
-
-        Args:
-            session (ConnectHandler): The SSH client session.
-            command (str): The command to execute on the system.
-            options (str): Additional options to pass to the command.
-
-        Returns:
-            str: The output of the command.
-
-        Raises:
-            Exception: If there is an error executing the command.
         """
         try:
             stdin, stdout, stderr = session.exec_command(command)
             return stdout.read().decode().strip()
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
+
+    def execute_file(self, session, script):
+        """ 
+        Execute a file on a system via SSH and return json as result
+        """
+        try:
+            script_id = uuid.uuid4()
+            username = session.get_transport().get_username()
+            basepath = f"/home/{username}/.sysbot"
+            filepath = f"/home/{username}/.sysbot/{script_id}"
+
+            sftp = session.open_sftp()
+
+            try:
+                sftp.stat(basepath)
+            except FileNotFoundError:
+                sftp.mkdir(basepath)
+
+            with sftp.file(filepath, "w") as f:
+                f.write(script)
+            sftp.chmod(filepath, 0o755)
+            sftp.close()
+
+            stdin, stdout, stderr = session.exec_command(filepath)
+            return stdout.read().decode().strip()
+        except paramiko.SSHException as e:
+            raise Exception(f"SSH error occurred: {str(e)}")
+        except json.JSONDecodeError as e:
+            raise Exception(f"Failed to parse JSON output: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Failed to execute file: {str(e)}")
 
     def close_session(self, session):
         """

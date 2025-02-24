@@ -1,6 +1,6 @@
 from winrm.protocol import Protocol
 
-class winrm(object):
+class Windows(object):
     """
     This class provides methods for interacting with Windows systems using the Windows Remote Management (WinRM) protocol.
     It uses the pywinrm library to establish and manage sessions.
