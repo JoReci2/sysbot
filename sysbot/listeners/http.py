@@ -2,7 +2,7 @@ from robot.output.listeners import Listeners
 import yaml
 import requests
 
-class Listener:
+class http(object):
     """
     A custom listener for Robot Framework that collects test results.
     """
@@ -59,7 +59,7 @@ class Listener:
         """
         self.suite_name = attributes.name
         self.suite_source = attributes.source
-        self.suite_tags = attributes.tags
+        #self.suite_tags = attributes.tags
 
     def end_test(self, name, attributes):
         """
