@@ -1,4 +1,5 @@
 import paramiko
+import uuid
 
 class Windows(object):
     """
@@ -6,21 +7,38 @@ class Windows(object):
     It uses the Netmiko library to establish and manage SSH connections.
     """
 
+    def __init__(self):
+        self.file_execution_base_path   = ".sysbot"
+        self.file_execution_uuid        = None
+        self.file_execution_script_path = f"{self.file_execution_base_path}/{self.file_execution_uuid}.ps1"
+        self.file_execution_result_path = f"{self.file_execution_base_path}/{self.file_execution_uuid}.txt"
+
+    def __sftp_read_file(self, session):
+        
+        try:
+            with session.open_sftp() as sftp:
+                with sftp.open(self.file_execution_result_path, 'r') as file:
+                    content = file.read().decode()
+                    return content
+        except Exception as e:
+            raise Exception(f"Failed to read remote file: {str(e)}")
+
+    def __sftp_push_file(self, session, content):
+        
+        sftp = session.open_sftp()
+        try:
+            sftp.stat(self.file_execution_base_path)
+        except FileNotFoundError:
+            sftp.mkdir(self.file_execution_base_path)
+
+        with sftp.file(self.file_execution_script_path, "w") as f:
+            f.write(content)
+        sftp.chmod(self.file_execution_script_path, 0o755)
+        sftp.close()
+
     def open_session(self, host, port, login, password):
         """
         Opens an SSH session to a system.
-
-        Args:
-            host (str): Hostname or IP address of the system.
-            port (int): Port of the SSH server.
-            login (str): Username for the SSH session.
-            password (str): Password for the SSH session.
-
-        Returns:
-            ConnectHandler: An SSH client session.
-
-        Raises:
-            Exception: If there is an error opening the SSH session.
         """
         try:
             client = paramiko.SSHClient()
@@ -33,52 +51,33 @@ class Windows(object):
     def execute_command(self, session, command, options):
         """
         Executes a command on a system via SSH.
-
-        Args:
-            session (ConnectHandler): The SSH client session.
-            command (str): The command to execute on the system.
-            options (str): Additional options to pass to the command.
-
-        Returns:
-            str: The output of the command.
-
-        Raises:
-            Exception: If there is an error executing the command.
         """
         try:
             stdin, stdout, stderr = session.exec_command(command)
+            output = stdout.read().decode().strip()
+            error = stderr.read().decode().strip()
+
+            if error:
+                raise Exception(f"PowerShell error: {error}") 
+
             return stdout.read().decode().strip()
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
 
-    def execute_file(self, session, script):
+    def execute_file(self, session, content):
         """ 
         Execute a file on a system via SSH and return json as result
         """
         try:
-            script_id = uuid.uuid4()
-            username = session.get_transport().get_username()
-            basepath = f"/home/{username}/.sysbot"
-            filepath = f"/home/{username}/.sysbot/{script_id}.ps1"
+            self.file_execution_uuid = uuid.uuid4()
 
-            sftp = session.open_sftp()
+            self.__sftp_push_file(session, content)
+            self.execute_command(session, f"powershell.exe -File {self.file_execution_script_path} > {self.file_execution_result_path}", options=None)
+            
+            return self.__sftp_read_file(session)
 
-            try:
-                sftp.stat(basepath)
-            except FileNotFoundError:
-                sftp.mkdir(basepath)
-
-            with sftp.file(filepath, "w") as f:
-                f.write(script)
-            sftp.chmod(filepath, 0o755)
-            sftp.close()
-
-            stdin, stdout, stderr = session.exec_command(f"powershell.exe -file {filepath}")
-            return stdout.read().decode().strip()
         except paramiko.SSHException as e:
             raise Exception(f"SSH error occurred: {str(e)}")
-        except json.JSONDecodeError as e:
-            raise Exception(f"Failed to parse JSON output: {str(e)}")
         except Exception as e:
             raise Exception(f"Failed to execute file: {str(e)}")
 
