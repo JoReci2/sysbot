@@ -13,7 +13,7 @@ class Windows(object):
         self.file_execution_script_path = f"{self.file_execution_base_path}/{self.file_execution_uuid}.ps1"
         self.file_execution_result_path = f"{self.file_execution_base_path}/{self.file_execution_uuid}.txt"
 
-    def __sftp_read_file(self, session):
+    def __sftp_read_file__(self, session):
         
         try:
             with session.open_sftp() as sftp:
@@ -23,7 +23,7 @@ class Windows(object):
         except Exception as e:
             raise Exception(f"Failed to read remote file: {str(e)}")
 
-    def __sftp_push_file(self, session, content):
+    def __sftp_push_file__(self, session, content):
         
         sftp = session.open_sftp()
         try:
@@ -71,10 +71,10 @@ class Windows(object):
         try:
             self.file_execution_uuid = uuid.uuid4()
 
-            self.__sftp_push_file(session, content)
+            self.__sftp_push_file__(session, content)
             self.execute_command(session, f"powershell.exe -File {self.file_execution_script_path} > {self.file_execution_result_path}", options=None)
             
-            return self.__sftp_read_file(session)
+            return self.__sftp_read_file__(session)
 
         except paramiko.SSHException as e:
             raise Exception(f"SSH error occurred: {str(e)}")
@@ -84,12 +84,6 @@ class Windows(object):
     def close_session(self, session):
         """
         Closes an open SSH session.
-
-        Args:
-            session (ConnectHandler): The SSH client session to close.
-
-        Raises:
-            Exception: If there is an error closing the SSH session.
         """
         try:
             session.close()
