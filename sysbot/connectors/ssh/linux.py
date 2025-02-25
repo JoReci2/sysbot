@@ -8,21 +8,38 @@ class Linux(object):
     It uses the Netmiko library to establish and manage SSH connections.
     """
 
+    def __init__(self):
+        self.file_execution_base_path   = ".sysbot"
+        self.file_execution_uuid        = None
+        self.file_execution_script_path = f"{self.file_execution_base_path}/{self.file_execution_uuid}.script"
+        self.file_execution_result_path = f"{self.file_execution_base_path}/{self.file_execution_uuid}.result"
+
+    def __sftp_read_file__(self, session):
+        
+        try:
+            with session.open_sftp() as sftp:
+                with sftp.open(self.file_execution_result_path, 'r') as file:
+                    content = file.read().decode()
+                    return content
+        except Exception as e:
+            raise Exception(f"Failed to read remote file: {str(e)}")
+
+    def __sftp_push_file__(self, session, content):
+        
+        sftp = session.open_sftp()
+        try:
+            sftp.stat(self.file_execution_base_path)
+        except FileNotFoundError:
+            sftp.mkdir(self.file_execution_base_path)
+
+        with sftp.file(self.file_execution_script_path, "w") as f:
+            f.write(content)
+        sftp.chmod(self.file_execution_script_path, 0o755)
+        sftp.close()
+
     def open_session(self, host, port, login, password):
         """
         Opens an SSH session to a system.
-
-        Args:
-            host (str): Hostname or IP address of the system.
-            port (int): Port of the SSH server.
-            login (str): Username for the SSH session.
-            password (str): Password for the SSH session.
-
-        Returns:
-            ConnectHandler: An SSH client session.
-
-        Raises:
-            Exception: If there is an error opening the SSH session.
         """
         try:
             client = paramiko.SSHClient()
@@ -38,6 +55,11 @@ class Linux(object):
         """
         try:
             stdin, stdout, stderr = session.exec_command(command)
+            output = stdout.read().decode().strip()
+            error = stderr.read().decode().strip()
+
+            if error:
+                raise Exception(f"console error: {error}")
             return stdout.read().decode().strip()
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
@@ -47,41 +69,21 @@ class Linux(object):
         Execute a file on a system via SSH and return json as result
         """
         try:
-            script_id = uuid.uuid4()
-            username = session.get_transport().get_username()
-            basepath = f"/home/{username}/.sysbot"
-            filepath = f"/home/{username}/.sysbot/{script_id}"
+            self.file_execution_uuid = uuid.uuid4()
 
-            sftp = session.open_sftp()
+            self.__sftp_push_file__(session, content)
+            self.execute_command(session, f"{self.file_execution_script_path} > {self.file_execution_result_path}", options=None)
+            
+            return self.__sftp_read_file__(session)
 
-            try:
-                sftp.stat(basepath)
-            except FileNotFoundError:
-                sftp.mkdir(basepath)
-
-            with sftp.file(filepath, "w") as f:
-                f.write(script)
-            sftp.chmod(filepath, 0o755)
-            sftp.close()
-
-            stdin, stdout, stderr = session.exec_command(filepath)
-            return stdout.read().decode().strip()
         except paramiko.SSHException as e:
             raise Exception(f"SSH error occurred: {str(e)}")
-        except json.JSONDecodeError as e:
-            raise Exception(f"Failed to parse JSON output: {str(e)}")
         except Exception as e:
             raise Exception(f"Failed to execute file: {str(e)}")
 
     def close_session(self, session):
         """
         Closes an open SSH session.
-
-        Args:
-            session (ConnectHandler): The SSH client session to close.
-
-        Raises:
-            Exception: If there is an error closing the SSH session.
         """
         try:
             session.close()
