@@ -26,7 +26,33 @@ import socket, paramiko, json, importlib
 from robot.utils import ConnectionCache
 from robot.api.deco import keyword, library
 from sshtunnel import SSHTunnelForwarder
+from abc import ABC, abstractmethod
 
+class ConnectorInterface(ABC):
+    """
+    Abstract base class for protocol-specific connectors.
+    """
+
+    @abstractmethod
+    def open_session(self, host: str, port: int, login: str = None, password: str = None) -> object:
+        """
+        Open a session to the target host.
+        """
+        pass
+
+    @abstractmethod
+    def execute_command(self, session: object, command: str, script: bool = False, runas: bool = False) -> any:
+        """
+        Execute a command on the specified session.
+        """
+        pass
+
+    @abstractmethod
+    def close_session(self, session: object) -> None:
+        """
+        Close the specified session.
+        """
+        pass
 
 class ConnectorHandler(object):
     """
@@ -152,22 +178,6 @@ class ConnectorHandler(object):
             raise ValueError(f"Alias '{alias}' does not exist: {str(ve)}")
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
-
-    def execute_file(self, alias: str, script: str) -> dict:
-        """
-        Execute a file on the specified session and return the result as a dictionary.
-        """
-        try:
-            connection = self._cache.switch(alias)
-            if not connection or 'session' not in connection:
-                raise RuntimeError(f"No valid session found for alias '{alias}'")
-
-            result = self.protocol.execute_file(connection['session'], script)
-            return result
-        except ValueError as ve:
-            raise ValueError(f"Alias '{alias}' does not exist: {str(ve)}")
-        except Exception as e:
-            raise Exception(f"Failed to execute file: {str(e)}")
 
     def close_all_sessions(self) -> None:
         """
