@@ -137,7 +137,7 @@ class ConnectorHandler(object):
                 print(f"Tunnel closed: {tunnel.ssh_address_or_host}")
             raise Exception(f"Failed to open session: {str(e)}")
 
-    def execute_command(self, alias: str, command: str, options: any = None) -> any:
+    def execute_command(self, alias: str, command: str) -> any:
         """
         Execute a command on the specified session.
         """
@@ -146,7 +146,7 @@ class ConnectorHandler(object):
             if not connection or 'session' not in connection:
                 raise RuntimeError(f"No valid session found for alias '{alias}'")
 
-            result = self.protocol.execute_command(connection['session'], command, options)
+            result = self.protocol.execute_command(connection['session'], command)
             return result
         except ValueError as ve:
             raise ValueError(f"Alias '{alias}' does not exist: {str(ve)}")
