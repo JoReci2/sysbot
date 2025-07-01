@@ -26,10 +26,10 @@ import paramiko
 import uuid
 import json
 
-from sysbot.connectors.ConnectorHandler import ConnectorInterface
-from sysbot.connectors.ssh.utils import sftp
+from sysbot.connectors.utils import AbstractConnector
+from sysbot.connectors.utils import sftp
 
-class Linux(ConnectorInterface):
+class Linux(AbstractConnector):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell).
     It uses the Netmiko library to establish and manage SSH connections.

@@ -1,7 +1,7 @@
 __pycache__/
+.venv/
 .asciidoctor/
 dist/
 *.egg-info/
 .DS_Store
 *.html
-.coverage

@@ -23,8 +23,10 @@ SOFTWARE.
 """
 
 from winrm.protocol import Protocol
+from sysbot.connectors.utils import AbstractConnector
+from sysbot.connectors.utils import sftp
 
-class Windows(object):
+class Windows(AbstractConnector):
     """
     This class provides methods for interacting with Windows systems using the Windows Remote Management (WinRM) protocol.
     It uses the pywinrm library to establish and manage sessions.
