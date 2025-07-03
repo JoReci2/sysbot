@@ -24,92 +24,78 @@ SOFTWARE.
 
 import paramiko
 import uuid
+import logging
+from typing import Any
+from sysbot.connectors.utils import sftp
+
+logger = logging.getLogger(__name__)
 
 class Windows(object):
     """
-    This class provides methods for interacting with systems using SSH (Secure Shell).
-    It uses the Netmiko library to establish and manage SSH connections.
+    SSH connector for Windows systems using paramiko.
     """
-
-    def __init__(self):
-        self.file_execution_base_path   = ".sysbot"
-        self.file_execution_uuid        = None
-        self.file_execution_script_path = f"{self.file_execution_base_path}/{self.file_execution_uuid}.ps1"
-        self.file_execution_result_path = f"{self.file_execution_base_path}/{self.file_execution_uuid}.txt"
-
-    def __sftp_read_file__(self, session):
-        
-        try:
-            with session.open_sftp() as sftp:
-                with sftp.open(self.file_execution_result_path, 'r') as file:
-                    content = file.read().decode()
-                    return content
-        except Exception as e:
-            raise Exception(f"Failed to read remote file: {str(e)}")
-
-    def __sftp_push_file__(self, session, content):
-        
-        sftp = session.open_sftp()
-        try:
-            sftp.stat(self.file_execution_base_path)
-        except FileNotFoundError:
-            sftp.mkdir(self.file_execution_base_path)
-
-        with sftp.file(self.file_execution_script_path, "w") as f:
-            f.write(content)
-        sftp.chmod(self.file_execution_script_path, 0o755)
-        sftp.close()
-
-    def open_session(self, host, port, login, password):
-        """
-        Opens an SSH session to a system.
-        """
+    def open_session(self, host: str, port: int, login: str, password: str) -> paramiko.SSHClient:
+        """Open an SSH session to a system."""
         try:
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             client.connect(host, port=port, username=login, password=password)
+            logger.info(f"SSH session opened to {host}:{port}")
             return client
         except Exception as e:
-            raise Exception(f"Failed to open SSH session: {str(e)}")
+            logger.error(f"Failed to open SSH session: {e}")
+            raise
 
-    def execute_command(self, session, command, options):
-        """
-        Executes a command on a system via SSH.
-        """
+    def execute_command(self, session: paramiko.SSHClient, command: str) -> str:
+        """Execute a command on a system via SSH."""
         try:
             stdin, stdout, stderr = session.exec_command(command)
             output = stdout.read().decode().strip()
             error = stderr.read().decode().strip()
-
             if error:
-                raise Exception(f"PowerShell error: {error}") 
-
-            return stdout.read().decode().strip()
+                logger.error(f"PowerShell error: {error}")
+                raise Exception(f"PowerShell error: {error}")
+            logger.info(f"Command executed: {command}")
+            return output
         except Exception as e:
-            raise Exception(f"Failed to execute command: {str(e)}")
+            logger.error(f"Failed to execute command: {e}")
+            raise
 
-    def execute_file(self, session, content):
-        """ 
-        Execute a file on a system via SSH and return json as result
-        """
+    def execute_file(self, session: paramiko.SSHClient, script: str) -> Any:
+        """Execute a file on a system via SSH and return the result as JSON or string."""
         try:
-            self.file_execution_uuid = uuid.uuid4()
-
-            self.__sftp_push_file__(session, content)
-            self.execute_command(session, f"powershell.exe -File {self.file_execution_script_path} > {self.file_execution_result_path}", options=None)
-            
-            return self.__sftp_read_file__(session)
-
+            file_uuid = uuid.uuid4()
+            base_path = ".sysbot"
+            script_path = f"{base_path}/{file_uuid}.ps1"
+            result_path = f"{base_path}/{file_uuid}.txt"
+            sftp_client = sftp()
+            sftp_client.sftp_push_file(session, script_path, script)
+            self.execute_command(session, f"powershell.exe -File {script_path} > {result_path}")
+            result = sftp_client.sftp_read_file(session, result_path)
+            logger.info(f"Script executed via SSH: {script_path}")
+            return result
         except paramiko.SSHException as e:
-            raise Exception(f"SSH error occurred: {str(e)}")
+            logger.error(f"SSH error occurred: {e}")
+            raise
         except Exception as e:
-            raise Exception(f"Failed to execute file: {str(e)}")
+            logger.error(f"Failed to execute file: {e}")
+            raise
 
-    def close_session(self, session):
-        """
-        Closes an open SSH session.
-        """
+    def delete_file(self, session: paramiko.SSHClient, file_path: str) -> None:
+        """Delete a file on the remote system via SFTP."""
+        try:
+            sftp_client = sftp()
+            sftp_client.sftp_delete_file(session, file_path)
+            logger.info(f"Deleted remote file: {file_path}")
+        except Exception as e:
+            logger.error(f"Failed to delete remote file: {e}")
+            raise
+
+    def close_session(self, session: paramiko.SSHClient) -> None:
+        """Close an open SSH session."""
         try:
             session.close()
+            logger.info("SSH session closed.")
         except Exception as e:
-            raise Exception(f"Failed to close SSH session: {str(e)}")
+            logger.error(f"Failed to close SSH session: {e}")
+            raise

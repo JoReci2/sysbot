@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 class AbstractConnector(ABC):
     """
-    Abstract base class for protocol-specific connectors.
+    Abstract base class for protocol-specific connectors. All connectors must inherit from cette classe et implémenter les méthodes requises. Les paramètres login et password peuvent être None, les implémentations doivent gérer ce cas.
     """
 
     @abstractmethod
-    def open_session(self, host: str, port: int, login: str = None, password: str = None) -> object:
+    def open_session(self, host: str, port: int, login: Optional[str] = None, password: Optional[str] = None) -> object:
         """
         Open a session to the target host.
         """
