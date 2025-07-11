@@ -53,7 +53,7 @@ class Bash(object):
             if runas == True and password != None:
                 stdin, stdout, stderr = session.exec_command(f"echo {password} | sudo -S bash", get_pty=True)
             elif runas == True and password == None:
-                stdin, stdout, stderr = session.exec_command("sudo bash", get_pty=True)
+                stdin, stdout, stderr = session.exec_command("sudo bash", get_pty=False)
             else:
                 stdin, stdout, stderr = session.exec_command("bash", get_pty=False)
             stdin.write(command)
