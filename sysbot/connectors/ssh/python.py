@@ -55,7 +55,7 @@ class Python(object):
             elif runas == True and password == None:
                 stdin, stdout, stderr = session.exec_command("sudo python3", get_pty=True)
             else:
-                stdin, stdout, stderr = session.exec_command("bash", get_pty=False)
+                stdin, stdout, stderr = session.exec_command("python3", get_pty=False)
             stdin.write(command)
             stdin.channel.shutdown_write()
             output = stdout.read().decode("utf-8")
