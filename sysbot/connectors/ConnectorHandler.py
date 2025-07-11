@@ -23,22 +23,11 @@ SOFTWARE.
 """
 
 import socket, paramiko, json, importlib
-import logging
 from robot.utils import ConnectionCache
 from robot.api.deco import keyword, library
 from sshtunnel import SSHTunnelForwarder
-from sysbot.connectors.utils import AbstractConnector
-from sysbot.connectors.utils.tunnels import TunnelManager
-from typing import Optional, cast
 
-# Configuration du logger
-logger = logging.getLogger(__name__)
 
-# Utilitaire pour garantir un str non-None
-def safe_str(val) -> str:
-    return '' if val is None else str(val)
-
-@library
 class ConnectorHandler(object):
     """
     Interface for managing protocol-specific connections with optional SSH tunneling.
@@ -49,113 +38,144 @@ class ConnectorHandler(object):
 
     def __init__(self) -> None:
         """
-        Initialize the ConnectorHandler with a connection cache.
+        Initialize the ConnectorInterface with the specified protocol and optional tunneling parameters.
         """
         self._cache = ConnectionCache('No sessions created')
-        self.tunnel_manager = TunnelManager()
+        self.protocol = None
 
-    def _get_protocol(self, protocol_name: str, product_name: str) -> AbstractConnector:
+    def __get_protocol__(self, protocol_name, product_name) -> object:
         """
         Retrieve and instantiate the protocol-specific connector.
         """
-        module_name = f"sysbot.connectors.{protocol_name.lower()}.{product_name.lower()}"
-        class_name = product_name.capitalize()
         try:
-            connector_module = importlib.import_module(module_name)
-            connector_class = getattr(connector_module, class_name, None)
-            if connector_class is None:
-                raise ImportError(f"Class '{class_name}' not found in module '{module_name}'")
-            if not isinstance(connector_class, type) or not issubclass(connector_class, AbstractConnector):
-                raise TypeError(f"{class_name} does not inherit from AbstractConnector")
-            return connector_class()
+            module_name = f"sysbot.connectors.{protocol_name.lower()}.{product_name.lower()}"
+            connector = importlib.import_module(module_name)
+            self.protocol = getattr(connector, product_name.capitalize())()
+        except ImportError as e:
+            raise ImportError(f"Failed to import module '{module_name}': {str(e)}")
+        except AttributeError as e:
+            raise AttributeError(f"Module '{module_name}' does not have the attribute '{protocol_name.lower()}': {str(e)}")
         except Exception as e:
-            logger.error(f"Failed to import protocol '{protocol_name}' product '{product_name}': {e}")
-            raise
+            raise Exception(f"An unexpected error occurred while retrieving the protocol: {str(e)}")
 
-    def _get_protocol_from_connection(self, connection: dict) -> AbstractConnector:
+    def __nested_tunnel__(self, tunnel_config, target_config, index=0, previous_tunnels=None) -> dict:
         """
-        Retrieve the protocol instance from the connection dict.
+        Open nested SSH tunnels and establish the final connection.
         """
-        protocol = connection.get("protocol")
-        if protocol is None:
-            raise RuntimeError("No protocol instance found in connection")
-        return protocol
+        if previous_tunnels is None:
+            previous_tunnels = []
 
-    @keyword
-    def open_session(self, alias: str, protocol: str, product: str, host: str = '', port: int = 0, login: str = '', password: str = '', tunnel_config = None) -> None:
+        try:
+            if index >= len(tunnel_config):
+                session = self.protocol.open_session(
+                    'localhost',
+                    previous_tunnels[-1].local_bind_port,
+                    target_config['username'],
+                    target_config['password']
+                )
+                return {"session": session, "tunnels": previous_tunnels}
+
+            config = tunnel_config[index]
+            ssh_address_or_host = (
+                'localhost', previous_tunnels[-1].local_bind_port
+            ) if previous_tunnels else (config['ip'], int(config['port']))
+            remote_bind_address = (
+                target_config['ip'], int(target_config['port'])
+            ) if index == len(tunnel_config) - 1 else (
+                tunnel_config[index + 1]['ip'], int(tunnel_config[index + 1]['port'])
+            )
+
+            tunnel = SSHTunnelForwarder(
+                ssh_address_or_host=ssh_address_or_host,
+                remote_bind_address=remote_bind_address,
+                ssh_username=config['username'],
+                ssh_password=config['password']
+            )
+            tunnel.start()
+            print(f"Tunnel {index + 1} established: {ssh_address_or_host[0]}:{ssh_address_or_host[1]}")
+            previous_tunnels.append(tunnel)
+
+            return self.__nested_tunnel__(tunnel_config, target_config, index + 1, previous_tunnels)
+        except Exception as e:
+            for tunnel in reversed(previous_tunnels):
+                tunnel.stop()
+                try:
+                    tunnel.ssh_address_or_host
+                except:
+                    print(f"Closed tunnel")
+                else:
+                    print(f"Closed tunnel to: {tunnel.ssh_address_or_host}")
+            raise Exception(f"Failed to establish nested tunnels: {str(e)}")
+
+    def open_session(self, alias: str, protocol: str, product: str, host: str, port: int, login: str=None, password: str=None, tunnel_config=None) -> None:
         """
         Open a session to the target host with optional nested SSH tunneling.
         """
         tunnels = []
-        protocol_instance = self._get_protocol(protocol, product)
-        remote_port = int(port)
+        self.__get_protocol__(protocol, product)
+        self.remote_port = int(port)
         try:
             if tunnel_config:
-                host = host or ''
-                login = login or ''
-                password = password or ''
-                if isinstance(tunnel_config, str):
-                    try:
+                try:
+                    if type(tunnel_config) is str:
                         tunnel_config = json.loads(tunnel_config)
-                    except Exception as e:
-                        raise Exception(f"Error during importing tunnel as json: {e}")
+                except Exception as e:
+                    raise Exception(f"Error during importing tunnel as json: {e}")
                 target_config = {
                     'ip': host,
-                    'port': remote_port,
+                    'port': int(self.remote_port),
                     'username': login,
                     'password': password
                 }
-                connection = self.tunnel_manager.open_nested_tunnel(
-                    tunnel_config,
-                    target_config,
-                    protocol_instance.open_session
-                )
+                connection = self.__nested_tunnel__(tunnel_config, target_config)
                 tunnels = connection["tunnels"]
             else:
-                safe_login = login if login is not None else ''
-                safe_password = password if password is not None else ''
-                session = protocol_instance.open_session(host, remote_port, safe_login, safe_password)
+                session = self.protocol.open_session(host, int(self.remote_port), login, password)
                 if not session:
                     raise Exception("Failed to open direct session")
-                connection = {"session": session, "tunnels": None, "protocol": protocol_instance}
+                connection = {"session": session, "tunnels": None}
+
             self._cache.register(connection, alias)
         except Exception as e:
-            self.tunnel_manager.close_tunnels(tunnels)
-            logger.error(f"Failed to open session: {e}")
-            raise
+            for tunnel in reversed(tunnels):
+                tunnel.stop()
+            raise Exception(f"Failed to open session: {str(e)}")
 
-    @keyword
-    def execute_command(self, alias: str, command: str) -> any:
+    def execute_command(self, alias: str, command: str, **kwargs) -> any:
         """
         Execute a command on the specified session.
         """
         try:
             connection = self._cache.switch(alias)
-            if not isinstance(connection, dict) or 'session' not in connection:
+            if not connection or 'session' not in connection:
                 raise RuntimeError(f"No valid session found for alias '{alias}'")
-            protocol_instance = self._get_protocol_from_connection(connection)
-            result = protocol_instance.execute_command(connection['session'], command)
+
+            result = self.protocol.execute_command(connection['session'], command, **kwargs)
             return result
         except ValueError as ve:
-            logger.error(f"Alias '{alias}' does not exist: {ve}")
-            raise
+            raise ValueError(f"Alias '{alias}' does not exist: {str(ve)}")
         except Exception as e:
-            logger.error(f"Failed to execute command: {e}")
-            raise
+            raise Exception(f"Failed to execute command: {str(e)}")
 
-    @keyword
     def close_all_sessions(self) -> None:
         """
         Close all active sessions and stop any associated SSH tunnels.
         """
         try:
             for connection in self._cache._connections:
-                protocol_instance = self._get_protocol_from_connection(connection)
-                protocol_instance.close_session(connection['session'])
+                self.protocol.close_session(connection['session'])
                 if connection['tunnels'] is not None:
                     for tunnel in reversed(connection['tunnels']):
                         tunnel.stop()
             self._cache.empty_cache()
         except Exception as e:
-            logger.error(f"Failed to close all sessions: {e}")
-            raise
+            raise Exception(f"Failed to close all sessions: {str(e)}")
+
+    def close_session(self, alias: str) -> None:
+        try:
+            connection = self._cache.switch(alias)
+            if not connection or 'session' not in connection:
+                raise RuntimeError(f"No valid session found for alias '{alias}'")
+            self.protocol.close_session(connection)
+        except Exception as e:
+            raise Exception(f"Failed to close session: {str(e)}")
