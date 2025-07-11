@@ -52,6 +52,8 @@ class Python(object):
         try:
             if runas == True and password != None:
                 stdin, stdout, stderr = session.exec_command(f"echo {password} | sudo -S python3", get_pty=True)
+            elif runas == True and password == None:
+                stdin, stdout, stderr = session.exec_command("sudo python3", get_pty=True)
             else:
                 stdin, stdout, stderr = session.exec_command("bash", get_pty=False)
             stdin.write(command)
