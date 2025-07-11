@@ -25,41 +25,13 @@ SOFTWARE.
 import paramiko
 import uuid
 import json
+import time
 
-class Linux(object):
+class Python(object):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell).
     It uses the Netmiko library to establish and manage SSH connections.
     """
-
-    def __init__(self):
-        self.file_execution_base_path   = ".sysbot"
-        self.file_execution_uuid        = None
-        self.file_execution_script_path = f"{self.file_execution_base_path}/{self.file_execution_uuid}.script"
-        self.file_execution_result_path = f"{self.file_execution_base_path}/{self.file_execution_uuid}.result"
-
-    def __sftp_read_file__(self, session):
-        
-        try:
-            with session.open_sftp() as sftp:
-                with sftp.open(self.file_execution_result_path, 'r') as file:
-                    content = file.read().decode()
-                    return content
-        except Exception as e:
-            raise Exception(f"Failed to read remote file: {str(e)}")
-
-    def __sftp_push_file__(self, session, content):
-        
-        sftp = session.open_sftp()
-        try:
-            sftp.stat(self.file_execution_base_path)
-        except FileNotFoundError:
-            sftp.mkdir(self.file_execution_base_path)
-
-        with sftp.file(self.file_execution_script_path, "w") as f:
-            f.write(content)
-        sftp.chmod(self.file_execution_script_path, 0o755)
-        sftp.close()
 
     def open_session(self, host, port, login, password):
         """
@@ -73,37 +45,27 @@ class Linux(object):
         except Exception as e:
             raise Exception(f"Failed to open SSH session: {str(e)}")
 
-    def execute_command(self, session, command):
+    def execute_command(self, session, command, runas=False, password=None):
         """
         Executes a command on a system via SSH.
         """
         try:
-            stdin, stdout, stderr = session.exec_command(command)
-            output = stdout.read().decode().strip()
-            error = stderr.read().decode().strip()
+            if runas == True and password != None:
+                stdin, stdout, stderr = session.exec_command(f"echo {password} | sudo -S python3", get_pty=True)
+            elif runas == True and password == None:
+                stdin, stdout, stderr = session.exec_command("sudo python3", get_pty=False)
+            else:
+                stdin, stdout, stderr = session.exec_command("python3", get_pty=False)
+            stdin.write(command)
+            stdin.channel.shutdown_write()
+            output = stdout.read().decode("utf-8")
+            error = stderr.read().decode("utf-8")
 
             if error:
                 raise Exception(f"console error: {error}")
-            return stdout.read().decode().strip()
+            return output
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
-
-    def execute_file(self, session, script):
-        """ 
-        Execute a file on a system via SSH and return json as result
-        """
-        try:
-            self.file_execution_uuid = uuid.uuid4()
-
-            self.__sftp_push_file__(session, content)
-            self.execute_command(session, f"{self.file_execution_script_path} > {self.file_execution_result_path}", options=None)
-            
-            return self.__sftp_read_file__(session)
-
-        except paramiko.SSHException as e:
-            raise Exception(f"SSH error occurred: {str(e)}")
-        except Exception as e:
-            raise Exception(f"Failed to execute file: {str(e)}")
 
     def close_session(self, session):
         """

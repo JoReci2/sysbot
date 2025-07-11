@@ -23,8 +23,9 @@ SOFTWARE.
 """
 
 from winrm.protocol import Protocol
+from base64 import b64encode
 
-class Windows(object):
+class Powershell(object):
     """
     This class provides methods for interacting with Windows systems using the Windows Remote Management (WinRM) protocol.
     It uses the pywinrm library to establish and manage sessions.
@@ -48,7 +49,7 @@ class Windows(object):
         """
         try:
             p = Protocol(
-                endpoint=f'http://{host}:{port}/wsman',
+                endpoint=f'https://{host}:{port}/wsman',
                 transport='ntlm',
                 username=login,
                 password=password,
@@ -60,11 +61,12 @@ class Windows(object):
                 'protocol': p,
                 'shell': shell
             }
+            
             return session
         except Exception as e:
             raise Exception(f"Failed to open WinRM session: {str(e)}")
 
-    def execute_command(self, session, command, options):
+    def execute_command(self, session, command):
         """
         Executes a PowerShell command on a Windows system via WinRM.
 
@@ -79,11 +81,11 @@ class Windows(object):
             Exception: If there is an error executing the command.
         """
         try:
-            payload = session['protocol'].run_command(session['shell'], 'powershell', ['-Command', command])
-            response = session['protocol'].get_command_output(session['shell'], payload)
-            output = response[0].decode().strip()
+            encoded_command = b64encode(command.encode("utf_16_le")).decode("ascii")
+            payload = session['protocol'].run_command(session['shell'], 'powershell -encodedcommand {0}'.format(encoded_command))
+            stdout, stderr, status_code = session['protocol'].get_command_output(session['shell'], payload)
             session['protocol'].cleanup_command(session['shell'], payload)
-            return output
+            return stdout
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
 

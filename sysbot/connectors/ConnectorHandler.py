@@ -99,7 +99,12 @@ class ConnectorHandler(object):
         except Exception as e:
             for tunnel in reversed(previous_tunnels):
                 tunnel.stop()
-                print(f"Closed tunnel to: {tunnel.ssh_address_or_host}")
+                try:
+                    tunnel.ssh_address_or_host
+                except:
+                    print(f"Closed tunnel")
+                else:
+                    print(f"Closed tunnel to: {tunnel.ssh_address_or_host}")
             raise Exception(f"Failed to establish nested tunnels: {str(e)}")
 
     def open_session(self, alias: str, protocol: str, product: str, host: str, port: int, login: str=None, password: str=None, tunnel_config=None) -> None:
@@ -134,10 +139,9 @@ class ConnectorHandler(object):
         except Exception as e:
             for tunnel in reversed(tunnels):
                 tunnel.stop()
-                print(f"Tunnel closed: {tunnel.ssh_address_or_host}")
             raise Exception(f"Failed to open session: {str(e)}")
 
-    def execute_command(self, alias: str, command: str) -> any:
+    def execute_command(self, alias: str, command: str, **kwargs) -> any:
         """
         Execute a command on the specified session.
         """
@@ -146,28 +150,12 @@ class ConnectorHandler(object):
             if not connection or 'session' not in connection:
                 raise RuntimeError(f"No valid session found for alias '{alias}'")
 
-            result = self.protocol.execute_command(connection['session'], command)
+            result = self.protocol.execute_command(connection['session'], command, **kwargs)
             return result
         except ValueError as ve:
             raise ValueError(f"Alias '{alias}' does not exist: {str(ve)}")
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
-
-    def execute_file(self, alias: str, script: str) -> dict:
-        """
-        Execute a file on the specified session and return the result as a dictionary.
-        """
-        try:
-            connection = self._cache.switch(alias)
-            if not connection or 'session' not in connection:
-                raise RuntimeError(f"No valid session found for alias '{alias}'")
-
-            result = self.protocol.execute_file(connection['session'], script)
-            return result
-        except ValueError as ve:
-            raise ValueError(f"Alias '{alias}' does not exist: {str(ve)}")
-        except Exception as e:
-            raise Exception(f"Failed to execute file: {str(e)}")
 
     def close_all_sessions(self) -> None:
         """
@@ -182,3 +170,12 @@ class ConnectorHandler(object):
             self._cache.empty_cache()
         except Exception as e:
             raise Exception(f"Failed to close all sessions: {str(e)}")
+
+    def close_session(self, alias: str) -> None:
+        try:
+            connection = self._cache.switch(alias)
+            if not connection or 'session' not in connection:
+                raise RuntimeError(f"No valid session found for alias '{alias}'")
+            self.protocol.close_session(connection)
+        except Exception as e:
+            raise Exception(f"Failed to close session: {str(e)}")
