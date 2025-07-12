@@ -26,9 +26,11 @@ from winrm.protocol import Protocol
 from base64 import b64encode
 from ...utils.ConnectorInterface import ConnectorInterface
 
+
 class Powershell(ConnectorInterface):
     """
-    This class provides methods for interacting with Windows systems using the Windows Remote Management (WinRM) protocol.
+    This class provides methods for interacting with Windows systems using
+    the Windows Remote Management (WinRM) protocol.
     It uses the pywinrm library to establish and manage sessions.
     """
 
@@ -50,30 +52,32 @@ class Powershell(ConnectorInterface):
         """
         try:
             p = Protocol(
-                endpoint=f'https://{host}:{port}/wsman',
-                transport='ntlm',
+                endpoint=f"https://{host}:{port}/wsman",
+                transport="ntlm",
                 username=login,
                 password=password,
-                server_cert_validation='ignore'
+                server_cert_validation="ignore",
             )
 
             shell = p.open_shell()
-            session = {
-                'protocol': p,
-                'shell': shell
-            }
-            
+            session = {"protocol": p, "shell": shell}
+
             return session
         except Exception as e:
             raise Exception(f"Failed to open WinRM session: {str(e)}")
 
-    def execute_command(self, session, command):
+    def execute_command(
+        self, session, command, runas=False, username=None, password=None
+    ):
         """
         Executes a PowerShell command on a Windows system via WinRM.
 
         Args:
             session (dict): The session dictionary containing the protocol and shell.
             command (str): The PowerShell command to execute on the Windows system.
+            runas (bool): Whether to run with elevated privileges
+            username (str): Username for elevated execution (if different from session user)
+            password (str): Password for elevated execution (if required)
 
         Returns:
             str: The output of the command.
@@ -82,10 +86,39 @@ class Powershell(ConnectorInterface):
             Exception: If there is an error executing the command.
         """
         try:
-            encoded_command = b64encode(command.encode("utf_16_le")).decode("ascii")
-            payload = session['protocol'].run_command(session['shell'], 'powershell -encodedcommand {0}'.format(encoded_command))
-            stdout, stderr, status_code = session['protocol'].get_command_output(session['shell'], payload)
-            session['protocol'].cleanup_command(session['shell'], payload)
+            if runas:
+                if username and password:
+                    # Create credentials for RunAs
+                    ps_command = (
+                        f"Start-Process PowerShell -Credential $credential "
+                        f'-ArgumentList "-Command", "{command}" -Wait -NoNewWindow'
+                    )
+                    credential_command = f"""
+$securePassword = ConvertTo-SecureString '{password}' -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential('{username}', $securePassword)
+{ps_command}
+"""
+                    final_command = credential_command
+                else:
+                    # Run as administrator using current session
+                    final_command = (
+                        f"Start-Process PowerShell -Verb RunAs "
+                        f'-ArgumentList "-Command", "{command}" -Wait'
+                    )
+            else:
+                final_command = command
+
+            encoded_command = b64encode(final_command.encode("utf_16_le")).decode(
+                "ascii"
+            )
+            payload = session["protocol"].run_command(
+                session["shell"],
+                "powershell -encodedcommand {0}".format(encoded_command),
+            )
+            stdout, stderr, status_code = session["protocol"].get_command_output(
+                session["shell"], payload
+            )
+            session["protocol"].cleanup_command(session["shell"], payload)
             return stdout
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
@@ -101,6 +134,6 @@ class Powershell(ConnectorInterface):
             Exception: If there is an error closing the session.
         """
         try:
-            session['protocol'].close_shell(session['shell'])
+            session["protocol"].close_shell(session["shell"])
         except Exception as e:
             raise Exception(f"Failed to close WinRM session: {str(e)}")
