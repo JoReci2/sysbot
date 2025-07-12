@@ -1,7 +1,7 @@
 import requests
 from requests.auth import HTTPBasicAuth
 import json
-from ..ConnectorInterface import ConnectorInterface
+from ...utils.ConnectorInterface import ConnectorInterface
 
 class Basicauth(ConnectorInterface):
     """

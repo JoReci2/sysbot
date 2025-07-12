@@ -24,7 +24,7 @@ SOFTWARE.
 
 from winrm.protocol import Protocol
 from base64 import b64encode
-from ..ConnectorInterface import ConnectorInterface
+from ...utils.ConnectorInterface import ConnectorInterface
 
 class Powershell(ConnectorInterface):
     """

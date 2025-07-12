@@ -1,5 +1,5 @@
 import unittest
-from sysbot.connectors.ConnectorInterface import ConnectorInterface
+from sysbot.utils.ConnectorInterface import ConnectorInterface
 from sysbot.connectors.ssh.bash import Bash
 from sysbot.connectors.http.basicauth import Basicauth
 from sysbot.connectors.winrm.powershell import Powershell

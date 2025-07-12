@@ -23,4 +23,4 @@ SOFTWARE.
 """
 
 from .ConnectorHandler import ConnectorHandler
-from .ConnectorInterface import ConnectorInterface
+from ..utils.ConnectorInterface import ConnectorInterface

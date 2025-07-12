@@ -26,7 +26,7 @@ import paramiko
 import uuid
 import json
 import time
-from ..ConnectorInterface import ConnectorInterface
+from ...utils.ConnectorInterface import ConnectorInterface
 
 class Python(ConnectorInterface):
     """
