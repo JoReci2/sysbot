@@ -24,8 +24,9 @@ SOFTWARE.
 
 from winrm.protocol import Protocol
 from base64 import b64encode
+from ...utils.ConnectorInterface import ConnectorInterface
 
-class Powershell(object):
+class Powershell(ConnectorInterface):
     """
     This class provides methods for interacting with Windows systems using the Windows Remote Management (WinRM) protocol.
     It uses the pywinrm library to establish and manage sessions.

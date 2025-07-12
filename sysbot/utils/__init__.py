@@ -24,3 +24,4 @@ SOFTWARE.
 
 from .security import Security
 from .versionManager import VersionManager
+from .ConnectorInterface import ConnectorInterface

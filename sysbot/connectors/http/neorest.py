@@ -1,7 +1,8 @@
 import requests
 import json
+from ...utils.ConnectorInterface import ConnectorInterface
 
-class Neorest(object):
+class Neorest(ConnectorInterface):
     """
     This class provides methods for interacting with a NEO REST API.
     It uses the requests library to establish and manage sessions.
