@@ -3,3 +3,126 @@
 :toclevels: 1
 
 include::partial$overview.adoc[]
+
+== High-Level Architecture
+
+image::sdd_high_level_architecture.svg[Data flow diagram, 500, 500]
+
+**Technology Stack**:
+
+* Python
+* RobotFramework
+* SQLite / MySQL
+* Web
+
+== Technical Design
+
+The technical design of the system prioritizes scalability, maintainability, extensibility, real-time tracking, and resilience. By adopting patterns such as the Adapter and Layered Architecture, the system achieves horizontal scalability through the seamless addition of new drivers and vertical scalability by enhancing functionality within defined layers. The clear separation of concerns enforced by the Layered Architecture and Repository Pattern ensures a maintainable codebase that is easy to extend and debug. Dependency Injection further reduces coupling, enabling safer updates and robust testing practices. Extensibility is inherent to the design, as the Adapter Pattern allows new systems or services to be integrated without altering the core logic, while interchangeable protocol handlers support the introduction of new communication protocols with minimal changes. Real-time tracking of execution progress is facilitated by the Observer Pattern, which enhances system reliability and provides critical data for debugging. Finally, resilience is bolstered by the use of Dependency Injection and the Repository Layer, which isolate failures and provide fallback mechanisms, ensuring robust and uninterrupted operations even in adverse conditions.
+
+=== Layered Architecture
+
+The system is organized into distinct layers, including business logic (Robot Framework + modules) and infrastructure (ConnectorHandler).
+  
+* Facilitates clear separation of concerns.
+* Enhances modularity, making the system easier to maintain and extend.
+* Allows independent testing and debugging of each layer.
+
+=== Adapter Pattern (modules)
+
+Each module acts as an adapter, abstracting the details of system-specific operations (e.g., Windows, RHEL) and providing a unified interface to Robot Framework.
+
+- Simplifies the integration of new systems or services by implementing a common interface.
+- Reduces the complexity of handling heterogeneous environments.
+
+=== Observer Pattern (RobotFramework Listener)
+
+The listener monitors test execution events from Robot Framework and updates the database with logs and results in real-time.
+
+- Ensures real-time tracking of execution progress.
+- Decouples event monitoring from the execution logic, improving maintainability.
+
+=== Dependency Injection (ConnectorHandler)
+
+Protocol handlers (e.g., SSH, WinRM) are injected into the ConnectorHandler at runtime, allowing it to dynamically adapt to different communication protocols.
+
+- Promotes flexibility by allowing dynamic selection of protocols based on the target system.
+- Simplifies testing by enabling the use of mock protocol handlers.
+
+=== Repository Pattern (Database Access)
+
+The tasqWeb module provide API to interacts with the database through a repository layer, abstracting the details of SQL queries and database operations.
+
+- Provides a clean separation between the API logic and database access.
+- Simplifies the migration to different database technologies if needed.
+
+== Security and Compliance
+
+=== Authentication/Authorization
+
+- The API uses HTTP Basic Authentication to secure access. Users provide a username and password, which are validated against predefined credentials stored in the configuration.
+- All API endpoints require authentication via the authenticate function, ensuring that only authorized users can perform actions.
+- Invalid credentials result in an HTTP 401 Unauthorized error with appropriate headers for secure handling.
+
+=== Encryption and Validation
+
+- Input data is thoroughly validated at the API level:
+- Uploaded files are verified by extension (e.g., only .zip files are allowed).
+- Campaign results and logs are stored securely on the server with proper directory structure and controlled access.
+
+== Connector Design
+
+=== Responsibilities
+
+* Serve as the centralized interface for establishing and managing connections to target systems.
+* Provide an abstraction layer to unify interactions with diverse communication protocols.
+* Enable execution of commands and retrieval of results from various systems.
+* Handle secure session management, including session opening, command execution, and cleanup.
+* Provide the capacity to make multiple SSH tunneling session
+
+=== Interaction
+
+* Invokes ConnectorInterface to establish sessions or execute commands on target systems.
+* Uses aliases to manage and track multiple connections.
+* Dynamically delegates session management and command execution to protocol-specific implementations (e.g., Ssh, Winrm, Redfish, etc.).
+* Maintains a cache of active sessions to optimize resource usage and prevent redundant connections.
+
+=== Data flow
+
+image::connectors_dataflow.svg[Data flow diagram, 500, 500]
+
+== Dataloader Design
+
+=== Responsibilities
+
+* Dynamically load and parse data for use in Robot Framework test automation.
+* Provide a unified interface to handle different data sources (e.g., YAML, JSON, CSV).
+* Abstract complexity and reduce the need for format-specific handling within test cases.
+* Ensure robust error handling to manage unsupported formats or data-loading issues.
+
+=== Interaction
+
+* Invoked within Robot Framework test suites via the Data Load keyword.
+* Accepts user-defined parameters (e.g., module type, file paths) to determine how to load the requested data.
+* Delegates data parsing to dynamically resolved modules without exposing their internal logic to the user.
+
+=== Data flow
+
+image::dataloaders_dataflow.svg[data flow diagram, 300, 300]
+
+== Module Design
+
+=== Responsibilities
+
+* Provide Robot Framework keyword libraries to interact with hardware systems or services.
+* Enable test automation by offering ready-to-use methods (keywords) for hardware or service-specific operations.
+* Abstract low-level session management and command execution, simplifying interaction for test engineers.
+
+=== Interaction
+
+* These classes are directly imported as libraries in Robot Framework test cases.
+* Each class exposes a set of keywords tailored to a specific target (e.g., cisco, hpe, ect...).
+* Internally, they delegate session management and command execution to ConnectorInterface.
+
+=== Data flow
+
+image:sysbot:drivers_dataflow.svg[Data flow diagram, 300, 300]
