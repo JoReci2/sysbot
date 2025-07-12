@@ -23,13 +23,52 @@ SOFTWARE.
 """
 
 from abc import ABC, abstractmethod
+from typing import Optional
+from .versionManager import version_manager
 
 
 class ConnectorInterface(ABC):
     """
     Abstract base class defining the interface that all connectors must implement.
     This ensures that all connectors have the same structure and provide consistent methods.
+    Supports versioning of connector methods for backward compatibility.
     """
+
+    def __init__(self):
+        """Initialize the connector with version manager support."""
+        self.version_manager = version_manager
+        self._connector_version = "1.0.0"  # Default version
+
+    def set_connector_version(self, version: str) -> None:
+        """
+        Set the version for this connector instance.
+        
+        Args:
+            version: Version string to set
+        """
+        self._connector_version = version
+
+    def get_connector_version(self) -> str:
+        """
+        Get the current version of this connector.
+        
+        Returns:
+            Current connector version
+        """
+        return self._connector_version
+
+    def get_versioned_method(self, method_name: str, version: Optional[str] = None):
+        """
+        Get a versioned method from this connector.
+        
+        Args:
+            method_name: Name of the method to retrieve
+            version: Version to retrieve (optional, uses default if not specified)
+            
+        Returns:
+            The versioned method
+        """
+        return self.version_manager.get_versioned_function(method_name, version)
 
     @abstractmethod
     def open_session(self, host, port, login, password):
