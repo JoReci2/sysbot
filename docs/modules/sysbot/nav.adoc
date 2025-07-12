@@ -1,4 +1,5 @@
 * xref:index.adoc[Overview]
+* xref:development-guidelines.adoc[Development Guidelines]
 * xref:sum.adoc[System User Manual]
 * xref:sdd.adoc[System Design Document]
 * xref:sps.adoc[System Production Specification]

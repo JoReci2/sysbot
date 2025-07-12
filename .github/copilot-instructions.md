@@ -1,95 +1,95 @@
-# Configuration GitHub Copilot pour SysBot
+# GitHub Copilot Configuration for SysBot
 
-## Description du projet
+## Project Description
 
-SysBot est un outil d'automatisation et de gestion de systèmes qui fournit une interface unifiée pour se connecter et gérer divers systèmes via différents protocoles. 
+SysBot is a system automation and management tool that provides a unified interface for connecting to and managing various systems through different protocols.
 
-### Fonctionnalités principales :
-- **Support multi-protocoles** : SSH, HTTP, WinRM et plus
-- **Tunneling SSH** : Support pour les tunnels SSH imbriqués
-- **Opérations sur fichiers** : Exécution de scripts et récupération de résultats à distance
-- **Multi-plateforme** : Support pour Linux et Windows
-- **Intégration Robot Framework** : Support intégré pour l'automatisation Robot Framework
-- **Sécurité de type** : Support complet des annotations de type et analyse statique
+### Key Features:
+- **Multi-protocol support**: SSH, HTTP, WinRM and more
+- **SSH tunneling**: Support for nested SSH tunnels
+- **File operations**: Remote script execution and result retrieval
+- **Multi-platform**: Support for Linux and Windows
+- **Robot Framework integration**: Built-in support for Robot Framework automation
+- **Type safety**: Complete type annotation support and static analysis
 
-## Structure du repository
+## Repository Structure
 
 ```
 sysbot/
-├── .github/                 # Configuration GitHub et Copilot
-├── .gitlab-ci.yml          # Configuration CI/CD GitLab
-├── docs/                   # Documentation du projet
-├── sysbot/                 # Code source principal
+├── .github/                 # GitHub and Copilot configuration
+├── .gitlab-ci.yml          # GitLab CI/CD configuration
+├── docs/                   # Project documentation
+├── sysbot/                 # Main source code
 │   ├── __init__.py
-│   ├── Helper.py           # Fonctions utilitaires principales
-│   ├── connectors/         # Connecteurs spécifiques aux protocoles
-│   │   ├── ConnectorHandler.py  # Classe gestionnaire principale
-│   │   ├── ssh/            # Implémentations du protocole SSH
-│   │   │   ├── linux.py    # Connecteur SSH Linux
-│   │   │   ├── windows.py  # Connecteur SSH Windows
-│   │   │   └── utils/      # Utilitaires SSH
-│   │   ├── http/           # Implémentations du protocole HTTP
-│   │   └── winrm/          # Implémentations du protocole WinRM
-│   ├── dataloaders/        # Utilitaires de chargement de données
-│   └── utils/              # Utilitaires généraux
-├── tests/                  # Tests unitaires
+│   ├── Helper.py           # Main utility functions
+│   ├── connectors/         # Protocol-specific connectors
+│   │   ├── ConnectorHandler.py  # Main handler class
+│   │   ├── ssh/            # SSH protocol implementations
+│   │   │   ├── linux.py    # Linux SSH connector
+│   │   │   ├── windows.py  # Windows SSH connector
+│   │   │   └── utils/      # SSH utilities
+│   │   ├── http/           # HTTP protocol implementations
+│   │   └── winrm/          # WinRM protocol implementations
+│   ├── dataloaders/        # Data loading utilities
+│   └── utils/              # General utilities
+├── tests/                  # Unit tests
 │   ├── test_Helper.py
 │   ├── test_connector_handler.py
 │   ├── test_dataloader_handler.py
 │   └── test_listener_http.py
-├── README.md               # Documentation principale
-├── setup.py                # Configuration d'installation
-├── pyproject.toml          # Configuration de build
-└── LICENSE                 # Licence MIT
+├── README.md               # Main documentation
+├── setup.py                # Installation configuration
+├── pyproject.toml          # Build configuration
+└── LICENSE                 # MIT License
 ```
 
-## Bonnes pratiques de développement
+## Development Best Practices
 
-### Tests unitaires
-- **Maintenir les tests à jour** : Chaque nouvelle fonctionnalité doit être accompagnée de tests correspondants
-- **Couverture de code** : Viser une couverture de test élevée pour le code critique
-- **Tests avant commit** : Exécuter tous les tests avant chaque commit avec `pytest tests/`
-- **Isolation des tests** : Chaque test doit être indépendant et reproductible
+### Unit Tests
+- **Keep tests up to date**: Each new feature must be accompanied by corresponding tests
+- **Code coverage**: Aim for high test coverage for critical code
+- **Pre-commit testing**: Run all tests before each commit with `pytest tests/`
+- **Test isolation**: Each test must be independent and reproducible
 
-### Qualité du code
-- **Formatage** : Utiliser `black sysbot/` pour le formatage automatique
-- **Vérification de types** : Utiliser `mypy sysbot/` pour la vérification statique des types
-- **Linting** : Utiliser `flake8 sysbot/` pour l'analyse de code
-- **Documentation** : Maintenir la documentation à jour dans le README.md et les docstrings
+### Code Quality
+- **Formatting**: Use `black sysbot/` for automatic formatting
+- **Type checking**: Use `mypy sysbot/` for static type verification
+- **Linting**: Use `flake8 sysbot/` for code analysis
+- **Documentation**: Keep documentation up to date in README.md and docstrings
 
-### Gestion des branches
-- **Nommage des branches** : Les noms de branches doivent avoir un rapport direct avec l'issue associée
-  - Format recommandé : `feature/issue-<numéro>-<description-courte>`
-  - Exemple : `feature/issue-11-add-copilot-config`
-  - Pour les corrections : `fix/issue-<numéro>-<description-courte>`
-  - Pour les améliorations : `enhancement/issue-<numéro>-<description-courte>`
+### Branch Management
+- **Branch naming**: Branch names must be directly related to the associated issue
+  - Recommended format: `feature/issue-<number>-<short-description>`
+  - Example: `feature/issue-11-add-copilot-config`
+  - For fixes: `fix/issue-<number>-<short-description>`
+  - For enhancements: `enhancement/issue-<number>-<short-description>`
 
-### Workflow de développement
-1. **Avant chaque commit** :
-   - Exécuter les tests : `pytest tests/`
-   - Vérifier le formatage : `black --check sysbot/`
-   - Vérifier les types : `mypy sysbot/`
-   - Vérifier le linting : `flake8 sysbot/`
+### Development Workflow
+1. **Before each commit**:
+   - Run tests: `pytest tests/`
+   - Check formatting: `black --check sysbot/`
+   - Check types: `mypy sysbot/`
+   - Check linting: `flake8 sysbot/`
 
-2. **Documentation** :
-   - Mettre à jour le README.md pour les nouvelles fonctionnalités
-   - Ajouter ou mettre à jour les docstrings pour les nouvelles méthodes/classes
-   - Maintenir la documentation dans le dossier `docs/` si applicable
+2. **Documentation**:
+   - Update README.md for new features
+   - Add or update docstrings for new methods/classes
+   - Maintain documentation in the `docs/` folder if applicable
 
-3. **Pull Requests** :
-   - Inclure une description claire des changements
-   - Référencer l'issue associée
-   - S'assurer que tous les tests passent
-   - Demander une revue de code avant le merge
+3. **Pull Requests**:
+   - Include a clear description of changes
+   - Reference the associated issue
+   - Ensure all tests pass
+   - Request code review before merge
 
-### Dépendances
-- **Installation de développement** : `pip install -e ".[dev]"`
-- **Dépendances principales** : robotframework, paramiko, sshtunnel, netmiko, redfish, pyVmomi, pywinrm, pyOpenSSL
-- **Python** : Minimum version 3.7+
+### Dependencies
+- **Development installation**: `pip install -e ".[dev]"`
+- **Main dependencies**: robotframework, paramiko, sshtunnel, netmiko, redfish, pyVmomi, pywinrm, pyOpenSSL
+- **Python**: Minimum version 3.7+
 
-### Conventions de code
-- Suivre les conventions PEP 8
-- Utiliser des annotations de type pour toutes les fonctions publiques
-- Privilégier la lisibilité et la maintenabilité
-- Éviter les dépendances externes non nécessaires
-- Documenter les fonctions complexes avec des exemples d'utilisation
+### Code Conventions
+- Follow PEP 8 conventions
+- Use type annotations for all public functions
+- Prioritize readability and maintainability
+- Avoid unnecessary external dependencies
+- Document complex functions with usage examples

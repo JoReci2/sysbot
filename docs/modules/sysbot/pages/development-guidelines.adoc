@@ -1,0 +1,324 @@
+= Development Guidelines
+:toc:
+:toclevels: 3
+
+This document provides comprehensive guidelines for developing and contributing to the SysBot project.
+
+== Overview
+
+SysBot is a system automation and management tool that provides a unified interface for connecting to and managing various systems through different protocols.
+
+=== Key Features
+
+* *Multi-protocol support*: SSH, HTTP, WinRM and more
+* *SSH tunneling*: Support for nested SSH tunnels
+* *File operations*: Remote script execution and result retrieval
+* *Multi-platform*: Support for Linux and Windows
+* *Robot Framework integration*: Built-in support for Robot Framework automation
+* *Type safety*: Complete type annotation support and static analysis
+
+== Repository Structure
+
+The SysBot repository is organized as follows:
+
+[source]
+----
+sysbot/
+├── .github/                 # GitHub and Copilot configuration
+├── .gitlab-ci.yml          # GitLab CI/CD configuration
+├── docs/                   # Project documentation
+├── sysbot/                 # Main source code
+│   ├── __init__.py
+│   ├── Helper.py           # Main utility functions
+│   ├── connectors/         # Protocol-specific connectors
+│   │   ├── ConnectorHandler.py  # Main handler class
+│   │   ├── ssh/            # SSH protocol implementations
+│   │   │   ├── linux.py    # Linux SSH connector
+│   │   │   ├── windows.py  # Windows SSH connector
+│   │   │   └── utils/      # SSH utilities
+│   │   ├── http/           # HTTP protocol implementations
+│   │   └── winrm/          # WinRM protocol implementations
+│   ├── dataloaders/        # Data loading utilities
+│   └── utils/              # General utilities
+├── tests/                  # Unit tests
+│   ├── test_Helper.py
+│   ├── test_connector_handler.py
+│   ├── test_dataloader_handler.py
+│   └── test_listener_http.py
+├── README.md               # Main documentation
+├── setup.py                # Installation configuration
+├── pyproject.toml          # Build configuration
+└── LICENSE                 # MIT License
+----
+
+== Development Best Practices
+
+=== Unit Tests
+
+*Keep tests up to date*:: Each new feature must be accompanied by corresponding tests
+
+*Code coverage*:: Aim for high test coverage for critical code
+
+*Pre-commit testing*:: Run all tests before each commit with `pytest tests/`
+
+*Test isolation*:: Each test must be independent and reproducible
+
+==== Running Tests
+
+To run the complete test suite:
+
+[source,bash]
+----
+pytest tests/
+----
+
+=== Code Quality
+
+==== Formatting
+
+Use Black for automatic code formatting:
+
+[source,bash]
+----
+black sysbot/
+----
+
+To check formatting without making changes:
+
+[source,bash]
+----
+black --check sysbot/
+----
+
+==== Type Checking
+
+Use mypy for static type verification:
+
+[source,bash]
+----
+mypy sysbot/
+----
+
+==== Linting
+
+Use flake8 for code analysis:
+
+[source,bash]
+----
+flake8 sysbot/
+----
+
+==== Documentation
+
+* Keep documentation up to date in README.md and docstrings
+* Maintain documentation in the `docs/` folder for new features
+* Use AsciiDoc format for documentation files
+
+=== Branch Management
+
+==== Branch Naming Conventions
+
+Branch names must be directly related to the associated issue:
+
+*Feature branches*:: `feature/issue-<number>-<short-description>`
++
+Example: `feature/issue-11-add-copilot-config`
+
+*Bug fixes*:: `fix/issue-<number>-<short-description>`
++
+Example: `fix/issue-25-ssh-connection-timeout`
+
+*Enhancements*:: `enhancement/issue-<number>-<short-description>`
++
+Example: `enhancement/issue-30-improve-error-handling`
+
+== Development Workflow
+
+=== Pre-commit Checklist
+
+Before each commit, ensure you have completed the following:
+
+1. *Run tests*:
++
+[source,bash]
+----
+pytest tests/
+----
+
+2. *Check formatting*:
++
+[source,bash]
+----
+black --check sysbot/
+----
+
+3. *Check types*:
++
+[source,bash]
+----
+mypy sysbot/
+----
+
+4. *Check linting*:
++
+[source,bash]
+----
+flake8 sysbot/
+----
+
+=== Documentation Updates
+
+1. *README.md*: Update for new features that affect the main functionality
+2. *Docstrings*: Add or update docstrings for new methods/classes
+3. *AsciiDoc documentation*: Maintain comprehensive documentation in the `docs/` folder
+
+=== Pull Request Process
+
+1. *Clear description*: Include a detailed description of changes
+2. *Issue reference*: Reference the associated issue number
+3. *Test verification*: Ensure all tests pass
+4. *Code review*: Request code review before merge
+5. *Documentation*: Verify that documentation has been updated if needed
+
+== Dependencies
+
+=== Development Installation
+
+For development work, install SysBot in editable mode with development dependencies:
+
+[source,bash]
+----
+pip install -e ".[dev]"
+----
+
+=== Main Dependencies
+
+The core dependencies include:
+
+* `robotframework` - Test automation framework
+* `paramiko` - SSH client library
+* `sshtunnel` - SSH tunneling support
+* `netmiko` - Network device automation
+* `redfish` - Redfish API client
+* `pyVmomi` - VMware vSphere API bindings
+* `pywinrm` - Windows Remote Management
+* `pyOpenSSL` - OpenSSL wrapper
+
+=== Python Version Requirements
+
+* *Minimum Python version*: 3.7+
+* *Recommended Python version*: 3.9+
+
+== Code Conventions
+
+=== General Guidelines
+
+* Follow PEP 8 conventions for Python code style
+* Use type annotations for all public functions
+* Prioritize readability and maintainability over clever code
+* Avoid unnecessary external dependencies
+* Document complex functions with usage examples
+
+=== Type Annotations
+
+All public functions must include type annotations:
+
+[source,python]
+----
+def connect_to_host(hostname: str, port: int = 22) -> Connection:
+    """Connect to a remote host via SSH.
+    
+    Args:
+        hostname: The hostname or IP address to connect to
+        port: The SSH port number (default: 22)
+        
+    Returns:
+        A Connection object representing the SSH session
+        
+    Raises:
+        ConnectionError: If the connection fails
+    """
+    # Implementation here
+    pass
+----
+
+=== Documentation Standards
+
+* Use clear, concise docstrings for all public functions and classes
+* Include parameter descriptions, return values, and exceptions
+* Provide usage examples for complex functions
+* Keep inline comments minimal and focused on *why*, not *what*
+
+== Testing Guidelines
+
+=== Test Structure
+
+Tests should be organized to mirror the source code structure:
+
+* Each module should have a corresponding test file
+* Test files should be prefixed with `test_`
+* Use descriptive test method names that explain what is being tested
+
+=== Test Quality
+
+* Each test should test one specific behavior
+* Tests should be independent and able to run in any order
+* Use appropriate assertions and avoid testing implementation details
+* Mock external dependencies to ensure tests are reliable and fast
+
+=== Test Data
+
+* Use fixtures for common test data setup
+* Avoid hardcoded values where possible
+* Create test data that covers edge cases and error conditions
+
+== Troubleshooting
+
+=== Common Issues
+
+==== Import Errors
+
+If you encounter import errors, ensure you have installed the package in development mode:
+
+[source,bash]
+----
+pip install -e ".[dev]"
+----
+
+==== Test Failures
+
+If tests are failing unexpectedly:
+
+1. Check that all dependencies are installed
+2. Verify your Python version meets requirements
+3. Run tests individually to isolate the issue
+4. Check for any local configuration that might affect tests
+
+==== Code Quality Issues
+
+If pre-commit checks are failing:
+
+1. Run the specific tool (black, mypy, flake8) to see detailed error messages
+2. Fix formatting issues automatically where possible
+3. Address type annotation issues manually
+4. Resolve linting warnings and errors
+
+== Getting Help
+
+If you need assistance with development:
+
+1. Check the existing documentation in the `docs/` folder
+2. Review similar implementations in the codebase
+3. Create an issue on GitHub for bugs or feature requests
+4. Reach out to the maintainers for guidance on complex changes
+
+== Contributing
+
+We welcome contributions to SysBot! Please ensure you follow these guidelines:
+
+1. *Read the documentation*: Familiarize yourself with the project structure and conventions
+2. *Create an issue*: For significant changes, create an issue first to discuss the approach
+3. *Follow the workflow*: Use the branch naming conventions and development workflow outlined above
+4. *Write tests*: Include appropriate tests for your changes
+5. *Update documentation*: Keep documentation current with your changes
+6. *Be respectful*: Follow the code of conduct and be respectful in all interactions
