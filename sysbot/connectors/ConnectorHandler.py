@@ -179,3 +179,80 @@ class ConnectorHandler(object):
             self.protocol.close_session(connection)
         except Exception as e:
             raise Exception(f"Failed to close session: {str(e)}")
+
+    def open_proxy_sock5(self, alias: str, listen_port: int, tunnel_config) -> dict:
+        """
+        Open a SOCKS5 proxy server that forwards connections through SSH tunnel chain.
+        
+        Args:
+            alias (str): Unique identifier for this proxy session
+            listen_port (int): Local port to listen for SOCKS5 connections  
+            tunnel_config: SSH tunnel configuration (JSON string or list of dicts)
+                Format: [{'ip': 'host1', 'port': 22, 'username': 'user1', 'password': 'pass1'}, ...]
+                
+        Returns:
+            dict: Proxy server details and status
+        """
+        try:
+            # Import the SOCKS5 proxy connector
+            from .ssh.socks5_proxy import Socks5Proxy
+            
+            # Parse tunnel config if it's a JSON string
+            if isinstance(tunnel_config, str):
+                try:
+                    tunnel_config = json.loads(tunnel_config)
+                except Exception as e:
+                    raise Exception(f"Error parsing tunnel config JSON: {e}")
+            
+            if not isinstance(tunnel_config, list) or not tunnel_config:
+                raise Exception("tunnel_config must be a non-empty list of SSH hop configurations")
+            
+            # Create SOCKS5 proxy instance
+            socks5_proxy = Socks5Proxy()
+            
+            # Open the SOCKS5 proxy
+            result = socks5_proxy.open_proxy_sock5(alias, listen_port, tunnel_config)
+            
+            # Store the proxy instance in cache for later cleanup
+            proxy_connection = {
+                'proxy_instance': socks5_proxy,
+                'type': 'socks5_proxy'
+            }
+            self._cache.register(proxy_connection, alias)
+            
+            return result
+            
+        except Exception as e:
+            raise Exception(f"Failed to open SOCKS5 proxy: {str(e)}")
+
+    def close_proxy_sock5(self, alias: str) -> dict:
+        """
+        Close a SOCKS5 proxy server and clean up all associated resources.
+        
+        Args:
+            alias (str): The proxy session alias to close
+            
+        Returns:
+            dict: Cleanup status
+        """
+        try:
+            # Get the proxy connection from cache
+            try:
+                connection = self._cache.switch(alias)
+                if not connection or 'proxy_instance' not in connection:
+                    raise RuntimeError(f"No SOCKS5 proxy session found for alias '{alias}'")
+            except ValueError:
+                raise ValueError(f"No SOCKS5 proxy session found with alias '{alias}'")
+            
+            proxy_instance = connection['proxy_instance']
+            
+            # Close the SOCKS5 proxy
+            result = proxy_instance.close_proxy_sock5(alias)
+            
+            # Remove from cache
+            self._cache._connections = [conn for conn in self._cache._connections if conn != connection]
+            
+            return result
+            
+        except Exception as e:
+            raise Exception(f"Failed to close SOCKS5 proxy: {str(e)}")
