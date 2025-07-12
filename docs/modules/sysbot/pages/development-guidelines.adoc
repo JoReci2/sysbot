@@ -26,29 +26,18 @@ The SysBot repository is organized as follows:
 sysbot/
 ├── .github/                 # GitHub and Copilot configuration
 ├── .gitlab-ci.yml          # GitLab CI/CD configuration
+├── .gitignore              # Git ignore rules
+├── LICENSE                 # MIT License
+├── README.md               # Main documentation
+├── antora-playbook.yml     # Antora documentation configuration
 ├── docs/                   # Project documentation
+├── pyproject.toml          # Build configuration
+├── setup.py                # Installation configuration
 ├── sysbot/                 # Main source code
-│   ├── __init__.py
-│   ├── Helper.py           # Main utility functions
 │   ├── connectors/         # Protocol-specific connectors
-│   │   ├── ConnectorHandler.py  # Main handler class
-│   │   ├── ssh/            # SSH protocol implementations
-│   │   │   ├── linux.py    # Linux SSH connector
-│   │   │   ├── windows.py  # Windows SSH connector
-│   │   │   └── utils/      # SSH utilities
-│   │   ├── http/           # HTTP protocol implementations
-│   │   └── winrm/          # WinRM protocol implementations
 │   ├── dataloaders/        # Data loading utilities
 │   └── utils/              # General utilities
-├── tests/                  # Unit tests
-│   ├── test_Helper.py
-│   ├── test_connector_handler.py
-│   ├── test_dataloader_handler.py
-│   └── test_listener_http.py
-├── README.md               # Main documentation
-├── setup.py                # Installation configuration
-├── pyproject.toml          # Build configuration
-└── LICENSE                 # MIT License
+└── tests/                  # Unit tests
 ----
 
 == Development Best Practices
