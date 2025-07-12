@@ -23,10 +23,8 @@ SOFTWARE.
 """
 
 import paramiko
-import uuid
-import json
-import time
 from ...utils.ConnectorInterface import ConnectorInterface
+
 
 class Python(ConnectorInterface):
     """
@@ -48,16 +46,36 @@ class Python(ConnectorInterface):
 
     def execute_command(self, session, command, runas=False, password=None):
         """
-        Executes a command on a system via SSH.
+        Executes a Python command on a system via SSH.
+
+        Args:
+            session: The SSH session object
+            command (str): The Python command to execute
+            runas (bool): Whether to run with elevated privileges using sudo
+            password (str): Password for sudo authentication (if required)
+
+        Returns:
+            str: The output of the command execution
+
+        Raises:
+            Exception: If there is an error executing the command
         """
         try:
-            if runas == True and password != None:
-                stdin, stdout, stderr = session.exec_command(f"echo {password} | sudo -S python3", get_pty=True)
-            elif runas == True and password == None:
-                stdin, stdout, stderr = session.exec_command("sudo python3", get_pty=False)
+            if runas and password is not None:
+                # Use stdin to pass password securely to sudo
+                stdin, stdout, stderr = session.exec_command(
+                    "sudo -S python3", get_pty=True
+                )
+                stdin.write(f"{password}\n{command}")
+            elif runas and password is None:
+                stdin, stdout, stderr = session.exec_command(
+                    "sudo python3", get_pty=False
+                )
+                stdin.write(command)
             else:
                 stdin, stdout, stderr = session.exec_command("python3", get_pty=False)
-            stdin.write(command)
+                stdin.write(command)
+
             stdin.channel.shutdown_write()
             output = stdout.read().decode("utf-8")
             error = stderr.read().decode("utf-8")
