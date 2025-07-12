@@ -26,8 +26,9 @@ import paramiko
 import uuid
 import json
 import time
+from ..ConnectorInterface import ConnectorInterface
 
-class Python(object):
+class Python(ConnectorInterface):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell).
     It uses the Netmiko library to establish and manage SSH connections.

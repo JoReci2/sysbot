@@ -1,8 +1,9 @@
 import requests
 from requests.auth import HTTPBasicAuth
 import json
+from ..ConnectorInterface import ConnectorInterface
 
-class Basicauth(object):
+class Basicauth(ConnectorInterface):
     """
     This class provides methods for interacting with an API using basic authentication.
     It uses the requests library to establish and manage sessions.

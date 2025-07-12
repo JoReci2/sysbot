@@ -1,7 +1,8 @@
 import redfish as RedfishLibrary
 import json
+from ..ConnectorInterface import ConnectorInterface
 
-class Redfish(object):
+class Redfish(ConnectorInterface):
     """
     This class provides methods for interacting with systems using the Redfish API.
     It uses the redfish library to establish and manage sessions.

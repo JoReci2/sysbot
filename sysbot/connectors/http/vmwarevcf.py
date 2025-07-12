@@ -1,7 +1,8 @@
 import requests
 import json
+from ..ConnectorInterface import ConnectorInterface
 
-class Vmwarevcf(object):
+class Vmwarevcf(ConnectorInterface):
     """Manages connections and operations for SDDC (Software-Defined Data Center) VCF components.
     Provides structured interaction with SDDCManager (VCF) through token-based management.
     """

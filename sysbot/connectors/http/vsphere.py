@@ -1,6 +1,7 @@
 from pyVim.connect import SmartConnect, Disconnect
+from ..ConnectorInterface import ConnectorInterface
 
-class Vsphere(object):
+class Vsphere(ConnectorInterface):
     """
     This class provides methods for interacting with VMware systems.
     It uses the pyVim library to establish and manage connections.

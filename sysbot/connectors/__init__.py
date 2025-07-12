@@ -23,3 +23,4 @@ SOFTWARE.
 """
 
 from .ConnectorHandler import ConnectorHandler
+from .ConnectorInterface import ConnectorInterface
