@@ -135,49 +135,11 @@ sysbot/
 ├── connectors/          # Protocol-specific connectors
 │   ├── ConnectorHandler.py  # Main handler class
 │   ├── ssh/            # SSH protocol implementations
-│   │   ├── linux.py    # Linux SSH connector
-│   │   ├── windows.py  # Windows SSH connector
-│   │   └── utils/      # SSH utilities
 │   ├── http/           # HTTP protocol implementations
 │   └── winrm/          # WinRM protocol implementations
 ├── dataloaders/        # Data loading utilities
 └── utils/              # General utilities
 ```
-
-## Development
-
-### Running Tests
-
-```bash
-pytest tests/
-```
-
-### Code Formatting
-
-```bash
-black sysbot/
-```
-
-### Type Checking
-
-```bash
-mypy sysbot/
-```
-
-### Linting
-
-```bash
-flake8 sysbot/
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
 
 ## License
 
