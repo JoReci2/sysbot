@@ -3,20 +3,18 @@ import ssl, socket, datetime
 
 class Security(object):
     
-    def get_certificate_informations(self, host: str, port: int) -> dict[str, str]:
+    def get_certificate_informations(self, session) -> dict[str, str]:
         """
         get infomations about web service certificate.
         """
-        context = ssl.create_default_context()
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
-        conn = socket.create_connection((host, port))
-        sock = context.wrap_socket(conn, server_hostname=host)
-        sock.settimeout(10)
         try:
-            der_cert = sock.getpeercert(True)
-        finally:
-            sock.close()
+            der_cert = session.getpeercert(True)
+        except ssl.SSLError as e:
+            raise Exception(f"Failed to retrieve certificate: {str(e)}")
+        except socket.error as e:
+            raise Exception(f"Socket error while retrieving certificate: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Unexpected error while retrieving certificate: {str(e)}")
         try:
             certificate = ssl.DER_cert_to_PEM_cert(der_cert)
             x509 = crypto.load_certificate(crypto.FILETYPE_PEM, certificate)

@@ -29,7 +29,7 @@ class ConnectorHandler(object):
     def __nested_tunnel__(self, tunnel_config, target_config):
         return TunnelingManager.nested_tunnel(self.protocol, tunnel_config, target_config)
 
-    def open_session(self, alias: str, protocol: str, product: str, host: str, port: int, login: str=None, password: str=None, tunnel_config=None) -> None:
+    def open_session(self, alias: str, protocol: str, product: str, host: str, port: int, login: str=None, password: str=None, tunnel_config=None, **kwargs) -> None:
         """
         Open a session to the target host with optional nested SSH tunneling.
         """
