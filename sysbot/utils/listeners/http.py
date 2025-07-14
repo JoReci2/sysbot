@@ -2,7 +2,7 @@ from robot.output.listeners import Listeners
 import yaml
 import requests
 
-class http(object):
+class Http(object):
     """
     A custom listener for Robot Framework that collects test results.
     """

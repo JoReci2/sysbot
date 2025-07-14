@@ -1,8 +1,8 @@
 import pytz, datetime
 
-class Helper():
+class Timezone():
 
-    def convert_timezone_to_offset(self, timezone):
+    def convert_to_offset(self, timezone):
         """
         Converts the provided timezone to an offset.
         """
