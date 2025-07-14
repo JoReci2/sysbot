@@ -1,6 +1,6 @@
 import requests
 import json
-from ...utils.ConnectorInterface import ConnectorInterface
+from ...utils import ConnectorInterface
 
 class Neorest(ConnectorInterface):
     """

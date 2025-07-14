@@ -1,31 +1,9 @@
-"""
-MIT License
-
-Copyright (c) 2024 Thibault SCIRE
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
-import socket, paramiko, json, importlib
+import socket, paramiko, json
 from robot.utils import ConnectionCache
 from robot.api.deco import keyword, library
 from sshtunnel import SSHTunnelForwarder
+
+from ..utils import TunnelingManager
 
 
 class ConnectorHandler(object):
@@ -43,69 +21,13 @@ class ConnectorHandler(object):
         self._cache = ConnectionCache('No sessions created')
         self.protocol = None
 
-    def __get_protocol__(self, protocol_name, product_name) -> object:
-        """
-        Retrieve and instantiate the protocol-specific connector.
-        """
-        try:
-            module_name = f"sysbot.connectors.{protocol_name.lower()}.{product_name.lower()}"
-            connector = importlib.import_module(module_name)
-            self.protocol = getattr(connector, product_name.capitalize())()
-        except ImportError as e:
-            raise ImportError(f"Failed to import module '{module_name}': {str(e)}")
-        except AttributeError as e:
-            raise AttributeError(f"Module '{module_name}' does not have the attribute '{protocol_name.lower()}': {str(e)}")
-        except Exception as e:
-            raise Exception(f"An unexpected error occurred while retrieving the protocol: {str(e)}")
 
-    def __nested_tunnel__(self, tunnel_config, target_config, index=0, previous_tunnels=None) -> dict:
-        """
-        Open nested SSH tunnels and establish the final connection.
-        """
-        if previous_tunnels is None:
-            previous_tunnels = []
+    def __get_protocol__(self, protocol_name, product_name):
+        self.protocol = TunnelingManager.get_protocol(protocol_name, product_name)
 
-        try:
-            if index >= len(tunnel_config):
-                session = self.protocol.open_session(
-                    'localhost',
-                    previous_tunnels[-1].local_bind_port,
-                    target_config['username'],
-                    target_config['password']
-                )
-                return {"session": session, "tunnels": previous_tunnels}
 
-            config = tunnel_config[index]
-            ssh_address_or_host = (
-                'localhost', previous_tunnels[-1].local_bind_port
-            ) if previous_tunnels else (config['ip'], int(config['port']))
-            remote_bind_address = (
-                target_config['ip'], int(target_config['port'])
-            ) if index == len(tunnel_config) - 1 else (
-                tunnel_config[index + 1]['ip'], int(tunnel_config[index + 1]['port'])
-            )
-
-            tunnel = SSHTunnelForwarder(
-                ssh_address_or_host=ssh_address_or_host,
-                remote_bind_address=remote_bind_address,
-                ssh_username=config['username'],
-                ssh_password=config['password']
-            )
-            tunnel.start()
-            print(f"Tunnel {index + 1} established: {ssh_address_or_host[0]}:{ssh_address_or_host[1]}")
-            previous_tunnels.append(tunnel)
-
-            return self.__nested_tunnel__(tunnel_config, target_config, index + 1, previous_tunnels)
-        except Exception as e:
-            for tunnel in reversed(previous_tunnels):
-                tunnel.stop()
-                try:
-                    tunnel.ssh_address_or_host
-                except:
-                    print(f"Closed tunnel")
-                else:
-                    print(f"Closed tunnel to: {tunnel.ssh_address_or_host}")
-            raise Exception(f"Failed to establish nested tunnels: {str(e)}")
+    def __nested_tunnel__(self, tunnel_config, target_config):
+        return TunnelingManager.nested_tunnel(self.protocol, tunnel_config, target_config)
 
     def open_session(self, alias: str, protocol: str, product: str, host: str, port: int, login: str=None, password: str=None, tunnel_config=None) -> None:
         """

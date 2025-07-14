@@ -1,5 +1,5 @@
 from pyVim.connect import SmartConnect, Disconnect
-from ...utils.ConnectorInterface import ConnectorInterface
+from ...utils import ConnectorInterface
 
 class Vsphere(ConnectorInterface):
     """
