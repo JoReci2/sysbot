@@ -1,6 +1,6 @@
 import redfish as RedfishLibrary
 import json
-from ...utils.ConnectorInterface import ConnectorInterface
+from ...utils import ConnectorInterface
 
 class Redfish(ConnectorInterface):
     """
