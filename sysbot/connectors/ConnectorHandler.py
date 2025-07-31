@@ -32,6 +32,20 @@ class ConnectorHandler(object):
     def open_session(self, alias: str, protocol: str, product: str, host: str, port: int, login: str=None, password: str=None, tunnel_config=None, **kwargs) -> None:
         """
         Open a session to the target host with optional nested SSH tunneling.
+        
+        Args:
+            alias (str): Session alias for identification
+            protocol (str): Protocol type (e.g., 'ssh')
+            product (str): Product type (e.g., 'bash', 'python')
+            host (str): Target hostname or IP address
+            port (int): Target port number
+            login (str): Username for authentication
+            password (str): Password for authentication (optional if using SSH keys)
+            tunnel_config: SSH tunnel configuration (optional)
+            **kwargs: Additional parameters including SSH key authentication:
+                - private_key_path (str): Path to SSH private key file
+                - private_key_passphrase (str): Passphrase for the private key (optional)
+                - public_key_path (str): Path to SSH public key file (optional)
         """
         tunnels = []
         self.__get_protocol__(protocol, product)
@@ -49,10 +63,18 @@ class ConnectorHandler(object):
                     'username': login,
                     'password': password
                 }
+                # Add SSH key parameters to target config if provided
+                if kwargs.get('private_key_path'):
+                    target_config['private_key_path'] = kwargs.get('private_key_path')
+                if kwargs.get('private_key_passphrase'):
+                    target_config['private_key_passphrase'] = kwargs.get('private_key_passphrase')
+                if kwargs.get('public_key_path'):
+                    target_config['public_key_path'] = kwargs.get('public_key_path')
+                    
                 connection = self.__nested_tunnel__(tunnel_config, target_config)
                 tunnels = connection["tunnels"]
             else:
-                session = self.protocol.open_session(host, int(self.remote_port), login, password)
+                session = self.protocol.open_session(host, int(self.remote_port), login, password, **kwargs)
                 if not session:
                     raise Exception("Failed to open direct session")
                 connection = {"session": session, "tunnels": None}

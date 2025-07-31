@@ -32,7 +32,7 @@ class ConnectorInterface(ABC):
     """
 
     @abstractmethod
-    def open_session(self, host, port, login, password):
+    def open_session(self, host, port, login, password, **kwargs):
         """
         Opens a session to the target system.
 
@@ -41,6 +41,7 @@ class ConnectorInterface(ABC):
             port (int): Port to connect to.
             login (str): Username for authentication.
             password (str): Password for authentication.
+            **kwargs: Additional authentication parameters (e.g., SSH keys).
 
         Returns:
             object: Session object that can be used for executing commands.

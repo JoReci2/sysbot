@@ -61,11 +61,21 @@ class TunnelingManager:
             previous_tunnels = []
         try:
             if index >= len(tunnel_config):
+                # Extract SSH key parameters from target_config for final session
+                ssh_params = {}
+                if target_config.get('private_key_path'):
+                    ssh_params['private_key_path'] = target_config['private_key_path']
+                if target_config.get('private_key_passphrase'):
+                    ssh_params['private_key_passphrase'] = target_config['private_key_passphrase']
+                if target_config.get('public_key_path'):
+                    ssh_params['public_key_path'] = target_config['public_key_path']
+                
                 session = protocol.open_session(
                     'localhost',
                     previous_tunnels[-1].local_bind_port,
                     target_config['username'],
-                    target_config['password']
+                    target_config['password'],
+                    **ssh_params
                 )
                 return {"session": session, "tunnels": previous_tunnels}
             config = tunnel_config[index]
