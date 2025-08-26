@@ -3,7 +3,7 @@ import base64
 from ...utils import ConnectorInterface
 
 
-class Bash(ConnectorInterface):
+class Powershell(ConnectorInterface):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell).
     It uses the Netmiko library to establish and manage SSH connections.
@@ -39,16 +39,30 @@ class Bash(ConnectorInterface):
         """
         try:
             
-            encoded_command = base64.b64encode(command.encode('utf-8')).decode('ascii')
+            
 
             if runas and password is not None:
-                payload = f"echo '{password}' | sudo -S bash -c 'echo {encoded_command} | base64 -d | bash'"
+                ps_command = (
+                        f"Start-Process PowerShell -Credential $credential "
+                        f'-ArgumentList "-Command", "{command}" -Wait -NoNewWindow'
+                    )
+                credential_command = f"""
+$securePassword = ConvertTo-SecureString '{password}' -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential('{username}', $securePassword)
+{ps_command}
+"""
+                final_command = credential_command
             elif runas and password is None:
-                payload = f"sudo bash -c 'echo {encoded_command} | base64 -d | bash'"
+                final_command = (
+                        f"Start-Process PowerShell -Verb RunAs "
+                        f'-ArgumentList "-Command", "{command}" -Wait'
+                    )
             else:
-                payload = f"echo {encoded_command} | base64 -d | bash"
+                final_command = command
 
-            stdin, stdout, stderr = session.exec_command(payload, get_pty=True)
+            encoded_command = base64.b64encode(final_command.encode("utf_16_le")).decode("ascii")
+
+            stdin, stdout, stderr = session.exec_command("powershell.exe -encodedcommand {0}".format(encoded_command), get_pty=False)
             stdin.close()
 
             output = stdout.read().decode("utf-8").strip()
