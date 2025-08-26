@@ -159,25 +159,6 @@ class Sysbot(metaclass=MetaModules):
             self._protocol.close_session(connection)
         except Exception as e:
             raise Exception(f"Failed to close session: {str(e)}")
-
-    def get_available_modules(self):
-        def _collect_modules(obj, prefix=""):
-            modules = []
-            for attr_name in dir(obj):
-                if not attr_name.startswith('_') and attr_name not in ['get_available_modules', 'list_discovered_modules', 'name']:
-                    attr = getattr(obj, attr_name)
-                    current_path = f"{prefix}.{attr_name}" if prefix else attr_name
-                    
-                    if isinstance(attr, ModuleGroup):
-                        modules.extend(_collect_modules(attr, current_path))
-                    elif hasattr(attr, '__class__') and not callable(attr):
-                        modules.append(current_path)
-            return modules
-        
-        return _collect_modules(self)
-    
-    def list_discovered_modules(self):
-        return self._discover_all_modules()
     
     def import_data_from(self, module: str, **kwargs) -> any:
         module = module.lower()
