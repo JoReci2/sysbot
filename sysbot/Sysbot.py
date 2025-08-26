@@ -167,11 +167,9 @@ class Sysbot(metaclass=MetaModules):
             if len(parts) < 2:
                 raise ValueError(f"Function path must contain at least module.function, got: '{function_path}'")
             
-            # Les parties sauf la dernière forment le chemin du module
             module_parts = parts[:-1]
             function_name = parts[-1]
             
-            # Naviguer dans la hiérarchie des modules
             current_obj = self
             for part in module_parts:
                 if hasattr(current_obj, part):
@@ -179,17 +177,14 @@ class Sysbot(metaclass=MetaModules):
                 else:
                     raise AttributeError(f"Module '{part}' not found in path '{'.'.join(module_parts)}'")
             
-            # Vérifier que la fonction existe
             if not hasattr(current_obj, function_name):
                 raise AttributeError(f"Function '{function_name}' not found in module '{'.'.join(module_parts)}'")
             
             function = getattr(current_obj, function_name)
             
-            # Vérifier que c'est bien une fonction callable
             if not callable(function):
                 raise TypeError(f"'{function_name}' is not a callable function")
             
-            # Appeler la fonction avec les arguments
             result = function(*args, **kwargs)
             return result
             
