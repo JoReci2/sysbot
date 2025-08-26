@@ -79,6 +79,8 @@ class Sysbot(metaclass=MetaModules):
                 raise Exception(f"Unable to load module {module_path}: {e}")
     
     def _create_hierarchy(self, module_path, module_instance):
+        if hasattr(module_instance, 'set_sysbot_instance'):
+            module_instance.set_sysbot_instance(self)
         parts = module_path.split('.')
         current_obj = self
         for i, part in enumerate(parts[:-1]):

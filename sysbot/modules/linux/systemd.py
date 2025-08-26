@@ -1,7 +1,12 @@
-class Systemd(object):
+from sysbot.utils.engine import BaseModule
 
-    def start(self, name):
-        return "systemctl start {name}"
+class Systemd(BaseModule):
 
-    def stop(self, name):
-        return f"systemctl stop {name}"
+    def start(self, alias, name):
+        return self.execute_command(alias, f"systemctl start {name}")
+
+    def stop(self, alias, name):
+        return self.execute_command(alias, f"systemctl stop {name}")
+
+    def is_active(self, alias, name):
+        return self.execute_command(alias, f"systemctl is-active {name}")
