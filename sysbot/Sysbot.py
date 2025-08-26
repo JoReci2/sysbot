@@ -42,7 +42,7 @@ class Sysbot(metaclass=MetaModules):
             modules = self._discover_all_modules()
         self._load_modules(modules)
         self._cache = ConnectionCache('No sessions created')
-        self.protocol = None
+        self._protocol = None
     
     def _discover_all_modules(self):
         modules_dir = Path(__file__).parent / "modules"
@@ -91,15 +91,15 @@ class Sysbot(metaclass=MetaModules):
         setattr(current_obj, final_name, module_instance)
 
     def __get_protocol__(self, protocol_name, product_name):
-        self.protocol = TunnelingManager.get_protocol(protocol_name, product_name)
+        self._protocol = TunnelingManager.get_protocol(protocol_name, product_name)
 
     def __nested_tunnel__(self, tunnel_config, target_config):
-        return TunnelingManager.nested_tunnel(self.protocol, tunnel_config, target_config)
+        return TunnelingManager.nested_tunnel(self._protocol, tunnel_config, target_config)
 
     def open_session(self, alias: str, protocol: str, product: str, host: str, port: int, login: str=None, password: str=None, tunnel_config=None, **kwargs) -> None:
         tunnels = []
         self.__get_protocol__(protocol, product)
-        self.remote_port = int(port)
+        self._remote_port = int(port)
         try:
             if tunnel_config:
                 try:
@@ -109,14 +109,14 @@ class Sysbot(metaclass=MetaModules):
                     raise Exception(f"Error during importing tunnel as json: {e}")
                 target_config = {
                     'ip': host,
-                    'port': int(self.remote_port),
+                    'port': int(self._remote_port),
                     'username': login,
                     'password': password
                 }
                 connection = self.__nested_tunnel__(tunnel_config, target_config)
                 tunnels = connection["tunnels"]
             else:
-                session = self.protocol.open_session(host, int(self.remote_port), login, password)
+                session = self._protocol.open_session(host, int(self._remote_port), login, password)
                 if not session:
                     raise Exception("Failed to open direct session")
                 connection = {"session": session, "tunnels": None}
@@ -133,7 +133,7 @@ class Sysbot(metaclass=MetaModules):
             if not connection or 'session' not in connection:
                 raise RuntimeError(f"No valid session found for alias '{alias}'")
 
-            result = self.protocol.execute_command(connection['session'], command, **kwargs)
+            result = self._protocol.execute_command(connection['session'], command, **kwargs)
             return result
         except ValueError as ve:
             raise ValueError(f"Alias '{alias}' does not exist: {str(ve)}")
@@ -143,7 +143,7 @@ class Sysbot(metaclass=MetaModules):
     def close_all_sessions(self) -> None:
         try:
             for connection in self._cache._connections:
-                self.protocol.close_session(connection['session'])
+                self._protocol.close_session(connection['session'])
                 if connection['tunnels'] is not None:
                     for tunnel in reversed(connection['tunnels']):
                         tunnel.stop()
@@ -156,7 +156,7 @@ class Sysbot(metaclass=MetaModules):
             connection = self._cache.switch(alias)
             if not connection or 'session' not in connection:
                 raise RuntimeError(f"No valid session found for alias '{alias}'")
-            self.protocol.close_session(connection)
+            self._protocol.close_session(connection)
         except Exception as e:
             raise Exception(f"Failed to close session: {str(e)}")
 
