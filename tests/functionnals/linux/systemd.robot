@@ -1,5 +1,5 @@
 *** Settings ***
-Name           Unit tests linux for systemd module
+Name           Fonctionnal tests linux for systemd module
 
 Library        Collections
 Library        sysbot.Sysbot
