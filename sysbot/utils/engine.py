@@ -1,33 +1,69 @@
 """
-Module dédié à la gestion des tunnels SSH et à la récupération des protocoles pour ConnectorHandler.
+MIT License
+
+Copyright (c) 2024 Thibault SCIRE
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 """
 
 import importlib
 from sshtunnel import SSHTunnelForwarder
+from abc import ABC, abstractmethod
+
+
+class ConnectorInterface(ABC):
+
+    @abstractmethod
+    def open_session(self, host, port, login, password):
+        pass
+
+    @abstractmethod
+    def execute_command(self, session, command, **kwargs):
+        pass
+
+    @abstractmethod
+    def close_session(self, session):
+        pass
+
+class MetaModules(type):
+    def __new__(cls, name, bases, dct):
+        return super().__new__(cls, name, bases, dct)
+
+class ModuleGroup:
+    def __init__(self, name):
+        self.name = name
+
+class BaseModule:
+    def __init__(self):
+        self._sysbot = None
+    
+    def set_sysbot_instance(self, sysbot_instance):
+        self._sysbot = sysbot_instance
+    
+    def execute_command(self, alias, command, **kwargs):
+        if self._sysbot is None:
+            raise RuntimeError("No Sysbot instance available")
+        return self._sysbot.execute_command(alias, command, **kwargs)
 
 class TunnelingManager:
-    """
-    Utility class for managing SSH tunnels and dynamic protocol retrieval.
-
-    Provides static methods to dynamically instantiate connectors and establish nested SSH tunnels.
-    """
     @staticmethod
     def get_protocol(protocol_name, product_name):
-        """
-        Dynamically instantiates the connector corresponding to the protocol and product.
-
-        Args:
-            protocol_name (str): Name of the protocol (e.g., 'ssh', 'http').
-            product_name (str): Name of the product (e.g., 'bash', 'redfish').
-
-        Returns:
-            object: Instance of the corresponding connector.
-
-        Raises:
-            ImportError: If the module cannot be found.
-            AttributeError: If the product class does not exist in the module.
-            Exception: For any other unexpected error.
-        """
         try:
             module_name = f"sysbot.connectors.{protocol_name.lower()}.{product_name.lower()}"
             connector = importlib.import_module(module_name)
@@ -41,22 +77,6 @@ class TunnelingManager:
 
     @staticmethod
     def nested_tunnel(protocol, tunnel_config, target_config, index=0, previous_tunnels=None):
-        """
-        Establishes nested SSH tunnels and opens the final session to the target.
-
-        Args:
-            protocol (ConnectorInterface): Instance of the connector to use for opening the final session.
-            tunnel_config (list): List of dictionaries containing the configuration for each SSH hop.
-            target_config (dict): Dictionary containing connection info for the final target.
-            index (int, optional): Current hop index (used recursively).
-            previous_tunnels (list, optional): List of already opened tunnels.
-
-        Returns:
-            dict: Dictionary with the opened session and the list of active tunnels.
-
-        Raises:
-            Exception: If tunnel establishment fails.
-        """
         if previous_tunnels is None:
             previous_tunnels = []
         try:
@@ -84,7 +104,6 @@ class TunnelingManager:
                 ssh_password=config['password']
             )
             tunnel.start()
-            print(f"Tunnel {index + 1} established: {ssh_address_or_host[0]}:{ssh_address_or_host[1]}")
             previous_tunnels.append(tunnel)
             return TunnelingManager.nested_tunnel(protocol, tunnel_config, target_config, index + 1, previous_tunnels)
         except Exception as e:
