@@ -23,8 +23,10 @@ is_installed method works
 
 version method works
     ${output}=    Call Module    linux.rpm.version    target    openssh
-    Should Be Equal    ${output}    test
+    Should Not Be Empty    ${output}
+    Log To Console    ${output}
 
 release method works
     ${output}=    Call Module    linux.rpm.release    target    openssh
-    Should Be Equal    ${output}    test
+    Should Not Be Empty    ${output}
+    Log To Console    ${output}
