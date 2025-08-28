@@ -109,10 +109,4 @@ class TunnelingManager:
         except Exception as e:
             for tunnel in reversed(previous_tunnels):
                 tunnel.stop()
-                try:
-                    tunnel.ssh_address_or_host
-                except:
-                    print(f"Closed tunnel")
-                else:
-                    print(f"Closed tunnel to: {tunnel.ssh_address_or_host}")
             raise Exception(f"Failed to establish nested tunnels: {str(e)}")

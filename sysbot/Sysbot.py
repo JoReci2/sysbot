@@ -22,10 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import os, importlib, socket, paramiko, json
+import importlib
+import json
 from robot.utils import ConnectionCache
-from robot.api.deco import keyword, library
-from sshtunnel import SSHTunnelForwarder
 from pathlib import Path
 
 from .utils.engine import MetaModules
