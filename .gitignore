@@ -5,3 +5,7 @@ dist/
 *.egg-info/
 .DS_Store
 *.html
+
+report.html
+log.html
+output.xml
