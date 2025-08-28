@@ -43,6 +43,19 @@ cd sysbot
 pip install -e ".[dev]"
 ```
 
+Regulary use tools to ensure the code is clean:
+```bash
+# Check and format the code
+ruff check sysbot
+ruff format sysbot
+# Analyze complexity et mantenability (A=Good,B=Middle,C=Bad)
+radon cc sysbot
+radon mi sysbot
+# Security analisys
+bandit -r sysbot
+safety scan
+```
+
 ## Quick Start
 
 ### Basic SSH Connection
