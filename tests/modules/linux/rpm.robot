@@ -7,8 +7,8 @@ Library        sysbot.Sysbot
 *** Variables ***
 ${IP}=          192.168.1.112
 ${PORT}=        22
-${USER}=        thibault.scire
-${PASSWORD}=    Viv3_L3s_B00bs
+${USER}=        sysbot
+${PASSWORD}=    P@ssw0rd
 
 *** Settings ***
 
