@@ -1,5 +1,7 @@
 from sysbot.utils.engine import BaseModule
 import json
+import configparser
+from io import StringIO
 
 class Dnf(BaseModule):
 
@@ -7,11 +9,9 @@ class Dnf(BaseModule):
         output = self.execute_command(alias, "dnf repolist --json")
         return json.loads(output)
 
-    def get_package_version(self, alias, name):
-        return self.execute_command(alias, f"""rpm -q --queryformat="%{{VERSION}}" {name}""")
-
-    def get_package_release(self, alias, name):
-        return self.execute_command(alias, f"""rpm -q --queryformat="%{{RELEASE}}" {name}""")
-
-    def package_is_installed(self, alias, name):
-        return self.execute_command(alias, f"""rpm -q {name}""") == 0
+    def repofile(self, alias, file):
+        output = self.execute_command(alias, f"cat {file}")
+        config = configparser.ConfigParser(strict=False, interpolation=None)
+        config.read_file(StringIO(output))
+        data = {section: dict(config.items(section)) for section in config.sections()}
+        return data
