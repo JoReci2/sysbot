@@ -27,67 +27,22 @@ import json
 from robot.utils import ConnectionCache
 from pathlib import Path
 
-from .utils.engine import MetaModules
+from .utils.engine import ModuleMeta
 from .utils.engine import ModuleGroup
 from .utils.engine import TunnelingManager
+from .utils.engine import ModuleLoader
 
-class Sysbot(metaclass=MetaModules):
+class Sysbot(metaclass=ModuleMeta):
 
     ROBOT_LIBRARY_SCOPE = 'SUITE'
     ROBOT_LIBRARY_DOC_FORMAT = 'reST'
 
     def __init__(self, modules=None):
         if modules is None:
-            modules = self._discover_all_modules()
-        self._load_modules(modules)
+            modules = ModuleLoader.discover_all_modules(__file__)
+        ModuleLoader.load_modules(self, modules)
         self._cache = ConnectionCache('No sessions created')
         self._protocol = None
-    
-    def _discover_all_modules(self):
-        modules_dir = Path(__file__).parent / "modules"
-        available_modules = []
-        
-        def scan_directory(directory, prefix=""):
-            if not directory.exists():
-                return
-            
-            for item in directory.iterdir():
-                if item.is_file() and item.suffix == ".py" and item.name != "__init__.py":
-                    module_path = f"{prefix}.{item.stem}" if prefix else item.stem
-                    available_modules.append(module_path)
-                elif item.is_dir() and not item.name.startswith('.'):
-                    new_prefix = f"{prefix}.{item.name}" if prefix else item.name
-                    scan_directory(item, new_prefix)
-        
-        scan_directory(modules_dir)
-        return available_modules
-    
-    def _load_modules(self, module_names):
-        for module_path in module_names:
-            try:
-                full_module_path = f"sysbot.modules.{module_path}"
-                module = importlib.import_module(full_module_path)
-                module_name = module_path.split('.')[-1]
-                class_name = module_name.capitalize()
-                
-                if hasattr(module, class_name):
-                    module_class = getattr(module, class_name)
-                    module_instance = module_class()
-                    self._create_hierarchy(module_path, module_instance)
-            except ImportError as e:
-                raise Exception(f"Unable to load module {module_path}: {e}")
-    
-    def _create_hierarchy(self, module_path, module_instance):
-        if hasattr(module_instance, 'set_sysbot_instance'):
-            module_instance.set_sysbot_instance(self)
-        parts = module_path.split('.')
-        current_obj = self
-        for i, part in enumerate(parts[:-1]):
-            if not hasattr(current_obj, part):
-                setattr(current_obj, part, ModuleGroup(part))
-            current_obj = getattr(current_obj, part)
-        final_name = parts[-1]
-        setattr(current_obj, final_name, module_instance)
 
     def open_session(self, alias: str, protocol: str, product: str, host: str, port: int, login: str=None, password: str=None, tunnel_config=None, **kwargs) -> None:
         tunnels = []

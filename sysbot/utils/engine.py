@@ -25,6 +25,7 @@ SOFTWARE.
 import importlib
 from sshtunnel import SSHTunnelForwarder
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 
 class ConnectorInterface(ABC):
@@ -41,7 +42,7 @@ class ConnectorInterface(ABC):
     def close_session(self, session):
         pass
 
-class MetaModules(type):
+class ModuleMeta(type):
     def __new__(cls, name, bases, dct):
         return super().__new__(cls, name, bases, dct)
 
@@ -49,7 +50,7 @@ class ModuleGroup:
     def __init__(self, name):
         self.name = name
 
-class BaseModule:
+class ModuleBase:
     def __init__(self):
         self._sysbot = None
     
@@ -60,6 +61,56 @@ class BaseModule:
         if self._sysbot is None:
             raise RuntimeError("No Sysbot instance available")
         return self._sysbot.execute_command(alias, command, **kwargs)
+
+class ModuleLoader:
+    @staticmethod
+    def discover_all_modules(sysbot_file_path):
+        modules_dir = Path(sysbot_file_path).parent / "modules"
+        available_modules = []
+        
+        def scan_directory(directory, prefix=""):
+            if not directory.exists():
+                return
+            
+            for item in directory.iterdir():
+                if item.is_file() and item.suffix == ".py" and item.name != "__init__.py":
+                    module_path = f"{prefix}.{item.stem}" if prefix else item.stem
+                    available_modules.append(module_path)
+                elif item.is_dir() and not item.name.startswith('.'):
+                    new_prefix = f"{prefix}.{item.name}" if prefix else item.name
+                    scan_directory(item, new_prefix)
+        
+        scan_directory(modules_dir)
+        return available_modules
+    
+    @staticmethod
+    def load_modules(sysbot_instance, module_names):
+        for module_path in module_names:
+            try:
+                full_module_path = f"sysbot.modules.{module_path}"
+                module = importlib.import_module(full_module_path)
+                module_name = module_path.split('.')[-1]
+                class_name = module_name.capitalize()
+                
+                if hasattr(module, class_name):
+                    module_class = getattr(module, class_name)
+                    module_instance = module_class()
+                    ModuleLoader.create_hierarchy(sysbot_instance, module_path, module_instance)
+            except ImportError as e:
+                raise Exception(f"Unable to load module {module_path}: {e}")
+    
+    @staticmethod
+    def create_hierarchy(sysbot_instance, module_path, module_instance):
+        if hasattr(module_instance, 'set_sysbot_instance'):
+            module_instance.set_sysbot_instance(sysbot_instance)
+        parts = module_path.split('.')
+        current_obj = sysbot_instance
+        for i, part in enumerate(parts[:-1]):
+            if not hasattr(current_obj, part):
+                setattr(current_obj, part, ModuleGroup(part))
+            current_obj = getattr(current_obj, part)
+        final_name = parts[-1]
+        setattr(current_obj, final_name, module_instance)
 
 class TunnelingManager:
     @staticmethod

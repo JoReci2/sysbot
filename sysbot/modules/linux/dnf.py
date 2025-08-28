@@ -1,9 +1,9 @@
-from sysbot.utils.engine import BaseModule
+from sysbot.utils.engine import ModuleBase
 import json
 import configparser
 from io import StringIO
 
-class Dnf(BaseModule):
+class Dnf(ModuleBase):
 
     def repolist(self, alias):
         output = self.execute_command(alias, "dnf repolist --json")
