@@ -90,15 +90,9 @@ class Sysbot(metaclass=MetaModules):
         final_name = parts[-1]
         setattr(current_obj, final_name, module_instance)
 
-    def __get_protocol__(self, protocol_name, product_name):
-        self._protocol = TunnelingManager.get_protocol(protocol_name, product_name)
-
-    def __nested_tunnel__(self, tunnel_config, target_config):
-        return TunnelingManager.nested_tunnel(self._protocol, tunnel_config, target_config)
-
     def open_session(self, alias: str, protocol: str, product: str, host: str, port: int, login: str=None, password: str=None, tunnel_config=None, **kwargs) -> None:
         tunnels = []
-        self.__get_protocol__(protocol, product)
+        self._protocol = TunnelingManager.get_protocol(protocol, product)
         self._remote_port = int(port)
         try:
             if tunnel_config:
@@ -113,7 +107,8 @@ class Sysbot(metaclass=MetaModules):
                     'username': login,
                     'password': password
                 }
-                connection = self.__nested_tunnel__(tunnel_config, target_config)
+                TunnelingManager.nested_tunnel(self._protocol, tunnel_config, target_config)
+                connection = TunnelingManager.nested_tunnel(self._protocol, tunnel_config, target_config)
                 tunnels = connection["tunnels"]
             else:
                 session = self._protocol.open_session(host, int(self._remote_port), login, password)
