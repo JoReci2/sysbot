@@ -1,15 +1,18 @@
 # SysBot
 
-A system automation and management tool that provides a unified interface for connecting to and managing various systems through different protocols.
+A system automation and management tool that provides a unified interface for connecting to and managing various systems through different protocols. Built with Robot Framework integration in mind.
 
 ## Features
 
 - **Multi-protocol Support**: SSH, HTTP, WinRM, and more
-- **SSH Tunneling**: Support for nested SSH tunnels
+- **SSH Tunneling**: Support for nested SSH tunnels with automatic management
 - **File Operations**: Execute scripts and retrieve results remotely
 - **Cross-platform**: Support for Linux and Windows systems
-- **Robot Framework Integration**: Built-in support for Robot Framework automation
+- **Robot Framework Integration**: Built-in support for Robot Framework automation with SUITE scope
 - **Type Safety**: Full type hints and static analysis support
+- **Modular Architecture**: Dynamic module loading and discovery
+- **Data Loaders**: Extensible data import system
+- **Connection Management**: Robust session caching and lifecycle management
 
 ## Installation
 
@@ -40,21 +43,34 @@ cd sysbot
 pip install -e ".[dev]"
 ```
 
+Regulary use tools to ensure the code is clean:
+```bash
+# Check and format the code
+ruff check sysbot
+ruff format sysbot
+# Analyze complexity et mantenability (A=Good,B=Middle,C=Bad)
+radon cc sysbot
+radon mi sysbot
+# Security analisys
+bandit -r sysbot
+safety scan
+```
+
 ## Quick Start
 
 ### Basic SSH Connection
 
 ```python
-from sysbot.connectors import ConnectorHandler
+from sysbot import Sysbot
 
-# Create a connector handler
-handler = ConnectorHandler()
+# Create a SysBot instance
+bot = Sysbot()
 
 # Open an SSH session to a Linux system
-handler.open_session(
+bot.open_session(
     alias="my_linux_server",
     protocol="ssh",
-    product="linux",
+    product="bash",
     host="192.168.1.100",
     port=22,
     login="username",
@@ -62,11 +78,11 @@ handler.open_session(
 )
 
 # Execute a command
-result = handler.execute_command("my_linux_server", "ls -la")
+result = bot.execute_command("my_linux_server", "ls -la")
 print(result)
 
 # Close all sessions
-handler.close_all_sessions()
+bot.close_all_sessions()
 ```
 
 ### SSH Tunneling
@@ -89,10 +105,10 @@ tunnel_config = [
 ]
 
 # Open session through tunnels
-handler.open_session(
+bot.open_session(
     alias="tunneled_server",
     protocol="ssh",
-    product="linux",
+    product="bash",
     host="192.168.3.100",
     port=22,
     login="final_user",
@@ -101,45 +117,102 @@ handler.open_session(
 )
 ```
 
-### File Execution
+### Using with Robot Framework
+
+```robot
+*** Settings ***
+Library        sysbot.Sysbot
+
+Suite Teardown    Close All Sessions
+Suite Setup       Open Session    target    ssh    bash    ${IP}    ${PORT}   ${USER}    ${PASSWORD}
+
+*** Test Cases ***
+
+repolist method works
+    ${output}=    Call Module    linux.dnf.repolist    target
+    Should Not Be Empty    ${output}[0][name]
+```
+
+### Module System
 
 ```python
-# Execute a script file on Linux
-script_content = """
-#!/bin/bash
-echo "Hello from remote system"
-date
-whoami
-"""
+# Call functions from loaded modules
+bot = Sysbot("linux.systemd", "linux.dnf") #bot = Sysbot() to load all modules
+result = bot.linux.dnf.repolist("tunneled_server")
 
-result = handler.execute_file("my_linux_server", script_content)
-print(result)
+# Import data using data loaders
+data = bot.import_data_from("csv", file_path="/path/to/data.csv")
+```
+
+### Session Management
+
+```python
+# Close a specific session
+bot.close_session("my_linux_server")
+
+# Close all sessions (automatically handles tunnels)
+bot.close_all_sessions()
 ```
 
 ## Supported Protocols
 
 ### SSH
-- **Linux**: Full support for Linux systems via SSH
-- **Windows**: Support for Windows systems via SSH (requires SSH server)
+- **Bash**: Full support for bash via SSH
+- **Powershell**: Support for powershell via SSH (requires SSH server)
 
 ### HTTP
-- **Redfish**: Support for Redfish API connections
+- **BasicAuth**: Support for API connections
+- **vsphere**: Support for ESXi and vCenter
 
 ### WinRM
-- **Windows**: Native Windows Remote Management support
+- **Powershell**: Native Windows Remote Management support
+
+### Socket
+- **TCP**: Native TCP socket with ssl if needed
+- **UDP**: Native UDP socket
 
 ## Architecture
 
 ```
 sysbot/
-├── connectors/          # Protocol-specific connectors
-│   ├── ConnectorHandler.py  # Main handler class
-│   ├── ssh/            # SSH protocol implementations
-│   ├── http/           # HTTP protocol implementations
-│   └── winrm/          # WinRM protocol implementations
+├── Sysbot.py           # Main SysBot class
+├── connectors/         # Protocol-specific connectors
 ├── dataloaders/        # Data loading utilities
-└── utils/              # General utilities
+├── utils/
+│   └── engine.py       # Engine class
+└── modules/            # Protocol-specific modules
 ```
+
+## Key Components
+
+### Connection Management
+- **Connection Cache**: Centralized session management using Robot Framework's ConnectionCache
+- **Automatic Cleanup**: Proper cleanup of sessions and tunnels on close
+- **Alias Support**: Named connections for easy reference
+
+### Tunneling System
+- **Nested Tunnels**: Support for multiple SSH hops
+- **Automatic Management**: Tunnels are automatically created and destroyed
+- **JSON Configuration**: Support for tunnel configuration via JSON strings
+
+### Module System
+- **Dynamic Loading**: Modules are automatically discovered and loaded
+- **Modular Functions**: Call specific functions using dot notation
+- **Extensible**: Easy to add new protocol or module support
+
+### Data Loaders
+- **Pluggable System**: Support for different data sources
+- **Module-based**: Each loader is a separate module
+- **Flexible Input**: Support for various data formats
+
+## Error Handling
+
+SysBot provides comprehensive error handling:
+
+- **Connection Errors**: Detailed error messages for connection failures
+- **Tunnel Management**: Automatic cleanup on tunnel failures
+- **Session Validation**: Verification of session validity before operations
+- **Module Errors**: Clear error messages for module and function calls
 
 ## License
 
@@ -153,4 +226,4 @@ Thibault SCIRE - [GitHub](https://github.com/thibaultscire)
 
 - [Paramiko](https://www.paramiko.org/) for SSH functionality
 - [Robot Framework](https://robotframework.org/) for automation framework
-- [SSHTunnel](https://github.com/pahaz/sshtunnel) for SSH tunneling support 
+- [SSHTunnel](https://github.com/pahaz/sshtunnel) for SSH tunneling support
