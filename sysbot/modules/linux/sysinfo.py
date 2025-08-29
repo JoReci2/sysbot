@@ -49,3 +49,9 @@ class Sysinfo(ModuleBase):
                 key, value = line.split(':', 1)
                 cpu_info[key.strip()] = value.strip()
         return cpu_info
+
+    def keyboard(self, alias):
+        return self.execute_command(alias, "localectl | grep Keymap | awk '{print $3}' | tr -d ' '")
+    
+    def timezone(self, alias):
+        return self.execute_command(alias, "timedatectl | grep 'Time zone' | awk '{print $3}' | tr -d ' '")

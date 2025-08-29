@@ -24,6 +24,14 @@ hostname method works
     ${output}=    Call Module    linux.sysinfo.hostname    target
     Should Be Equal    ${output}        lab01
 
+fqdn method works
+    ${output}=    Call Module    linux.sysinfo.fqdn    target
+    Should Be Equal    ${output}        lab01
+
+domain method works
+    ${output}=    Call Module    linux.sysinfo.domain    target
+    Should Be Empty    ${output}
+
 uptime method works
     ${output}=    Call Module    linux.sysinfo.uptime    target
     Should Contain    ${output}    days
@@ -43,3 +51,11 @@ ram method works
 cpu method works
     ${output}=    Call Module    linux.sysinfo.cpu    target
     Should Be Equal    ${output}[Architecture]    x86_64
+
+keyboard method works
+    ${output}=    Call Module    linux.sysinfo.keyboard    target
+    Should Be Equal    ${output}    fr
+
+timezone method works
+    ${output}=    Call Module    linux.sysinfo.timezone    target
+    Should Contain    ${output}    Etc/UTC
