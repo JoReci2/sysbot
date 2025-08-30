@@ -5,15 +5,18 @@ Library        Collections
 Library        sysbot.Sysbot
 
 *** Variables ***
-${IP}=          192.168.1.112
 ${PORT}=        22
-${USER}=        sysbot
-${PASSWORD}=    P@ssw0rd
+
+*** Keywords ***
+
+Init test suite
+    Call Components    plugins.data.yaml    connexion    tests/.dataset/connexion.yml
+    Open Session    target    ssh    bash    connexion.host    ${PORT}   connexion.username    connexion.password
 
 *** Settings ***
 
 Suite Teardown    Close All Sessions
-Suite Setup       Open Session    target    ssh    bash    ${IP}    ${PORT}   ${USER}    ${PASSWORD}
+Suite Setup       Init test suite
 
 *** Test Cases ***
 os_release method works
