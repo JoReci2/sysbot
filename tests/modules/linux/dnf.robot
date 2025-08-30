@@ -18,9 +18,9 @@ Suite Setup       Open Session    target    ssh    bash    ${IP}    ${PORT}   ${
 *** Test Cases ***
 
 repolist method works
-    ${output}=    Call Module    linux.dnf.repolist    target
+    ${output}=    Call Components    modules.linux.dnf.repolist    target
     Should Not Be Empty    ${output}[0][name]
 
 repofile method works
-    ${output}=    Call Module    linux.dnf.repofile    target    /etc/yum.repos.d/fedora.repo
+    ${output}=    Call Components    modules.linux.dnf.repofile    target    /etc/yum.repos.d/fedora.repo
     Should Be Equal    ${output}[fedora][enabled]    1

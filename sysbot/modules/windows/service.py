@@ -1,6 +1,6 @@
-from sysbot.utils.engine import ModuleBase
+from sysbot.utils.engine import ComponentBase
 
 
-class Service(ModuleBase):
-    def start(self, name):
+class Service(ComponentBase):
+    def start(self, name: str) -> str:
         return f"Starting service: {name}"

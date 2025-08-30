@@ -1,12 +1,12 @@
-from sysbot.utils.engine import ModuleBase
+from sysbot.utils.engine import ComponentBase
 
 
-class Systemd(ModuleBase):
-    def is_active(self, alias, name):
+class Systemd(ComponentBase):
+    def is_active(self, alias: str, name: str) -> str:
         return self.execute_command(alias, f"systemctl is-active {name}")
 
-    def is_enabled(self, alias, name):
+    def is_enabled(self, alias: str, name: str) -> str:
         return self.execute_command(alias, f"systemctl is-enabled {name}")
 
-    def is_failed(self, alias, name):
+    def is_failed(self, alias: str, name: str) -> str:
         return self.execute_command(alias, f"systemctl is-failed {name}")
