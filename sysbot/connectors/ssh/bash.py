@@ -1,6 +1,6 @@
 import paramiko
 import base64
-from ...utils import ConnectorInterface
+from sysbot.utils.engine import ConnectorInterface
 
 
 class Bash(ConnectorInterface):
@@ -38,8 +38,7 @@ class Bash(ConnectorInterface):
             Exception: If there is an error executing the command
         """
         try:
-            
-            encoded_command = base64.b64encode(command.encode('utf-8')).decode('ascii')
+            encoded_command = base64.b64encode(command.encode("utf-8")).decode("ascii")
 
             if runas and password is not None:
                 payload = f"echo '{password}' | sudo -S bash -c 'echo {encoded_command} | base64 -d | bash'"

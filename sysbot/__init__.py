@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-#import sys
-#from .Sysbot import Sysbot
+# import sys
+# from .Sysbot import Sysbot
 
-#sys.modules[__name__] = Sysbot()
+# sys.modules[__name__] = Sysbot()

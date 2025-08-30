@@ -1,5 +1,6 @@
 import json
 
+
 def load(file):
     """
     Load variables from a JSON file.
@@ -14,7 +15,7 @@ def load(file):
     """
     file_path = file
     try:
-        with open(file_path, mode='r', encoding='utf-8') as file:
+        with open(file_path, mode="r", encoding="utf-8") as file:
             return json.load(file)
     except FileNotFoundError:
         raise FileNotFoundError(f"JSON file not found: {file_path}")

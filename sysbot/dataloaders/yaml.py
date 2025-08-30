@@ -1,5 +1,6 @@
 import yaml
 
+
 def load(file):
     """
     Load variables from a YAML file.
@@ -14,7 +15,7 @@ def load(file):
     """
     file_path = file
     try:
-        with open(file_path, mode='r', encoding='utf-8') as file:
+        with open(file_path, mode="r", encoding="utf-8") as file:
             return yaml.safe_load(file)
     except FileNotFoundError:
         raise FileNotFoundError(f"YAML file not found: {file_path}")

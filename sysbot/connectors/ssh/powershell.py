@@ -1,6 +1,6 @@
 import paramiko
 import base64
-from ...utils import ConnectorInterface
+from sysbot.utils.engine import ConnectorInterface
 
 
 class Powershell(ConnectorInterface):
@@ -38,14 +38,11 @@ class Powershell(ConnectorInterface):
             Exception: If there is an error executing the command
         """
         try:
-            
-            
-
             if runas and password is not None:
                 ps_command = (
-                        f"Start-Process PowerShell -Credential $credential "
-                        f'-ArgumentList "-Command", "{command}" -Wait -NoNewWindow'
-                    )
+                    f"Start-Process PowerShell -Credential $credential "
+                    f'-ArgumentList "-Command", "{command}" -Wait -NoNewWindow'
+                )
                 credential_command = f"""
 $securePassword = ConvertTo-SecureString '{password}' -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential('{username}', $securePassword)
@@ -54,15 +51,20 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
                 final_command = credential_command
             elif runas and password is None:
                 final_command = (
-                        f"Start-Process PowerShell -Verb RunAs "
-                        f'-ArgumentList "-Command", "{command}" -Wait'
-                    )
+                    f"Start-Process PowerShell -Verb RunAs "
+                    f'-ArgumentList "-Command", "{command}" -Wait'
+                )
             else:
                 final_command = command
 
-            encoded_command = base64.b64encode(final_command.encode("utf_16_le")).decode("ascii")
+            encoded_command = base64.b64encode(
+                final_command.encode("utf_16_le")
+            ).decode("ascii")
 
-            stdin, stdout, stderr = session.exec_command("powershell.exe -encodedcommand {0}".format(encoded_command), get_pty=False)
+            stdin, stdout, stderr = session.exec_command(
+                "powershell.exe -encodedcommand {0}".format(encoded_command),
+                get_pty=False,
+            )
             stdin.close()
 
             output = stdout.read().decode("utf-8").strip()

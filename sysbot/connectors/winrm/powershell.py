@@ -1,6 +1,6 @@
 from winrm.protocol import Protocol
 from base64 import b64encode
-from ...utils import ConnectorInterface
+from sysbot.utils.engine import ConnectorInterface
 
 
 class Powershell(ConnectorInterface):

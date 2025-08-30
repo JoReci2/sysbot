@@ -1,5 +1,6 @@
 import csv
 
+
 def load(file):
     """
     Load variables from a CSV file.
@@ -15,7 +16,7 @@ def load(file):
     file_path = file
     try:
         result = []
-        with open(file_path, mode='r', newline='', encoding='utf-8') as file:
+        with open(file_path, mode="r", newline="", encoding="utf-8") as file:
             reader = csv.DictReader(file)
             for row in reader:
                 result.append(row)

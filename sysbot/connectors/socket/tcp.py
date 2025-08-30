@@ -1,6 +1,6 @@
 import socket
 import ssl
-from ...utils import ConnectorInterface
+from sysbot.utils.engine import ConnectorInterface
 
 
 class Tcp(ConnectorInterface):
@@ -27,7 +27,7 @@ class Tcp(ConnectorInterface):
         """
         try:
             conn = socket.create_connection((host, port))
-            
+
             if use_ssl:
                 context = ssl.create_default_context()
                 context.check_hostname = False
@@ -37,7 +37,7 @@ class Tcp(ConnectorInterface):
                 sock = conn
 
             return sock
-            
+
         except socket.timeout:
             raise Exception(f"Connection to {host}:{port} timed out")
         except socket.gaierror as e:
@@ -47,7 +47,15 @@ class Tcp(ConnectorInterface):
         except Exception as e:
             raise Exception(f"Failed to open TCP session to {host}:{port}: {str(e)}")
 
-    def execute_command(self, session, command, expect_response=True, timeout=30, buffer_size=4096, encoding='utf-8'):
+    def execute_command(
+        self,
+        session,
+        command,
+        expect_response=True,
+        timeout=30,
+        buffer_size=4096,
+        encoding="utf-8",
+    ):
         """
         Send data through the TCP socket and optionally receive a response.
 
@@ -85,14 +93,14 @@ class Tcp(ConnectorInterface):
                 data_to_send = command
 
             bytes_sent = session.send(data_to_send)
-            
+
             result = {
-                'sent': command,
-                'bytes_sent': bytes_sent,
-                'success': True,
-                'received': None,
-                'bytes_received': 0,
-                'timeout': False
+                "sent": command,
+                "bytes_sent": bytes_sent,
+                "success": True,
+                "received": None,
+                "bytes_received": 0,
+                "timeout": False,
             }
 
             # Receive response if expected
@@ -100,23 +108,24 @@ class Tcp(ConnectorInterface):
                 try:
                     received_data = session.recv(buffer_size)
                     if isinstance(command, str):
-                        result['received'] = received_data.decode(encoding, errors='ignore')
+                        result["received"] = received_data.decode(
+                            encoding, errors="ignore"
+                        )
                     else:
-                        result['received'] = received_data
-                    result['bytes_received'] = len(received_data)
+                        result["received"] = received_data
+                    result["bytes_received"] = len(received_data)
                 except socket.timeout:
-                    result['timeout'] = True
+                    result["timeout"] = True
 
             # Restore original timeout
             session.settimeout(original_timeout)
-            
+
             return result
 
         except socket.error as e:
             raise Exception(f"Socket error during command execution: {str(e)}")
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
-        
 
     def close_session(self, session):
         """
@@ -133,5 +142,3 @@ class Tcp(ConnectorInterface):
                 session.close()
         except Exception as e:
             raise Exception(f"Failed to close TCP session: {str(e)}")
-
-    
