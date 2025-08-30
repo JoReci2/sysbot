@@ -42,17 +42,15 @@ class ConnectorInterface(ABC):
         pass
 
 
-class ModuleMeta(type):
+class ComponentMeta(type):
     def __new__(cls, name, bases, dct):
         return super().__new__(cls, name, bases, dct)
 
-
-class ModuleGroup:
+class ComponentGroup:
     def __init__(self, name):
         self.name = name
 
-
-class ModuleBase:
+class ComponentBase:
     def __init__(self):
         self._sysbot = None
 
@@ -64,12 +62,14 @@ class ModuleBase:
             raise RuntimeError("No Sysbot instance available")
         return self._sysbot.execute_command(alias, command, **kwargs)
 
-
-class ModuleLoader:
+class ComponentLoader:
     @staticmethod
-    def discover_all_modules(sysbot_file_path):
-        modules_dir = Path(sysbot_file_path).parent / "modules"
-        available_modules = []
+    def discover_all_components(sysbot_file_path, component_type):
+        """
+        Découvre tous les composants d'un type donné (modules ou plugins)
+        """
+        components_dir = Path(sysbot_file_path).parent / component_type
+        available_components = []
 
         def scan_directory(directory, prefix=""):
             if not directory.exists():
@@ -81,46 +81,69 @@ class ModuleLoader:
                     and item.suffix == ".py"
                     and item.name != "__init__.py"
                 ):
-                    module_path = f"{prefix}.{item.stem}" if prefix else item.stem
-                    available_modules.append(module_path)
+                    component_path = f"{prefix}.{item.stem}" if prefix else item.stem
+                    available_components.append(component_path)
                 elif item.is_dir() and not item.name.startswith("."):
                     new_prefix = f"{prefix}.{item.name}" if prefix else item.name
                     scan_directory(item, new_prefix)
 
-        scan_directory(modules_dir)
-        return available_modules
-
+        scan_directory(components_dir)
+        return available_components
+    
     @staticmethod
-    def load_modules(sysbot_instance, module_names):
-        for module_path in module_names:
+    def load_components(sysbot_instance, component_list):
+        """
+        Charge une liste de composants (modules.xxx ou plugins.xxx)
+        """
+        for component_full_path in component_list:
             try:
-                full_module_path = f"sysbot.modules.{module_path}"
-                module = importlib.import_module(full_module_path)
-                module_name = module_path.split(".")[-1]
-                class_name = module_name.capitalize()
+                # Séparer le type (modules/plugins) du chemin
+                parts = component_full_path.split('.', 1)
+                if len(parts) != 2:
+                    raise ValueError(f"Invalid component path format: {component_full_path}")
+                
+                component_type, component_path = parts
+                
+                # Construire le chemin d'importation complet
+                full_import_path = f"sysbot.{component_type}.{component_path}"
+                component_module = importlib.import_module(full_import_path)
+                
+                # Obtenir le nom de la classe
+                component_name = component_path.split(".")[-1]
+                class_name = component_name.capitalize()
 
-                if hasattr(module, class_name):
-                    module_class = getattr(module, class_name)
-                    module_instance = module_class()
-                    ModuleLoader.create_hierarchy(
-                        sysbot_instance, module_path, module_instance
+                if hasattr(component_module, class_name):
+                    component_class = getattr(component_module, class_name)
+                    component_instance = component_class()
+                    ComponentLoader.create_hierarchy(
+                        sysbot_instance, component_full_path, component_instance
                     )
+                else:
+                    raise AttributeError(f"Class '{class_name}' not found in {full_import_path}")
+                    
             except ImportError as e:
-                raise Exception(f"Unable to load module {module_path}: {e}")
+                raise Exception(f"Unable to load component {component_full_path}: {e}")
 
     @staticmethod
-    def create_hierarchy(sysbot_instance, module_path, module_instance):
-        if hasattr(module_instance, "set_sysbot_instance"):
-            module_instance.set_sysbot_instance(sysbot_instance)
-        parts = module_path.split(".")
+    def create_hierarchy(sysbot_instance, component_full_path, component_instance):
+        """
+        Crée la hiérarchie d'objets pour accéder au composant
+        """
+        if hasattr(component_instance, "set_sysbot_instance"):
+            component_instance.set_sysbot_instance(sysbot_instance)
+        
+        parts = component_full_path.split(".")
         current_obj = sysbot_instance
+        
+        # Créer la hiérarchie complète (ex: modules.linux.dnf)
         for i, part in enumerate(parts[:-1]):
             if not hasattr(current_obj, part):
-                setattr(current_obj, part, ModuleGroup(part))
+                setattr(current_obj, part, ComponentGroup(part))
             current_obj = getattr(current_obj, part)
+        
+        # Attacher l'instance finale
         final_name = parts[-1]
-        setattr(current_obj, final_name, module_instance)
-
+        setattr(current_obj, final_name, component_instance)
 
 class TunnelingManager:
     @staticmethod
