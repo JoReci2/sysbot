@@ -29,6 +29,13 @@ from pathlib import Path
 
 
 class ConnectorInterface(ABC):
+    def __init__(self):
+        self._cache = None
+    
+    def set_cache(self, cache):
+        """Injecte le cache dans le connecteur."""
+        self._cache = cache
+    
     @abstractmethod
     def open_session(self, host, port, login, password):
         pass
@@ -155,13 +162,20 @@ class ComponentLoader:
 
 class TunnelingManager:
     @staticmethod
-    def get_protocol(protocol_name, product_name):
+    def get_protocol(protocol_name, product_name, cache=None):
         try:
             module_name = (
                 f"sysbot.connectors.{protocol_name.lower()}.{product_name.lower()}"
             )
             connector = importlib.import_module(module_name)
-            return getattr(connector, product_name.capitalize())()
+            connector_class = getattr(connector, product_name.capitalize())
+            instance = connector_class()
+            
+            # Injection automatique du cache
+            if cache and hasattr(instance, 'set_cache'):
+                instance.set_cache(cache)
+                
+            return instance
         except ImportError as e:
             raise ImportError(f"Failed to import module '{module_name}': {str(e)}")
         except AttributeError as e:
