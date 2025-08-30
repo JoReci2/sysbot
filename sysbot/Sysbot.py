@@ -165,3 +165,7 @@ class Sysbot(metaclass=ComponentMeta):
 
         except Exception as e:
             raise Exception(f"Failed to call function '{function_path}': {str(e)}")
+
+    def get_secret(self, secret_name: str) -> any:
+        """Récupère un secret par son nom."""
+        return self._cache.secrets.get(secret_name)
