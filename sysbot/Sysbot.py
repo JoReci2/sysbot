@@ -26,19 +26,23 @@ import importlib
 import json
 from robot.utils import ConnectionCache
 
-from .utils.engine import ModuleMeta
+from .utils.engine import ComponentMeta
 from .utils.engine import TunnelingManager
-from .utils.engine import ModuleLoader
+from .utils.engine import ComponentLoader
 
 
-class Sysbot(metaclass=ModuleMeta):
+class Sysbot(metaclass=ComponentMeta):
     ROBOT_LIBRARY_SCOPE = "SUITE"
     ROBOT_LIBRARY_DOC_FORMAT = "reST"
 
-    def __init__(self, modules=None):
-        if modules is None:
-            modules = ModuleLoader.discover_all_modules(__file__)
-        ModuleLoader.load_modules(self, modules)
+    def __init__(self, components=None):
+        if components is None:
+            all_modules = ComponentLoader.discover_all_components(__file__, "modules")
+            all_plugins = ComponentLoader.discover_all_components(__file__, "plugins")
+            components = []
+            components.extend([f"modules.{module}" for module in all_modules])
+            components.extend([f"plugins.{plugin}" for plugin in all_plugins])
+        ComponentLoader.load_components(self, components)
         self._cache = ConnectionCache("No sessions created")
         self._protocol = None
 
