@@ -24,7 +24,6 @@ SOFTWARE.
 
 import importlib
 import json
-#from robot.utils import ConnectionCache
 
 from .utils.engine import ComponentMeta
 from .utils.engine import TunnelingManager
