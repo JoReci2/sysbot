@@ -31,11 +31,10 @@ from pathlib import Path
 class ConnectorInterface(ABC):
     def __init__(self):
         self._cache = None
-    
+
     def set_cache(self, cache):
-        """Injecte le cache dans le connecteur."""
         self._cache = cache
-    
+
     @abstractmethod
     def open_session(self, host, port, login, password):
         pass
@@ -75,9 +74,6 @@ class ComponentBase:
 class ComponentLoader:
     @staticmethod
     def discover_all_components(sysbot_file_path, component_type):
-        """
-        Découvre tous les composants d'un type donné (modules ou plugins)
-        """
         components_dir = Path(sysbot_file_path).parent / component_type
         available_components = []
 
@@ -102,12 +98,8 @@ class ComponentLoader:
 
     @staticmethod
     def load_components(sysbot_instance, component_list):
-        """
-        Charge une liste de composants (modules.xxx ou plugins.xxx)
-        """
         for component_full_path in component_list:
             try:
-                # Séparer le type (modules/plugins) du chemin
                 parts = component_full_path.split(".", 1)
                 if len(parts) != 2:
                     raise ValueError(
@@ -116,11 +108,9 @@ class ComponentLoader:
 
                 component_type, component_path = parts
 
-                # Construire le chemin d'importation complet
                 full_import_path = f"sysbot.{component_type}.{component_path}"
                 component_module = importlib.import_module(full_import_path)
 
-                # Obtenir le nom de la classe
                 component_name = component_path.split(".")[-1]
                 class_name = component_name.capitalize()
 
@@ -140,22 +130,17 @@ class ComponentLoader:
 
     @staticmethod
     def create_hierarchy(sysbot_instance, component_full_path, component_instance):
-        """
-        Crée la hiérarchie d'objets pour accéder au composant
-        """
         if hasattr(component_instance, "set_sysbot_instance"):
             component_instance.set_sysbot_instance(sysbot_instance)
 
         parts = component_full_path.split(".")
         current_obj = sysbot_instance
 
-        # Créer la hiérarchie complète (ex: modules.linux.dnf)
         for i, part in enumerate(parts[:-1]):
             if not hasattr(current_obj, part):
                 setattr(current_obj, part, ComponentGroup(part))
             current_obj = getattr(current_obj, part)
 
-        # Attacher l'instance finale
         final_name = parts[-1]
         setattr(current_obj, final_name, component_instance)
 
@@ -170,11 +155,10 @@ class TunnelingManager:
             connector = importlib.import_module(module_name)
             connector_class = getattr(connector, product_name.capitalize())
             instance = connector_class()
-            
-            # Injection automatique du cache
-            if cache and hasattr(instance, 'set_cache'):
+
+            if cache and hasattr(instance, "set_cache"):
                 instance.set_cache(cache)
-                
+
             return instance
         except ImportError as e:
             raise ImportError(f"Failed to import module '{module_name}': {str(e)}")
