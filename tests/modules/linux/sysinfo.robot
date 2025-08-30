@@ -53,9 +53,9 @@ cpu method works
     Should Be Equal    ${output}[Architecture]    x86_64
 
 keyboard method works
-    ${output}=    Call Module    modules.linux.sysinfo.keyboard    target
+    ${output}=    Call Components    modules.linux.sysinfo.keyboard    target
     Should Be Equal    ${output}    fr
 
 timezone method works
-    ${output}=    Call Module    modules.linux.sysinfo.timezone    target
+    ${output}=    Call Components    modules.linux.sysinfo.timezone    target
     Should Contain    ${output}    Etc/UTC
