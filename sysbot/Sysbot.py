@@ -89,7 +89,7 @@ class Sysbot(metaclass=ComponentMeta):
                     raise Exception("Failed to open direct session")
                 connection = {"session": session, "tunnels": None}
 
-            self._cache.register(connection, alias)
+            self._cache.connections.register(connection, alias)
         except Exception as e:
             for tunnel in reversed(tunnels):
                 tunnel.stop()
@@ -97,7 +97,7 @@ class Sysbot(metaclass=ComponentMeta):
 
     def execute_command(self, alias: str, command: str, **kwargs) -> any:
         try:
-            connection = self._cache.switch(alias)
+            connection = self._cache.connections.switch(alias)
             if not connection or "session" not in connection:
                 raise RuntimeError(f"No valid session found for alias '{alias}'")
 
@@ -112,18 +112,18 @@ class Sysbot(metaclass=ComponentMeta):
 
     def close_all_sessions(self) -> None:
         try:
-            for connection in self._cache.get_all_connections().values():
+            for connection in self._cache.connections.get_all_connections().values():
                 self._protocol.close_session(connection["session"])
                 if connection["tunnels"] is not None:
                     for tunnel in reversed(connection["tunnels"]):
                         tunnel.stop()
-            self._cache.empty_cache()
+            self._cache.connections.clear_all()
         except Exception as e:
             raise Exception(f"Failed to close all sessions: {str(e)}")
 
     def close_session(self, alias: str) -> None:
         try:
-            connection = self._cache.switch(alias)
+            connection = self._cache.connections.switch(alias)
             if not connection or "session" not in connection:
                 raise RuntimeError(f"No valid session found for alias '{alias}'")
             self._protocol.close_session(connection)
