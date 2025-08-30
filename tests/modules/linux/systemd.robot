@@ -18,14 +18,14 @@ Suite Setup       Open Session    target    ssh    bash    ${IP}    ${PORT}   ${
 *** Test Cases ***
 
 is_active method works
-    ${output}=    Call Module    linux.systemd.is_active    target    sshd
+    ${output}=    Call Module    modules.linux.systemd.is_active    target    sshd
     Should Be Equal    ${output}    active
 
 
 is_enabled method works
-    ${output}=    Call Module    linux.systemd.is_enabled    target    sshd
+    ${output}=    Call Module    modules.linux.systemd.is_enabled    target    sshd
     Should Be Equal    ${output}    enabled
 
 is_failed method works
-    ${output}=    Call Module    linux.systemd.is_failed    target    sshd
+    ${output}=    Call Module    modules.linux.systemd.is_failed    target    sshd
     Should Be Equal    ${output}    active
