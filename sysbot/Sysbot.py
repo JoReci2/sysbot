@@ -169,3 +169,7 @@ class Sysbot(metaclass=ComponentMeta):
     def get_secret(self, secret_name: str) -> any:
         """Récupère un secret par son nom."""
         return self._cache.secrets.get(secret_name)
+
+    def add_secret(self, secret_name: str, value: any) -> None:
+        """Ajoute un secret avec son nom et sa valeur."""
+        self._cache.secrets.register(secret_name, value)
