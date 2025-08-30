@@ -1,7 +1,7 @@
 import requests
 from requests.auth import HTTPBasicAuth
-import json
-from ...utils import ConnectorInterface
+from sysbot.utils.engine import ConnectorInterface
+
 
 class Basicauth(ConnectorInterface):
     """
@@ -13,7 +13,12 @@ class Basicauth(ConnectorInterface):
         """
         Opens a session to a API with basic auth.
         """
-        session_data = {'host': host, 'port': port, 'login': login, 'password': password}
+        session_data = {
+            "host": host,
+            "port": port,
+            "login": login,
+            "password": password,
+        }
         return session_data
 
     def execute_command(self, session, command, options):
@@ -21,11 +26,13 @@ class Basicauth(ConnectorInterface):
         Executes a command on a API with basic auth.
         """
         base_url = f"https://{session['host']}:{session['port']}{command}"
-        basic = HTTPBasicAuth(session['login'], session['password'])
+        basic = HTTPBasicAuth(session["login"], session["password"])
 
         if options:
-            try: 
-                result = requests.get(base_url, params=options['params'], verify=False, auth=basic)
+            try:
+                result = requests.get(
+                    base_url, params=options["params"], verify=False, auth=basic
+                )
             except Exception as e:
                 raise Exception(f"Failed to execute command: {str(e)}")
         else:

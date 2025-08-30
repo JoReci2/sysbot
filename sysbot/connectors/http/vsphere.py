@@ -1,5 +1,6 @@
 from pyVim.connect import SmartConnect, Disconnect
-from ...utils import ConnectorInterface
+from sysbot.utils.engine import ConnectorInterface
+
 
 class Vsphere(ConnectorInterface):
     """
@@ -24,7 +25,13 @@ class Vsphere(ConnectorInterface):
             Exception: If there is an error opening the session.
         """
         try:
-            client = SmartConnect(host=host, port=port, user=login, pwd=password, disableSslCertValidation=True)
+            client = SmartConnect(
+                host=host,
+                port=port,
+                user=login,
+                pwd=password,
+                disableSslCertValidation=True,
+            )
             return client
         except Exception as e:
             raise Exception(f"Failed to open VMware session: {str(e)}")

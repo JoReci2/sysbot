@@ -1,6 +1,6 @@
 import socket
 import select
-from ...utils import ConnectorInterface
+from sysbot.utils.engine import ConnectorInterface
 
 
 class Udp(ConnectorInterface):
@@ -28,24 +28,32 @@ class Udp(ConnectorInterface):
         try:
             # Create UDP socket
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            
+
             # Store target information with socket
             session_info = {
-                'socket': sock,
-                'target_host': host,
-                'target_port': int(port)
+                "socket": sock,
+                "target_host": host,
+                "target_port": int(port),
             }
-            
+
             return session_info
-            
+
         except socket.gaierror as e:
             raise Exception(f"Failed to resolve hostname {host}: {str(e)}")
         except OSError as e:
-                raise Exception(f"Failed to create UDP socket: {str(e)}")
+            raise Exception(f"Failed to create UDP socket: {str(e)}")
         except Exception as e:
             raise Exception(f"Failed to open UDP session to {host}:{port}: {str(e)}")
 
-    def execute_command(self, session, command, expect_response=True, timeout=30, buffer_size=4096, encoding='utf-8'):
+    def execute_command(
+        self,
+        session,
+        command,
+        expect_response=True,
+        timeout=30,
+        buffer_size=4096,
+        encoding="utf-8",
+    ):
         """
         Send data through the UDP socket and optionally receive a response.
 
@@ -70,12 +78,14 @@ class Udp(ConnectorInterface):
         Raises:
             Exception: If there is an error during communication.
         """
-        if not session or 'socket' not in session:
-            raise Exception("Invalid session object. Session is None or missing socket.")
+        if not session or "socket" not in session:
+            raise Exception(
+                "Invalid session object. Session is None or missing socket."
+            )
 
-        sock = session['socket']
-        target_host = session['target_host']
-        target_port = session['target_port']
+        sock = session["socket"]
+        target_host = session["target_host"]
+        target_port = session["target_port"]
 
         try:
             original_timeout = sock.gettimeout()
@@ -89,15 +99,15 @@ class Udp(ConnectorInterface):
 
             # Send UDP packet
             bytes_sent = sock.sendto(data_to_send, (target_host, target_port))
-            
+
             result = {
-                'sent': command,
-                'bytes_sent': bytes_sent,
-                'success': True,
-                'received': None,
-                'bytes_received': 0,
-                'timeout': False,
-                'source_address': None
+                "sent": command,
+                "bytes_sent": bytes_sent,
+                "success": True,
+                "received": None,
+                "bytes_received": 0,
+                "timeout": False,
+                "source_address": None,
             }
 
             # Receive response if expected
@@ -108,19 +118,21 @@ class Udp(ConnectorInterface):
                     if ready:
                         received_data, source_address = sock.recvfrom(buffer_size)
                         if isinstance(command, str):
-                            result['received'] = received_data.decode(encoding, errors='ignore')
+                            result["received"] = received_data.decode(
+                                encoding, errors="ignore"
+                            )
                         else:
-                            result['received'] = received_data
-                        result['bytes_received'] = len(received_data)
-                        result['source_address'] = source_address
+                            result["received"] = received_data
+                        result["bytes_received"] = len(received_data)
+                        result["source_address"] = source_address
                     else:
-                        result['timeout'] = True
+                        result["timeout"] = True
                 except socket.timeout:
-                    result['timeout'] = True
+                    result["timeout"] = True
 
             # Restore original timeout
             sock.settimeout(original_timeout)
-            
+
             return result
 
         except socket.error as e:
@@ -139,8 +151,7 @@ class Udp(ConnectorInterface):
             Exception: If there is an error closing the session.
         """
         try:
-            if session and 'socket' in session:
-                session['socket'].close()
+            if session and "socket" in session:
+                session["socket"].close()
         except Exception as e:
             raise Exception(f"Failed to close UDP session: {str(e)}")
-
