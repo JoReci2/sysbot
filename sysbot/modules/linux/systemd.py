@@ -1,7 +1,7 @@
-from sysbot.utils.engine import ModuleBase
+from sysbot.utils.engine import ComponentBase
 
 
-class Systemd(ModuleBase):
+class Systemd(ComponentBase):
     def is_active(self, alias, name):
         return self.execute_command(alias, f"systemctl is-active {name}")
 

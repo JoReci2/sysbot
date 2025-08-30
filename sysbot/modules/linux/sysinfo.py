@@ -1,7 +1,7 @@
-from sysbot.utils.engine import ModuleBase
+from sysbot.utils.engine import ComponentBase
 
 
-class Sysinfo(ModuleBase):
+class Sysinfo(ComponentBase):
     def os_release(self, alias):
         output = self.execute_command(alias, "cat /etc/os-release")
         data = {}

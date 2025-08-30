@@ -1,7 +1,7 @@
-from sysbot.utils.engine import ModuleBase
+from sysbot.utils.engine import ComponentBase
 
 
-class Rpm(ModuleBase):
+class Rpm(ComponentBase):
     def is_installed(self, alias, name):
         return self.execute_command(alias, f"rpm -q --quiet {name} ; echo $?")
 
