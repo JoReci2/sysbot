@@ -112,7 +112,7 @@ class Sysbot(metaclass=ComponentMeta):
 
     def close_all_sessions(self) -> None:
         try:
-            for connection in self._cache.connections.get_all_connections().values():
+            for connection in self._cache.connections.get_all().values():
                 self._protocol.close_session(connection["session"])
                 if connection["tunnels"] is not None:
                     for tunnel in reversed(connection["tunnels"]):

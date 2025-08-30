@@ -49,6 +49,7 @@ class Cache:
         return len(self.connections) + len(self.secrets)
 
 
+
 class ConnectionsManager:
     """Gestionnaire pour les connexions avec support d'alias et index."""
 
@@ -77,6 +78,22 @@ class ConnectionsManager:
 
         return index
 
+    def switch(self, index_or_alias: Union[int, str]) -> Any:
+        """Change la connexion courante et la retourne.
+
+        Args:
+            index_or_alias: Index (int) ou alias (str) de la connexion
+
+        Returns:
+            L'objet connexion
+        """
+        index = self._resolve_index(index_or_alias)
+        if index not in self._connections:
+            raise RuntimeError(f"Connection with index '{index}' does not exist.")
+
+        self._current_index = index
+        return self._connections[index]
+
     def get(self, index_or_alias: Union[int, str, None] = None) -> Any:
         """Récupère une connexion par index ou alias.
 
@@ -100,83 +117,12 @@ class ConnectionsManager:
 
         return self._connections[index]
 
-    def switch(self, index_or_alias: Union[int, str]) -> Any:
-        """Change la connexion courante et la retourne.
+    def get_all(self) -> Dict[int, Any]:
+        """Retourne toutes les connexions."""
+        return self._connections.copy()
 
-        Args:
-            index_or_alias: Index (int) ou alias (str) de la connexion
-
-        Returns:
-            L'objet connexion
-        """
-        index = self._resolve_index(index_or_alias)
-        if index not in self._connections:
-            raise RuntimeError(f"Connection with index '{index}' does not exist.")
-
-        self._current_index = index
-        return self._connections[index]
-
-    def close_all(self, closer_method: str = "close") -> None:
-        """Ferme toutes les connexions.
-
-        Args:
-            closer_method: Nom de la méthode à appeler pour fermer les connexions
-        """
-        for connection in self._connections.values():
-            if hasattr(connection, closer_method):
-                try:
-                    getattr(connection, closer_method)()
-                except Exception:
-                    # Ignore les erreurs lors de la fermeture
-                    pass
-
-        self.clear_all()
-
-    def close(
-        self, index_or_alias: Union[int, str, None] = None, closer_method: str = "close"
-    ) -> None:
-        """Ferme une connexion spécifique.
-
-        Args:
-            index_or_alias: Index, alias ou None pour la connexion courante
-            closer_method: Nom de la méthode à appeler pour fermer la connexion
-        """
-        if index_or_alias is None:
-            if self._current_index is None:
-                raise RuntimeError(self._no_current_error)
-            index = self._current_index
-        else:
-            index = self._resolve_index(index_or_alias)
-
-        if index not in self._connections:
-            raise RuntimeError(f"Connection with index '{index}' does not exist.")
-
-        connection = self._connections[index]
-        if hasattr(connection, closer_method):
-            try:
-                getattr(connection, closer_method)()
-            except Exception:
-                # Ignore les erreurs lors de la fermeture
-                pass
-
-        # Supprime la connexion et les alias associés
-        del self._connections[index]
-        self._aliases = {
-            alias: idx for alias, idx in self._aliases.items() if idx != index
-        }
-
-        # Reset la connexion courante si c'était celle-ci
-        if self._current_index == index:
-            self._current_index = None
-
-    def clear_all(self) -> None:
-        """Vide le cache sans fermer les connexions."""
-        self._connections.clear()
-        self._aliases.clear()
-        self._current_index = None
-
-    def remove(self, index_or_alias: Union[int, str]) -> None:
-        """Supprime une connexion sans la fermer.
+    def clear(self, index_or_alias: Union[int, str]) -> None:
+        """Supprime une connexion spécifique.
 
         Args:
             index_or_alias: Index ou alias de la connexion à supprimer
@@ -193,76 +139,11 @@ class ConnectionsManager:
         if self._current_index == index:
             self._current_index = None
 
-    @property
-    def current(self) -> Any:
-        """Retourne la connexion courante.
-
-        Returns:
-            L'objet connexion courante
-
-        Raises:
-            RuntimeError: Si aucune connexion courante
-        """
-        if self._current_index is None:
-            raise RuntimeError(self._no_current_error)
-        return self._connections[self._current_index]
-
-    @property
-    def current_index(self) -> Optional[int]:
-        """Retourne l'index de la connexion courante."""
-        return self._current_index
-
-    def has_connection(self, index_or_alias: Union[int, str]) -> bool:
-        """Vérifie si une connexion existe.
-
-        Args:
-            index_or_alias: Index ou alias de la connexion
-
-        Returns:
-            True si la connexion existe, False sinon
-        """
-        try:
-            index = self._resolve_index(index_or_alias)
-            return index in self._connections
-        except ValueError:
-            return False
-
-    def list_connections(self) -> List[Dict[str, Any]]:
-        """Retourne la liste des connexions avec leurs informations.
-
-        Returns:
-            Liste des connexions avec index, alias et type
-        """
-        result = []
-        reverse_aliases = {idx: alias for alias, idx in self._aliases.items()}
-
-        for index, connection in self._connections.items():
-            result.append(
-                {
-                    "index": index,
-                    "alias": reverse_aliases.get(index),
-                    "type": type(connection).__name__,
-                    "is_current": index == self._current_index,
-                }
-            )
-
-        return result
-
-    def get_all_connections(self) -> Dict[int, Any]:
-        """Retourne toutes les connexions."""
-        return self._connections.copy()
-
-    def get_all_aliases(self) -> Dict[str, int]:
-        """Retourne tous les alias."""
-        return self._aliases.copy()
-
-    def get_stats(self) -> Dict[str, Any]:
-        """Retourne des statistiques sur les connexions."""
-        return {
-            "total": len(self._connections),
-            "current_index": self._current_index,
-            "aliases_count": len(self._aliases),
-        }
+    def clear_all(self) -> None:
+        """Vide toutes les connexions du cache."""
+        self._connections.clear()
+        self._aliases.clear()
+        self._current_index = None
 
     def _get_next_index(self) -> int:
         """Génère le prochain index disponible."""
@@ -299,10 +180,6 @@ class ConnectionsManager:
     def __len__(self) -> int:
         """Retourne le nombre de connexions."""
         return len(self._connections)
-
-    def __contains__(self, index_or_alias: Union[int, str]) -> bool:
-        """Vérifie si une connexion existe (support de l'opérateur 'in')."""
-        return self.has_connection(index_or_alias)
 
 
 class SecretsManager:
