@@ -24,11 +24,12 @@ SOFTWARE.
 
 import importlib
 import json
-from robot.utils import ConnectionCache
+#from robot.utils import ConnectionCache
 
 from .utils.engine import ComponentMeta
 from .utils.engine import TunnelingManager
 from .utils.engine import ComponentLoader
+from .utils.cache import Cache as ConnectionCache
 
 
 class Sysbot(metaclass=ComponentMeta):
@@ -112,7 +113,7 @@ class Sysbot(metaclass=ComponentMeta):
 
     def close_all_sessions(self) -> None:
         try:
-            for connection in self._cache._connections:
+            for connection in self._cache.get_all_connections().values():
                 self._protocol.close_session(connection["session"])
                 if connection["tunnels"] is not None:
                     for tunnel in reversed(connection["tunnels"]):
