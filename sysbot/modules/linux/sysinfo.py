@@ -13,25 +13,25 @@ class Sysinfo(ComponentBase):
                     data[key] = value.strip("\"'")
         return data
 
-    def hostname(self, alias):
+    def hostname(self, alias: str) -> str:
         return self.execute_command(alias, "hostname -s")
 
-    def fqdn(self, alias):
+    def fqdn(self, alias: str) -> str:
         return self.execute_command(alias, "hostname -f")
 
-    def domain(self, alias):
+    def domain(self, alias: str) -> str:
         return self.execute_command(alias, "hostname -d")
 
-    def uptime(self, alias):
+    def uptime(self, alias: str) -> str:
         return self.execute_command(alias, "uptime --pretty")
 
-    def kernel(self, alias):
+    def kernel(self, alias: str) -> str:
         return self.execute_command(alias, "uname -r")
 
-    def architecture(self, alias):
+    def architecture(self, alias: str) -> str:
         return self.execute_command(alias, "uname -m")
 
-    def ram(self, alias):
+    def ram(self, alias: str) -> dict:
         output = self.execute_command(alias, "free -h")
         lines = output.splitlines()
         if len(lines) >= 2:
@@ -40,7 +40,7 @@ class Sysinfo(ComponentBase):
             return dict(zip(headers, values))
         return {}
 
-    def cpu(self, alias):
+    def cpu(self, alias: str) -> dict:
         output = self.execute_command(alias, "lscpu")
         lines = output.splitlines()
         cpu_info = {}
@@ -50,12 +50,12 @@ class Sysinfo(ComponentBase):
                 cpu_info[key.strip()] = value.strip()
         return cpu_info
 
-    def keyboard(self, alias):
+    def keyboard(self, alias: str) -> str:
         return self.execute_command(
             alias, "localectl | grep Keymap | awk '{print $3}' | tr -d ' '"
         )
 
-    def timezone(self, alias):
+    def timezone(self, alias: str) -> str:
         return self.execute_command(
             alias, "timedatectl | grep 'Time zone' | awk '{print $3}' | tr -d ' '"
         )

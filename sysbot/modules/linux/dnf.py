@@ -5,11 +5,11 @@ from io import StringIO
 
 
 class Dnf(ComponentBase):
-    def repolist(self, alias):
+    def repolist(self, alias: str) -> dict:
         output = self.execute_command(alias, "dnf repolist --json")
         return json.loads(output)
 
-    def repofile(self, alias, file):
+    def repofile(self, alias: str, file: str) -> dict:
         output = self.execute_command(alias, f"cat {file}")
         config = configparser.ConfigParser(strict=False, interpolation=None)
         config.read_file(StringIO(output))

@@ -6,7 +6,7 @@ from sysbot.utils.engine import ComponentBase
 
 class Data(ComponentBase):
     @staticmethod
-    def csv(file):
+    def csv(file: str) -> list[dict]:
         file_path = file
         try:
             result = []
@@ -23,7 +23,7 @@ class Data(ComponentBase):
             raise RuntimeError(f"Unexpected error occurred while loading CSV: {e}")
 
     @staticmethod
-    def json(file):
+    def json(file: str) -> dict:
         file_path = file
         try:
             with open(file_path, mode="r", encoding="utf-8") as file:
@@ -36,7 +36,7 @@ class Data(ComponentBase):
             raise RuntimeError(f"Unexpected error occurred while loading JSON: {e}")
 
     @staticmethod
-    def yaml(file):
+    def yaml(file: str) -> dict:
         file_path = file
         try:
             with open(file_path, mode="r", encoding="utf-8") as file:
