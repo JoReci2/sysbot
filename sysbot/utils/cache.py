@@ -30,7 +30,6 @@ import json
 
 
 class Cache:
-
     def __init__(self, no_current_error: str = "No current connection."):
         self.secrets = SecretsManager()
         self.connections = ConnectionsManager(no_current_error)
@@ -47,7 +46,6 @@ class Cache:
 
     def __len__(self) -> int:
         return len(self.connections) + len(self.secrets)
-
 
 
 class ConnectionsManager:
@@ -208,7 +206,9 @@ class SecretsManager:
 
         return key
 
-    def register(self, secret_name: str, secret_value: Union[str, Dict[str, Any]]) -> None:
+    def register(
+        self, secret_name: str, secret_value: Union[str, Dict[str, Any]]
+    ) -> None:
         """Enregistre un secret (simple ou dictionnaire).
 
         Args:
@@ -231,8 +231,8 @@ class SecretsManager:
 
     def switch(self, secret_name: str) -> str:
         """Change le secret 'courant' et le retourne.
-        
-        Note: Pour les secrets, cette méthode équivaut à get() 
+
+        Note: Pour les secrets, cette méthode équivaut à get()
         car il n'y a pas vraiment de notion de "secret courant"
 
         Args:
@@ -317,14 +317,14 @@ class SecretsManager:
         try:
             encrypted_secret = self._secrets[secret_name]
             decrypted_value = self._cipher.decrypt(encrypted_secret).decode()
-            
+
             # Tenter de parser comme JSON pour les dictionnaires
             try:
                 return json.loads(decrypted_value)
             except json.JSONDecodeError:
                 # Si ce n'est pas du JSON, retourner comme string
                 return decrypted_value
-                
+
         except Exception as e:
             raise Exception(f"Failed to decrypt secret '{secret_name}': {str(e)}")
 
