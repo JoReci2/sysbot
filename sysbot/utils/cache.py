@@ -207,13 +207,13 @@ class SecretsManager:
         return key
 
     def register(
-        self, secret_name: str, secret_value: Union[str, Dict[str, Any]]
+        self, secret_name: str, secret_value: Union[str, Dict[str, Any], List[Any]]
     ) -> None:
-        """Enregistre un secret (simple ou dictionnaire).
+        """Enregistre un secret (simple, dictionnaire ou liste).
 
         Args:
             secret_name: Nom/identifiant du secret
-            secret_value: Valeur du secret (string ou dictionnaire)
+            secret_value: Valeur du secret (string, dictionnaire ou liste)
 
         Raises:
             ValueError: Si la valeur n'est pas supportée
@@ -221,15 +221,15 @@ class SecretsManager:
         if isinstance(secret_value, str):
             encrypted_secret = self._cipher.encrypt(secret_value.encode())
             self._secrets[secret_name] = encrypted_secret
-        elif isinstance(secret_value, dict):
-            # Convertir le dictionnaire en JSON puis chiffrer
+        elif isinstance(secret_value, (dict, list)):
+            # Convertir le dictionnaire ou la liste en JSON puis chiffrer
             json_string = json.dumps(secret_value, indent=None, separators=(",", ":"))
             encrypted_secret = self._cipher.encrypt(json_string.encode())
             self._secrets[secret_name] = encrypted_secret
         else:
-            raise ValueError("Secret value must be a string or dictionary")
+            raise ValueError("Secret value must be a string, dictionary, or list")
 
-    def switch(self, secret_name: str) -> str:
+    def switch(self, secret_name: str) -> Union[str, Dict[str, Any], List[Any]]:
         """Change le secret 'courant' et le retourne.
 
         Note: Pour les secrets, cette méthode équivaut à get()
@@ -243,7 +243,7 @@ class SecretsManager:
         """
         return self.get(secret_name)
 
-    def get(self, secret_reference: str) -> Union[str, Dict[str, Any]]:
+    def get(self, secret_reference: str) -> Union[str, Dict[str, Any], List[Any]]:
         """Récupère un secret déchiffré avec support de la notation pointée.
 
         Args:
@@ -257,15 +257,24 @@ class SecretsManager:
             Exception: Si le déchiffrement échoue
         """
         if "." in secret_reference:
-            # Notation pointée pour accéder à un champ spécifique d'un dictionnaire
+            # Notation pointée pour accéder à un champ spécifique d'un dictionnaire ou liste
             secret_name, field_path = secret_reference.split(".", 1)
-            secret_dict = self._get_secret_dict(secret_name)
+            secret_value = self._get_secret(secret_name)
 
             # Support de la notation pointée multiple (ex: "config.database.password")
-            current_value = secret_dict
+            current_value = secret_value
             for field in field_path.split("."):
                 if isinstance(current_value, dict) and field in current_value:
                     current_value = current_value[field]
+                elif isinstance(current_value, list):
+                    try:
+                        # Support de l'accès par index pour les listes
+                        index = int(field)
+                        current_value = current_value[index]
+                    except (ValueError, IndexError):
+                        raise KeyError(
+                            f"Field '{field}' not found in secret '{secret_name}'"
+                        )
                 else:
                     raise KeyError(
                         f"Field '{field}' not found in secret '{secret_name}'"
@@ -276,7 +285,7 @@ class SecretsManager:
             # Secret simple
             return self._get_secret(secret_reference)
 
-    def get_all(self) -> Dict[str, Union[str, Dict[str, Any]]]:
+    def get_all(self) -> Dict[str, Union[str, Dict[str, Any], List[Any]]]:
         """Retourne tous les secrets déchiffrés.
 
         Returns:
@@ -309,7 +318,7 @@ class SecretsManager:
         """Supprime tous les secrets du cache."""
         self._secrets.clear()
 
-    def _get_secret(self, secret_name: str) -> Union[str, Dict[str, Any]]:
+    def _get_secret(self, secret_name: str) -> Union[str, Dict[str, Any], List[Any]]:
         """Méthode privée pour récupérer et déchiffrer un secret."""
         if secret_name not in self._secrets:
             raise KeyError(f"Secret '{secret_name}' not found")
@@ -318,7 +327,7 @@ class SecretsManager:
             encrypted_secret = self._secrets[secret_name]
             decrypted_value = self._cipher.decrypt(encrypted_secret).decode()
 
-            # Tenter de parser comme JSON pour les dictionnaires
+            # Tenter de parser comme JSON pour les dictionnaires et listes
             try:
                 return json.loads(decrypted_value)
             except json.JSONDecodeError:
