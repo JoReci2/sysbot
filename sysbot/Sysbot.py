@@ -65,14 +65,14 @@ class Sysbot(metaclass=ComponentMeta):
             if tunnel_config:
                 try:
                     if type(tunnel_config) is str:
-                        tunnel_config = json.loads(tunnel_config)
+                        tunnel_config = json.loads(self._cache.secrets.get(tunnel_config))
                 except Exception as e:
                     raise Exception(f"Error during importing tunnel as json: {e}")
                 target_config = {
-                    "ip": host,
+                    "ip": self._cache.secrets.get(host),
                     "port": int(self._remote_port),
-                    "username": login,
-                    "password": password,
+                    "username": self._cache.secrets.get(login),
+                    "password": self._cache.secrets.get(password),
                 }
                 TunnelingManager.nested_tunnel(
                     self._protocol, tunnel_config, target_config
@@ -83,7 +83,7 @@ class Sysbot(metaclass=ComponentMeta):
                 tunnels = connection["tunnels"]
             else:
                 session = self._protocol.open_session(
-                    host, int(self._remote_port), login, password
+                    self._cache.secrets.get(host), int(self._remote_port), self._cache.secrets.get(login), self._cache.secrets.get(password)
                 )
                 if not session:
                     raise Exception("Failed to open direct session")
