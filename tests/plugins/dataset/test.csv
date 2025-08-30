@@ -1,3 +1,6 @@
-name,age
-thibault,25
-shannon,30
+id,name,age,email,score,active
+1,Alice,28,alice@example.com,85.5,True
+2,Bob,34,bob@example.com,92.0,False
+3,Charlie,22,charlie@example.com,78.0,True
+4,David,45,david@example.com,88.5,True
+5,Eve,31,eve@example.com,95.0,False
