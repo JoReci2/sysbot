@@ -208,27 +208,46 @@ class SecretsManager:
 
         return key
 
-    def store_secret(self, secret_name: str, secret_value: str) -> None:
-        """Stocke un secret de manière chiffrée.
+    def register(self, secret_name: str, secret_value: Union[str, Dict[str, Any]]) -> None:
+        """Enregistre un secret (simple ou dictionnaire).
 
         Args:
             secret_name: Nom/identifiant du secret
-            secret_value: Valeur du secret à chiffrer
+            secret_value: Valeur du secret (string ou dictionnaire)
 
         Raises:
-            ValueError: Si la valeur n'est pas une string
+            ValueError: Si la valeur n'est pas supportée
         """
-        if not isinstance(secret_value, str):
-            raise ValueError("Secret value must be a string")
+        if isinstance(secret_value, str):
+            encrypted_secret = self._cipher.encrypt(secret_value.encode())
+            self._secrets[secret_name] = encrypted_secret
+        elif isinstance(secret_value, dict):
+            # Convertir le dictionnaire en JSON puis chiffrer
+            json_string = json.dumps(secret_value, indent=None, separators=(",", ":"))
+            encrypted_secret = self._cipher.encrypt(json_string.encode())
+            self._secrets[secret_name] = encrypted_secret
+        else:
+            raise ValueError("Secret value must be a string or dictionary")
 
-        encrypted_secret = self._cipher.encrypt(secret_value.encode())
-        self._secrets[secret_name] = encrypted_secret
-
-    def get_secret(self, secret_name: str) -> str:
-        """Récupère un secret déchiffré.
+    def switch(self, secret_name: str) -> str:
+        """Change le secret 'courant' et le retourne.
+        
+        Note: Pour les secrets, cette méthode équivaut à get() 
+        car il n'y a pas vraiment de notion de "secret courant"
 
         Args:
-            secret_name: Nom/identifiant du secret
+            secret_name: Nom du secret
+
+        Returns:
+            La valeur déchiffrée du secret
+        """
+        return self.get(secret_name)
+
+    def get(self, secret_reference: str) -> Union[str, Dict[str, Any]]:
+        """Récupère un secret déchiffré avec support de la notation pointée.
+
+        Args:
+            secret_reference: Référence au secret (ex: "db_config.password" ou "api_key")
 
         Returns:
             La valeur déchiffrée du secret
@@ -237,79 +256,10 @@ class SecretsManager:
             KeyError: Si le secret n'existe pas
             Exception: Si le déchiffrement échoue
         """
-        if secret_name not in self._secrets:
-            raise KeyError(f"Secret '{secret_name}' not found")
-
-        try:
-            encrypted_secret = self._secrets[secret_name]
-            decrypted_value = self._cipher.decrypt(encrypted_secret)
-            return decrypted_value.decode()
-        except Exception as e:
-            raise Exception(f"Failed to decrypt secret '{secret_name}': {str(e)}")
-
-    def store_secret_dict(self, secret_name: str, secret_dict: Dict[str, Any]) -> None:
-        """Stocke un dictionnaire de secrets sous un nom.
-
-        Args:
-            secret_name: Nom/identifiant du groupe de secrets
-            secret_dict: Dictionnaire contenant les secrets
-
-        Raises:
-            ValueError: Si le dictionnaire n'est pas valide
-        """
-        if not isinstance(secret_dict, dict):
-            raise ValueError("Secret dict must be a dictionary")
-
-        # Convertir toutes les valeurs en strings pour la sérialisation
-        serializable_dict = {}
-        for key, value in secret_dict.items():
-            if isinstance(value, (str, int, float, bool)):
-                serializable_dict[key] = str(value)
-            elif isinstance(value, dict):
-                # Support pour dictionnaires imbriqués
-                serializable_dict[key] = value
-            else:
-                raise ValueError(
-                    f"Unsupported value type for key '{key}': {type(value)}"
-                )
-
-        json_string = json.dumps(serializable_dict, indent=None, separators=(",", ":"))
-        self.store_secret(secret_name, json_string)
-
-    def get_secret_dict(self, secret_name: str) -> Dict[str, Any]:
-        """Récupère un dictionnaire de secrets.
-
-        Args:
-            secret_name: Nom/identifiant du groupe de secrets
-
-        Returns:
-            Dictionnaire contenant les secrets déchiffrés
-
-        Raises:
-            Exception: Si la désérialisation échoue
-        """
-        json_string = self.get_secret(secret_name)
-        try:
-            return json.loads(json_string)
-        except json.JSONDecodeError as e:
-            raise Exception(f"Failed to parse secret dict '{secret_name}': {str(e)}")
-
-    def get_secret_value(self, secret_reference: str) -> str:
-        """Récupère une valeur de secret avec support de la notation pointée.
-
-        Args:
-            secret_reference: Référence au secret (ex: "db_config.password" ou "api_key")
-
-        Returns:
-            La valeur du secret
-
-        Raises:
-            KeyError: Si le secret ou le champ n'existe pas
-        """
         if "." in secret_reference:
             # Notation pointée pour accéder à un champ spécifique d'un dictionnaire
             secret_name, field_path = secret_reference.split(".", 1)
-            secret_dict = self.get_secret_dict(secret_name)
+            secret_dict = self._get_secret_dict(secret_name)
 
             # Support de la notation pointée multiple (ex: "config.database.password")
             current_value = secret_dict
@@ -321,27 +271,31 @@ class SecretsManager:
                         f"Field '{field}' not found in secret '{secret_name}'"
                     )
 
-            return str(current_value)
+            return current_value
         else:
             # Secret simple
-            return self.get_secret(secret_reference)
+            return self._get_secret(secret_reference)
 
-    def has_secret(self, secret_name: str) -> bool:
-        """Vérifie si un secret existe.
-
-        Args:
-            secret_name: Nom/identifiant du secret
+    def get_all(self) -> Dict[str, Union[str, Dict[str, Any]]]:
+        """Retourne tous les secrets déchiffrés.
 
         Returns:
-            True si le secret existe, False sinon
+            Dictionnaire avec tous les secrets déchiffrés
         """
-        return secret_name in self._secrets
+        all_secrets = {}
+        for secret_name in self._secrets.keys():
+            try:
+                all_secrets[secret_name] = self._get_secret(secret_name)
+            except Exception:
+                # Ignorer les secrets qui ne peuvent pas être déchiffrés
+                continue
+        return all_secrets
 
-    def remove_secret(self, secret_name: str) -> None:
-        """Supprime un secret.
+    def clear(self, secret_name: str) -> None:
+        """Supprime un secret spécifique.
 
         Args:
-            secret_name: Nom/identifiant du secret
+            secret_name: Nom du secret à supprimer
 
         Raises:
             KeyError: Si le secret n'existe pas
@@ -351,88 +305,38 @@ class SecretsManager:
 
         del self._secrets[secret_name]
 
-    def list_secrets(self) -> List[str]:
-        """Retourne la liste des noms de secrets stockés.
-
-        Returns:
-            Liste des noms de secrets
-        """
-        return list(self._secrets.keys())
-
     def clear_all(self) -> None:
         """Supprime tous les secrets du cache."""
         self._secrets.clear()
 
-    def update_secret(self, secret_name: str, secret_value: str) -> None:
-        """Met à jour un secret existant ou en crée un nouveau.
+    def _get_secret(self, secret_name: str) -> Union[str, Dict[str, Any]]:
+        """Méthode privée pour récupérer et déchiffrer un secret."""
+        if secret_name not in self._secrets:
+            raise KeyError(f"Secret '{secret_name}' not found")
 
-        Args:
-            secret_name: Nom/identifiant du secret
-            secret_value: Nouvelle valeur du secret
-        """
-        self.store_secret(secret_name, secret_value)
-
-    def update_secret_dict_field(
-        self, secret_name: str, field_path: str, new_value: str
-    ) -> None:
-        """Met à jour un champ spécifique dans un dictionnaire de secrets.
-
-        Args:
-            secret_name: Nom du dictionnaire de secrets
-            field_path: Chemin vers le champ (ex: "database.password")
-            new_value: Nouvelle valeur
-        """
-        secret_dict = self.get_secret_dict(secret_name)
-
-        # Naviguer jusqu'au champ parent
-        fields = field_path.split(".")
-        current_dict = secret_dict
-
-        for field in fields[:-1]:
-            if field not in current_dict or not isinstance(current_dict[field], dict):
-                current_dict[field] = {}
-            current_dict = current_dict[field]
-
-        # Mettre à jour le champ final
-        current_dict[fields[-1]] = new_value
-
-        # Sauvegarder le dictionnaire modifié
-        self.store_secret_dict(secret_name, secret_dict)
-
-    def export_key(self) -> str:
-        """Exporte la clé de chiffrement (pour backup/partage sécurisé).
-
-        Returns:
-            La clé de chiffrement encodée en base64
-        """
-        return base64.urlsafe_b64encode(self._fernet_key).decode()
-
-    def import_key(self, key_b64: str) -> None:
-        """Importe une clé de chiffrement.
-
-        Args:
-            key_b64: Clé encodée en base64
-
-        Raises:
-            ValueError: Si la clé n'est pas valide
-        """
         try:
-            key = base64.urlsafe_b64decode(key_b64.encode())
-            # Tester la clé
-            test_cipher = Fernet(key)
-            # Si ça marche, utiliser la nouvelle clé
-            self._fernet_key = key
-            self._cipher = test_cipher
-            os.environ["SYSBOT_ENCRYPTION_KEY"] = key_b64
+            encrypted_secret = self._secrets[secret_name]
+            decrypted_value = self._cipher.decrypt(encrypted_secret).decode()
+            
+            # Tenter de parser comme JSON pour les dictionnaires
+            try:
+                return json.loads(decrypted_value)
+            except json.JSONDecodeError:
+                # Si ce n'est pas du JSON, retourner comme string
+                return decrypted_value
+                
         except Exception as e:
-            raise ValueError(f"Invalid encryption key: {str(e)}")
+            raise Exception(f"Failed to decrypt secret '{secret_name}': {str(e)}")
+
+    def _get_secret_dict(self, secret_name: str) -> Dict[str, Any]:
+        """Méthode privée pour récupérer un dictionnaire de secrets."""
+        secret_value = self._get_secret(secret_name)
+        if not isinstance(secret_value, dict):
+            raise ValueError(f"Secret '{secret_name}' is not a dictionary")
+        return secret_value
 
     def get_stats(self) -> Dict[str, int]:
-        """Retourne des statistiques sur les secrets stockés.
-
-        Returns:
-            Dictionnaire avec les statistiques
-        """
+        """Retourne des statistiques sur les secrets stockés."""
         return {
             "total_secrets": len(self._secrets),
             "total_size_bytes": sum(len(secret) for secret in self._secrets.values()),
