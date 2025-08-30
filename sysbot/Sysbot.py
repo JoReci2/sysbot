@@ -165,18 +165,3 @@ class Sysbot(metaclass=ComponentMeta):
 
         except Exception as e:
             raise Exception(f"Failed to call function '{function_path}': {str(e)}")
-
-    def import_data_from(self, module: str, **kwargs) -> any:
-        module = module.lower()
-
-        try:
-            module_name = f"sysbot.dataloaders.{module}"
-            loader_module = importlib.import_module(module_name)
-            result = loader_module.load(**kwargs)
-            return result
-
-        except ModuleNotFoundError:
-            raise ValueError(f"No loader available for module: {module}")
-
-        except Exception as e:
-            raise RuntimeError(f"An error occurred while processing the module: {e}")
