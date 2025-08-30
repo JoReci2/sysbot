@@ -46,9 +46,11 @@ class ComponentMeta(type):
     def __new__(cls, name, bases, dct):
         return super().__new__(cls, name, bases, dct)
 
+
 class ComponentGroup:
     def __init__(self, name):
         self.name = name
+
 
 class ComponentBase:
     def __init__(self):
@@ -61,6 +63,7 @@ class ComponentBase:
         if self._sysbot is None:
             raise RuntimeError("No Sysbot instance available")
         return self._sysbot.execute_command(alias, command, **kwargs)
+
 
 class ComponentLoader:
     @staticmethod
@@ -89,7 +92,7 @@ class ComponentLoader:
 
         scan_directory(components_dir)
         return available_components
-    
+
     @staticmethod
     def load_components(sysbot_instance, component_list):
         """
@@ -98,16 +101,18 @@ class ComponentLoader:
         for component_full_path in component_list:
             try:
                 # Séparer le type (modules/plugins) du chemin
-                parts = component_full_path.split('.', 1)
+                parts = component_full_path.split(".", 1)
                 if len(parts) != 2:
-                    raise ValueError(f"Invalid component path format: {component_full_path}")
-                
+                    raise ValueError(
+                        f"Invalid component path format: {component_full_path}"
+                    )
+
                 component_type, component_path = parts
-                
+
                 # Construire le chemin d'importation complet
                 full_import_path = f"sysbot.{component_type}.{component_path}"
                 component_module = importlib.import_module(full_import_path)
-                
+
                 # Obtenir le nom de la classe
                 component_name = component_path.split(".")[-1]
                 class_name = component_name.capitalize()
@@ -119,8 +124,10 @@ class ComponentLoader:
                         sysbot_instance, component_full_path, component_instance
                     )
                 else:
-                    raise AttributeError(f"Class '{class_name}' not found in {full_import_path}")
-                    
+                    raise AttributeError(
+                        f"Class '{class_name}' not found in {full_import_path}"
+                    )
+
             except ImportError as e:
                 raise Exception(f"Unable to load component {component_full_path}: {e}")
 
@@ -131,19 +138,20 @@ class ComponentLoader:
         """
         if hasattr(component_instance, "set_sysbot_instance"):
             component_instance.set_sysbot_instance(sysbot_instance)
-        
+
         parts = component_full_path.split(".")
         current_obj = sysbot_instance
-        
+
         # Créer la hiérarchie complète (ex: modules.linux.dnf)
         for i, part in enumerate(parts[:-1]):
             if not hasattr(current_obj, part):
                 setattr(current_obj, part, ComponentGroup(part))
             current_obj = getattr(current_obj, part)
-        
+
         # Attacher l'instance finale
         final_name = parts[-1]
         setattr(current_obj, final_name, component_instance)
+
 
 class TunnelingManager:
     @staticmethod

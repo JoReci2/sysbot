@@ -4,6 +4,7 @@ import yaml
 
 from sysbot.utils.engine import ComponentBase
 
+
 class Data(ComponentBase):
     @staticmethod
     def csv(file: str) -> list[dict]:
