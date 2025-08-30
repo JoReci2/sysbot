@@ -130,7 +130,7 @@ class Sysbot(metaclass=ComponentMeta):
         except Exception as e:
             raise Exception(f"Failed to close session: {str(e)}")
 
-    def call_module(self, function_path: str, *args, **kwargs) -> any:
+    def call_components(self, function_path: str, *args, **kwargs) -> any:
         try:
             parts = function_path.split(".")
             if len(parts) < 2:

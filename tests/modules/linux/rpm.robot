@@ -18,15 +18,15 @@ Suite Setup       Open Session    target    ssh    bash    ${IP}    ${PORT}   ${
 *** Test Cases ***
 
 is_installed method works
-    ${output}=    Call Module    modules.linux.rpm.is_installed    target    openssh
+    ${output}=    Call Components    modules.linux.rpm.is_installed    target    openssh
     Should Be Equal    ${output}    0
 
 version method works
-    ${output}=    Call Module    modules.linux.rpm.version    target    openssh
+    ${output}=    Call Components    modules.linux.rpm.version    target    openssh
     Should Not Be Empty    ${output}
     Log To Console    ${output}
 
 release method works
-    ${output}=    Call Module    modules.linux.rpm.release    target    openssh
+    ${output}=    Call Components    modules.linux.rpm.release    target    openssh
     Should Not Be Empty    ${output}
     Log To Console    ${output}
