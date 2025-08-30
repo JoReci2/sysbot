@@ -13,7 +13,7 @@ setup(
         "redfish",
         "pyVmomi",
         "pywinrm",
-        "pyOpenSSL"
+        "pyOpenSSL",
     ],
     author="Thibault SCIRE",
     author_email="thibault.scire@outlook.com",
@@ -21,6 +21,6 @@ setup(
     long_description="""This library provides core functionalities for the SysBot project.""",
     url="https://gitlab.com/home9344428/app/sysbot/sysbot.git",
     license="MIT",
-    license_files=['LICENSE'],
+    license_files=["LICENSE"],
     python_requires=">=3.7",
 )
