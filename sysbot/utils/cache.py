@@ -23,24 +23,26 @@ SOFTWARE.
 """
 
 from typing import Any, Dict, Optional, Union
+from .secret import SecretsManager
 
 
 class Cache:
-
     def __init__(self, no_current_error: str = "No current connection."):
         self._connections: Dict[int, Any] = {}
         self._aliases: Dict[str, int] = {}
         self._current_index: Optional[int] = None
         self._no_current_error = no_current_error
 
+        self.secrets = SecretsManager()
+
     def register(self, connection: Any, alias: Optional[str] = None) -> int:
         index = self._get_next_index()
         self._connections[index] = connection
         self._current_index = index
-        
+
         if alias:
             self._aliases[alias] = index
-            
+
         return index
 
     def get_connection(self, index_or_alias: Union[int, str, None] = None) -> Any:
@@ -48,18 +50,18 @@ class Cache:
             if self._current_index is None:
                 raise RuntimeError(self._no_current_error)
             return self._connections[self._current_index]
-        
+
         index = self._resolve_index(index_or_alias)
         if index not in self._connections:
             raise RuntimeError(f"Connection with index '{index}' does not exist.")
-        
+
         return self._connections[index]
 
     def switch(self, index_or_alias: Union[int, str]) -> Any:
         index = self._resolve_index(index_or_alias)
         if index not in self._connections:
             raise RuntimeError(f"Connection with index '{index}' does not exist.")
-        
+
         self._current_index = index
         return self._connections[index]
 
@@ -70,33 +72,36 @@ class Cache:
                     getattr(connection, closer_method)()
                 except Exception:
                     pass
-        
+
         self._connections.clear()
         self._aliases.clear()
         self._current_index = None
 
-    def close(self, index_or_alias: Union[int, str, None] = None, 
-              closer_method: str = "close") -> None:
+    def close(
+        self, index_or_alias: Union[int, str, None] = None, closer_method: str = "close"
+    ) -> None:
         if index_or_alias is None:
             if self._current_index is None:
                 raise RuntimeError(self._no_current_error)
             index = self._current_index
         else:
             index = self._resolve_index(index_or_alias)
-        
+
         if index not in self._connections:
             raise RuntimeError(f"Connection with index '{index}' does not exist.")
-        
+
         connection = self._connections[index]
         if hasattr(connection, closer_method):
             try:
                 getattr(connection, closer_method)()
             except Exception:
                 pass
-        
+
         del self._connections[index]
-        self._aliases = {alias: idx for alias, idx in self._aliases.items() if idx != index}
-        
+        self._aliases = {
+            alias: idx for alias, idx in self._aliases.items() if idx != index
+        }
+
         if self._current_index == index:
             self._current_index = None
 
@@ -104,6 +109,7 @@ class Cache:
         self._connections.clear()
         self._aliases.clear()
         self._current_index = None
+        self.secrets.clear_all()
 
     @property
     def current(self) -> Any:
@@ -123,7 +129,7 @@ class Cache:
     def _resolve_index(self, index_or_alias: Union[int, str]) -> int:
         if isinstance(index_or_alias, int):
             return index_or_alias
-        
+
         if isinstance(index_or_alias, str):
             if index_or_alias in self._aliases:
                 return self._aliases[index_or_alias]
@@ -131,7 +137,7 @@ class Cache:
                 return int(index_or_alias)
             except ValueError:
                 raise ValueError(f"Alias '{index_or_alias}' does not exist.")
-        
+
         raise ValueError(f"Invalid index or alias type: {type(index_or_alias)}")
 
     def __len__(self) -> int:
@@ -149,3 +155,13 @@ class Cache:
 
     def get_all_aliases(self) -> Dict[str, int]:
         return self._aliases.copy()
+
+    def get_cache_stats(self) -> Dict[str, Any]:
+        return {
+            "connections": {
+                "total": len(self._connections),
+                "current_index": self._current_index,
+                "aliases_count": len(self._aliases),
+            },
+            "secrets": self.secrets.get_stats(),
+        }
