@@ -40,11 +40,7 @@ class Sysinfo(ComponentBase):
                 continue
             key, value = line.split(":", 1)
             key = (
-                key.strip()
-                .lower()
-                .replace("(", "")
-                .replace(")", "")
-                .replace(" ", "_")
+                key.strip().lower().replace("(", "").replace(")", "").replace(" ", "_")
             )
             parts = value.strip().split()
             val = int(parts[0]) if parts else 0
