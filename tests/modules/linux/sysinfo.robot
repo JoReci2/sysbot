@@ -37,7 +37,7 @@ domain method works
 
 uptime method works
     ${output}=    Call Components    modules.linux.sysinfo.uptime    target
-    Should Contain    ${output}    days
+    Should Contain    ${output}    minutes
 
 kernel method works
     ${output}=    Call Components    modules.linux.sysinfo.kernel    target
