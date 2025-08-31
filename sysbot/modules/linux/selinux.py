@@ -5,12 +5,16 @@ import json
 class Selinux(ComponentBase):
     def sestatus(self, alias: str) -> dict:
         output = self.execute_command(alias, "sestatus")
+        
+        def normalize_key(key: str) -> str:
+            return key.strip().lower().replace(" ", "_")
+    
         data = {}
         for line in output.splitlines():
             if ":" in line:
                 key, value = line.split(":", 1)
-                data[key.strip()] = value.strip()
-        return json.dumps(data, indent=2)
+                data[normalize_key(key)] = value.strip()
+        return data
 
     def getenforce(self, alias: str) -> str:
         return self.execute_command(alias, "getenforce")
@@ -26,9 +30,14 @@ class Selinux(ComponentBase):
 
     def getsebool(self, alias: str) -> dict:
         output = self.execute_command(alias, "getsebool -a")
+        
+        def normalize_key(key: str) -> str:
+            return key.strip().lower().replace(" ", "_")
+
         data = {}
         for line in output.splitlines():
             if "-->" in line:
                 key, value = line.split("-->", 1)
-                data[key.strip()] = value.strip()
-        return json.dumps(data, indent=2)
+                data[normalize_key(key)] = value.strip()
+
+        return data
