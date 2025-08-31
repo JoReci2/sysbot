@@ -1,5 +1,5 @@
 *** Settings ***
-Name           Fonctionnal tests linux for dnf module
+Name           Fonctionnal tests linux for dnf module with secret features
 
 Library        Collections
 Library        sysbot.Sysbot
@@ -10,8 +10,8 @@ ${PORT}=        22
 *** Keywords ***
 
 Init test suite
-    Call Components    plugins.data.yaml    connexion    tests/.dataset/connexion.yml
-    Open Session    target    ssh    bash    connexion.host    ${PORT}   connexion.username    connexion.password
+    Call Components    plugins.data.yaml    connexion    tests/.dataset/connexion.yml    is_secret=True
+    Open Session    target    ssh    bash    connexion.host    ${PORT}   connexion.username    connexion.password    is_secret=True
 
 *** Settings ***
 

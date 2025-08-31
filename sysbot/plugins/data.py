@@ -6,7 +6,7 @@ from sysbot.utils.engine import ComponentBase
 
 
 class Data(ComponentBase):
-    def csv(self, key, file: str) -> list[dict]:
+    def csv(self, key, file: str, is_secret: bool = False) -> list[dict]:
         file_path = file
         try:
             result = []
@@ -14,7 +14,11 @@ class Data(ComponentBase):
                 reader = csv.DictReader(file)
                 for row in reader:
                     result.append(row)
-            self._sysbot._cache.secrets.register(key, result)
+            if is_secret:
+                self._sysbot._cache.secrets.register(key, result)
+                return "Imported"
+            else:
+                return result
         except FileNotFoundError:
             raise FileNotFoundError(f"CSV file not found: {file_path}")
         except csv.Error as e:
@@ -22,12 +26,16 @@ class Data(ComponentBase):
         except Exception as e:
             raise RuntimeError(f"Unexpected error occurred while loading CSV: {e}")
 
-    def json(self, key, file: str) -> dict:
+    def json(self, key, file: str, is_secret: bool = False) -> dict:
         file_path = file
         try:
             with open(file_path, mode="r", encoding="utf-8") as file:
                 result = json.load(file)
-            self._sysbot._cache.secrets.register(key, result)
+            if is_secret:
+                self._sysbot._cache.secrets.register(key, result)
+                return "Imported"
+            else:
+                return result
         except FileNotFoundError:
             raise FileNotFoundError(f"JSON file not found: {file_path}")
         except json.JSONDecodeError as e:
@@ -35,12 +43,16 @@ class Data(ComponentBase):
         except Exception as e:
             raise RuntimeError(f"Unexpected error occurred while loading JSON: {e}")
 
-    def yaml(self, key, file: str) -> dict:
+    def yaml(self, key, file: str, is_secret: bool = False) -> dict:
         file_path = file
         try:
             with open(file_path, mode="r", encoding="utf-8") as file:
                 result = yaml.safe_load(file)
-            self._sysbot._cache.secrets.register(key, result)
+            if is_secret:
+                self._sysbot._cache.secrets.register(key, result)
+                return "Imported"
+            else:
+                return result
         except FileNotFoundError:
             raise FileNotFoundError(f"YAML file not found: {file_path}")
         except yaml.YAMLError as e:

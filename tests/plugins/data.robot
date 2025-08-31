@@ -6,8 +6,23 @@ Library        sysbot.Sysbot
 
 *** Test Cases ***
 
-It is possible to load CSV files and retrieve the values ​​as an object
-    Call Components    plugins.data.csv    csv    tests/.dataset/test.csv
+Load CSV files and retrieve the values ​​as an object without secret    
+    ${vars}=    Call Components    plugins.data.csv    csv    tests/.dataset/test.csv
+    Should Be Equal As Integers    ${vars}[0][id]    1
+    Should Be Equal    ${vars}[0][name]    Alice
+
+Load YAML files and retrieve the values ​​as an object without secret
+    ${vars}=    Call Components    plugins.data.yaml    yaml    tests/.dataset/test.yml
+    Should Be Equal As Integers    ${vars}[dataset][0][id]    1
+    Should Be Equal    ${vars}[dataset][0][name]    Sample Item 1
+
+Load JSON files and retrieve the values ​​as an object without secret
+    ${vars}=    Call Components    plugins.data.json    json    tests/.dataset/test.json
+    Should Be Equal As Integers    ${vars}[dataset][0][id]    1
+    Should Be Equal    ${vars}[dataset][0][name]    Sample Item 1
+
+Load CSV files and retrieve the values ​​as an object with secret
+    Call Components    plugins.data.csv    csv    tests/.dataset/test.csv    is_secret=True
 
     ${secret}=    Get Secret    csv.0.id
     Should Be Equal As Integers    ${secret}    1
@@ -15,20 +30,21 @@ It is possible to load CSV files and retrieve the values ​​as an object
     ${secret}=    Get Secret    csv.0.name
     Should Be Equal    ${secret}    Alice
 
-It is possible to load YAML files and retrieve the values ​​as an object
-    Call Components    plugins.data.yaml    yaml    tests/.dataset/test.yml
-    
+Load YAML files and retrieve the values ​​as an object with secret
+    Call Components    plugins.data.yaml    yaml    tests/.dataset/test.yml    is_secret=True
+
     ${secret}=    Get Secret    yaml.dataset.0.id
     Should Be Equal As Integers    ${secret}    1
 
     ${secret}=    Get Secret    yaml.dataset.0.name
     Should Be Equal    ${secret}    Sample Item 1
 
-It is possible to load JSON files and retrieve the values ​​as an object
-    Call Components    plugins.data.json    json    tests/.dataset/test.json
+Load JSON files and retrieve the values ​​as an object with secret
+    Call Components    plugins.data.json    json    tests/.dataset/test.json    is_secret=True
 
     ${secret}=    Get Secret    json.dataset.0.id
     Should Be Equal As Integers    ${secret}    1
     
     ${secret}=    Get Secret    json.dataset.0.name
     Should Be Equal    ${secret}    Sample Item 1
+
