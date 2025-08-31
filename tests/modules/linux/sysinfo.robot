@@ -49,7 +49,7 @@ architecture method works
 
 ram method works
     ${output}=    Call Components    modules.linux.sysinfo.ram    target
-    Should Be Equal    ${output}[used]    15Gi
+    Should Be Equal As Integers    ${output}[memtotal][value]    16139020
 
 cpu method works
     ${output}=    Call Components    modules.linux.sysinfo.cpu    target
