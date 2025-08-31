@@ -8,7 +8,7 @@ class Ip(ComponentBase):
         return json.loads(output)
 
     def route(self, alias: str) -> dict:
-        output = self.execute_command(alias, f"ip --json route")
+        output = self.execute_command(alias, "ip --json route")
         return json.loads(output)
 
     def speed(self, alias: str, interface: str) -> str:

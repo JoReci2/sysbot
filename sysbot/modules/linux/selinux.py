@@ -1,5 +1,4 @@
 from sysbot.utils.engine import ComponentBase
-import json
 
 
 class Selinux(ComponentBase):
