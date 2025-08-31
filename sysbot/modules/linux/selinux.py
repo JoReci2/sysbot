@@ -5,10 +5,10 @@ import json
 class Selinux(ComponentBase):
     def sestatus(self, alias: str) -> dict:
         output = self.execute_command(alias, "sestatus")
-        
+
         def normalize_key(key: str) -> str:
             return key.strip().lower().replace(" ", "_")
-    
+
         data = {}
         for line in output.splitlines():
             if ":" in line:
@@ -30,7 +30,7 @@ class Selinux(ComponentBase):
 
     def getsebool(self, alias: str) -> dict:
         output = self.execute_command(alias, "getsebool -a")
-        
+
         def normalize_key(key: str) -> str:
             return key.strip().lower().replace(" ", "_")
 
