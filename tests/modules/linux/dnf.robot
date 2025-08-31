@@ -10,7 +10,7 @@ ${PORT}=        22
 *** Keywords ***
 
 Init test suite
-    Call Components    plugins.data.yaml    connexion    tests/.dataset/connexion.yml    is_secret=True
+    Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
     Open Session    target    ssh    bash    connexion.host    ${PORT}   connexion.username    connexion.password    is_secret=True
 
 *** Settings ***

@@ -11,7 +11,7 @@ ${USER}=       sysbot
 ${PASSWORD}=   P@ssw0rd
 
 *** Settings ***
-Suite Setup       Call Components    plugins.data.yaml    connexion    tests/.dataset/connexion.yml    is_secret=True
+Suite Setup       Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
 Suite Teardown    Close All Sessions
 
 *** Test Cases ***
