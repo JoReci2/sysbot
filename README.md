@@ -212,3 +212,4 @@ Thibault SCIRE - [GitHub](https://github.com/thibaultscire)
 ## Acknowledgments
 
 - [Robot Framework](https://robotframework.org/) for automation framework
+- [Testinfra](https://testinfra.readthedocs.io/en/latest/) Discovered after development was well advanced but helped me to surpass myself
