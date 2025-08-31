@@ -1,6 +1,5 @@
 *** Settings ***
 Name           data
-Description    Fonctionnal tests for data plugins
 
 Library        Collections
 Library        sysbot.Sysbot

@@ -1,6 +1,5 @@
 *** Settings ***
 Name           linux.dnf
-Description    Fonctionnal tests linux for dnf module with secret features
 
 Library        Collections
 Library        sysbot.Sysbot
