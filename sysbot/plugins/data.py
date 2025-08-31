@@ -6,7 +6,7 @@ from sysbot.utils.engine import ComponentBase
 
 
 class Data(ComponentBase):
-    def csv(self, key, file: str, is_secret: bool = False) -> list[dict]:
+    def csv(self, file: str, key: str = None) -> list[dict]:
         file_path = file
         try:
             result = []
@@ -14,7 +14,7 @@ class Data(ComponentBase):
                 reader = csv.DictReader(file)
                 for row in reader:
                     result.append(row)
-            if is_secret:
+            if key is not None:
                 self._sysbot._cache.secrets.register(key, result)
                 return "Imported"
             else:
@@ -26,12 +26,12 @@ class Data(ComponentBase):
         except Exception as e:
             raise RuntimeError(f"Unexpected error occurred while loading CSV: {e}")
 
-    def json(self, key, file: str, is_secret: bool = False) -> dict:
+    def json(self, file: str, key: str = None) -> dict:
         file_path = file
         try:
             with open(file_path, mode="r", encoding="utf-8") as file:
                 result = json.load(file)
-            if is_secret:
+            if key is not None:
                 self._sysbot._cache.secrets.register(key, result)
                 return "Imported"
             else:
@@ -43,12 +43,12 @@ class Data(ComponentBase):
         except Exception as e:
             raise RuntimeError(f"Unexpected error occurred while loading JSON: {e}")
 
-    def yaml(self, key, file: str, is_secret: bool = False) -> dict:
+    def yaml(self, file: str, key: str = None) -> dict:
         file_path = file
         try:
             with open(file_path, mode="r", encoding="utf-8") as file:
                 result = yaml.safe_load(file)
-            if is_secret:
+            if key is not None:
                 self._sysbot._cache.secrets.register(key, result)
                 return "Imported"
             else:
