@@ -1,4 +1,5 @@
 from sysbot.utils.engine import ComponentBase
+import json
 
 
 class Sysinfo(ComponentBase):
@@ -32,13 +33,22 @@ class Sysinfo(ComponentBase):
         return self.execute_command(alias, "uname -m")
 
     def ram(self, alias: str) -> dict:
-        output = self.execute_command(alias, "free -h")
-        lines = output.splitlines()
-        if len(lines) >= 2:
-            headers = lines[0].split()
-            values = lines[1].split()
-            return dict(zip(headers, values))
-        return {}
+        output = self.execute_command(alias, "cat /proc/meminfo")
+        data = {}
+        for line in output.splitlines():
+            if ":" not in line:
+                continue
+            key, value = line.split(":", 1)
+            key = (
+                key.strip().lower().replace("(", "").replace(")", "").replace(" ", "_")
+            )
+            parts = value.strip().split()
+            val = int(parts[0]) if parts else 0
+            unit = parts[1] if len(parts) > 1 else None
+
+            data[key] = {"value": val, "unit": unit}
+
+        return data
 
     def cpu(self, alias: str) -> dict:
         output = self.execute_command(alias, "lscpu")
@@ -82,3 +92,7 @@ class Sysinfo(ComponentBase):
                     "memory": pmem,
                 }
         return processes
+
+    def lsblk(self, alias: str) -> dict:
+        output = self.execute_command(alias, "lsblk --json")
+        return json.loads(output)

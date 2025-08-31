@@ -49,7 +49,7 @@ architecture method works
 
 ram method works
     ${output}=    Call Components    modules.linux.sysinfo.ram    target
-    Should Be Equal    ${output}[used]    15Gi
+    Should Be Equal As Integers    ${output}[memtotal][value]    16139020
 
 cpu method works
     ${output}=    Call Components    modules.linux.sysinfo.cpu    target
@@ -70,3 +70,7 @@ env method works
 process method works
     ${output}=    Call Components    modules.linux.sysinfo.process    target
     Should Be Equal    ${output}[1][user]    root
+
+lsblk method works
+    ${output}=    Call Components    modules.linux.sysinfo.lsblk    target
+    Should Be Equal    ${output}[blockdevices][0][name]    zram0
