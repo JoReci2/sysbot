@@ -3,8 +3,8 @@ import json
 
 
 class Sysinfo(ComponentBase):
-    def os_release(self, alias):
-        output = self.execute_command(alias, "cat /etc/os-release")
+    def os_release(self, alias: str, **kwargs) -> dict:
+        output = self.execute_command(alias, "cat /etc/os-release", **kwargs)
         data = {}
         for line in output.splitlines():
             line = line.strip()
@@ -14,26 +14,26 @@ class Sysinfo(ComponentBase):
                     data[key] = value.strip("\"'")
         return data
 
-    def hostname(self, alias: str) -> str:
-        return self.execute_command(alias, "hostname -s")
+    def hostname(self, alias: str, **kwargs) -> str:
+        return self.execute_command(alias, "hostname -s", **kwargs)
 
-    def fqdn(self, alias: str) -> str:
-        return self.execute_command(alias, "hostname -f")
+    def fqdn(self, alias: str, **kwargs) -> str:
+        return self.execute_command(alias, "hostname -f", **kwargs)
 
-    def domain(self, alias: str) -> str:
-        return self.execute_command(alias, "hostname -d")
+    def domain(self, alias: str, **kwargs) -> str:
+        return self.execute_command(alias, "hostname -d", **kwargs)
 
-    def uptime(self, alias: str) -> str:
-        return self.execute_command(alias, "uptime --pretty")
+    def uptime(self, alias: str, **kwargs) -> str:
+        return self.execute_command(alias, "uptime --pretty", **kwargs)
 
-    def kernel(self, alias: str) -> str:
-        return self.execute_command(alias, "uname -r")
+    def kernel(self, alias: str, **kwargs) -> str:
+        return self.execute_command(alias, "uname -r", **kwargs)
 
-    def architecture(self, alias: str) -> str:
-        return self.execute_command(alias, "uname -m")
+    def architecture(self, alias: str, **kwargs) -> str:
+        return self.execute_command(alias, "uname -m", **kwargs)
 
-    def ram(self, alias: str) -> dict:
-        output = self.execute_command(alias, "cat /proc/meminfo")
+    def ram(self, alias: str, **kwargs) -> dict:
+        output = self.execute_command(alias, "cat /proc/meminfo", **kwargs)
         data = {}
         for line in output.splitlines():
             if ":" not in line:
@@ -50,8 +50,8 @@ class Sysinfo(ComponentBase):
 
         return data
 
-    def cpu(self, alias: str) -> dict:
-        output = self.execute_command(alias, "lscpu")
+    def cpu(self, alias: str, **kwargs) -> dict:
+        output = self.execute_command(alias, "lscpu", **kwargs)
         lines = output.splitlines()
         cpu_info = {}
         for line in lines:
@@ -60,18 +60,14 @@ class Sysinfo(ComponentBase):
                 cpu_info[key.strip()] = value.strip()
         return cpu_info
 
-    def keyboard(self, alias: str) -> str:
-        return self.execute_command(
-            alias, "localectl | grep Keymap | awk '{print $3}' | tr -d ' '"
-        )
+    def keyboard(self, alias: str, **kwargs) -> str:
+        return self.execute_command(alias, "localectl | grep Keymap | awk '{print $3}' | tr -d ' '", **kwargs)
 
-    def timezone(self, alias: str) -> str:
-        return self.execute_command(
-            alias, "timedatectl | grep 'Time zone' | awk '{print $3}' | tr -d ' '"
-        )
+    def timezone(self, alias: str, **kwargs) -> str:
+        return self.execute_command(alias, "timedatectl | grep 'Time zone' | awk '{print $3}' | tr -d ' '", **kwargs)
 
-    def env(self, alias: str) -> dict:
-        output = self.execute_command(alias, "printenv")
+    def env(self, alias: str, **kwargs) -> dict:
+        output = self.execute_command(alias, "printenv", **kwargs)
         env_vars = {}
         for line in output.splitlines():
             if "=" in line:
@@ -79,8 +75,8 @@ class Sysinfo(ComponentBase):
                 env_vars[key] = value.strip()
         return env_vars
 
-    def process(self, alias: str) -> dict:
-        output = self.execute_command(alias, "ps -Aww -o pid,user,comm,pcpu,pmem")
+    def process(self, alias: str, **kwargs) -> dict:
+        output = self.execute_command(alias, "ps -Aww -o pid,user,comm,pcpu,pmem", **kwargs)
         processes = {}
         for line in output.splitlines()[1:]:
             if line:
@@ -93,6 +89,6 @@ class Sysinfo(ComponentBase):
                 }
         return processes
 
-    def lsblk(self, alias: str) -> dict:
-        output = self.execute_command(alias, "lsblk --json")
+    def lsblk(self, alias: str, **kwargs) -> dict:
+        output = self.execute_command(alias, "lsblk --json", **kwargs)
         return json.loads(output)
