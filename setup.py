@@ -17,9 +17,13 @@ setup(
     ],
     author="Thibault SCIRE",
     author_email="thibault.scire@outlook.com",
-    description="Sysbot library",
-    long_description="""This library provides core functionalities for the SysBot project.""",
-    url="https://gitlab.com/home9344428/app/sysbot/sysbot.git",
+    description="System test automation library",
+    long_description="""SysBot is a comprehensive library designed for system test automation. 
+    It provides secure connection management (SSH, WinRM), secret handling 
+    capabilities, and seamless integration with various technologies including VMware vSphere, Redfish, 
+    and remote system management. Perfect for DevOps teams looking to automate infrastructure tests workflows.""",
+    long_description_content_type="text/plain",
+    url="https://github.com/JoReci2/sysbot.git",
     license="MIT",
     license_files=["LICENSE"],
     python_requires=">=3.7",

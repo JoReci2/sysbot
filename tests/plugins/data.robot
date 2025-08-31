@@ -1,22 +1,50 @@
 *** Settings ***
-Name           Fonctionnal tests linux for data plugins
+Name           data
 
 Library        Collections
 Library        sysbot.Sysbot
 
 *** Test Cases ***
 
-It is possible to load CSV files and retrieve the values ​​as an object
-    ${output}=    Call Components    plugins.data.csv    tests/plugins/dataset/test.csv
-    Should Be Equal    ${output}[0][name]    Alice
-    Should Be Equal As Integers    ${output}[0][age]    28
+Load CSV files and retrieve the values ​​as an object without secret    
+    ${vars}=    Call Components    plugins.data.csv    tests/.dataset/test.csv
+    Should Be Equal As Integers    ${vars}[0][id]    1
+    Should Be Equal    ${vars}[0][name]    Alice
 
-It is possible to load YAML files and retrieve the values ​​as an object
-    ${output}=    Call Components    plugins.data.yaml    tests/plugins/dataset/test.yml
-    Should Be Equal As Integers    ${output}[dataset][0][id]    1
-    Should Be Equal    ${output}[dataset][0][name]    Sample Item 1
+Load YAML files and retrieve the values ​​as an object without secret
+    ${vars}=    Call Components    plugins.data.yaml    tests/.dataset/test.yml
+    Should Be Equal As Integers    ${vars}[dataset][0][id]    1
+    Should Be Equal    ${vars}[dataset][0][name]    Sample Item 1
 
-It is possible to load JSON files and retrieve the values ​​as an object
-    ${output}=    Call Components    plugins.data.json    tests/plugins/dataset/test.json
-    Should Be Equal As Integers    ${output}[dataset][0][id]    1
-    Should Be Equal    ${output}[dataset][0][name]    Sample Item 1
+Load JSON files and retrieve the values ​​as an object without secret
+    ${vars}=    Call Components    plugins.data.json    tests/.dataset/test.json
+    Should Be Equal As Integers    ${vars}[dataset][0][id]    1
+    Should Be Equal    ${vars}[dataset][0][name]    Sample Item 1
+
+Load CSV files and retrieve the values ​​as an object with secret
+    Call Components    plugins.data.csv    tests/.dataset/test.csv    key=csv
+
+    ${secret}=    Get Secret    csv.0.id
+    Should Be Equal As Integers    ${secret}    1
+
+    ${secret}=    Get Secret    csv.0.name
+    Should Be Equal    ${secret}    Alice
+
+Load YAML files and retrieve the values ​​as an object with secret
+    Call Components    plugins.data.yaml    tests/.dataset/test.yml    key=yaml
+
+    ${secret}=    Get Secret    yaml.dataset.0.id
+    Should Be Equal As Integers    ${secret}    1
+
+    ${secret}=    Get Secret    yaml.dataset.0.name
+    Should Be Equal    ${secret}    Sample Item 1
+
+Load JSON files and retrieve the values ​​as an object with secret
+    Call Components    plugins.data.json    tests/.dataset/test.json    key=json
+
+    ${secret}=    Get Secret    json.dataset.0.id
+    Should Be Equal As Integers    ${secret}    1
+    
+    ${secret}=    Get Secret    json.dataset.0.name
+    Should Be Equal    ${secret}    Sample Item 1
+

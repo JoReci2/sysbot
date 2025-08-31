@@ -1,18 +1,16 @@
 # SysBot
 
-A system automation and management tool that provides a unified interface for connecting to and managing various systems through different protocols. Built with Robot Framework integration in mind.
+A system test tool that provides a unified interface for connecting to and test various systems through different protocols. Built with Robot Framework integration in mind.
 
 ## Features
 
 - **Multi-protocol Support**: SSH, HTTP, WinRM, and more
 - **SSH Tunneling**: Support for nested SSH tunnels with automatic management
-- **File Operations**: Execute scripts and retrieve results remotely
 - **Cross-platform**: Support for Linux and Windows systems
 - **Robot Framework Integration**: Built-in support for Robot Framework automation with SUITE scope
-- **Type Safety**: Full type hints and static analysis support
-- **Modular Architecture**: Dynamic module loading and discovery
-- **Data Loaders**: Extensible data import system
+- **Modular Architecture**: Dynamic components loading and discovery (module and plugins)
 - **Connection Management**: Robust session caching and lifecycle management
+- **Secret Management**: Secure storage and retrieval of sensitive data
 
 ## Installation
 
@@ -27,41 +25,12 @@ A system automation and management tool that provides a unified interface for co
 pip install sysbot
 ```
 
-### Install from source
-
-```bash
-git clone https://github.com/thibaultscire/sysbot.git
-cd sysbot
-pip install -e .
-```
-
-### Development installation
-
-```bash
-git clone https://github.com/thibaultscire/sysbot.git
-cd sysbot
-pip install -e ".[dev]"
-```
-
-Regulary use tools to ensure the code is clean:
-```bash
-# Check and format the code
-ruff check sysbot
-ruff format sysbot
-# Analyze complexity et mantenability (A=Good,B=Middle,C=Bad)
-radon cc sysbot
-radon mi sysbot
-# Security analisys
-bandit -r sysbot
-safety scan
-```
-
 ## Quick Start
 
 ### Basic SSH Connection
 
 ```python
-from sysbot import Sysbot
+from sysbot.Sysbot import Sysbot
 
 # Create a SysBot instance
 bot = Sysbot()
@@ -107,7 +76,7 @@ tunnel_config = [
 # Open session through tunnels
 bot.open_session(
     alias="tunneled_server",
-    protocol="ssh",
+    protocol="ssh", # or http / winrm / ect...
     product="bash",
     host="192.168.3.100",
     port=22,
@@ -117,31 +86,71 @@ bot.open_session(
 )
 ```
 
+### Using secret management and plugins
+
+```python
+from sysbot.Sysbot import Sysbot
+bot = Sysbot()
+
+# If secret is not used
+my_import = bot.plugins.data.csv("/path/to/file")
+my_import[0][name]
+
+# With secret usage
+bot.plugins.data.csv("/path/to/file", key="my_secret")
+secret_data = bot.get_secret("my_secret.0.name")
+
+# Secret management without plugin
+bot.add_secret("new_secret", "very_secret_value")
+bot.get_secret("new_secret")
+bot.remove_secret("new_secret")
+```
+
 ### Using with Robot Framework
 
 ```robot
 *** Settings ***
 Library        sysbot.Sysbot
 
+*** Variables ***
+${HOST}=       192.168.1.112
+${PORT}=       22
+${USER}=       sysbot
+${PASSWORD}=   P@ssw0rd
+
+*** Settings ***
+Suite Setup       Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
 Suite Teardown    Close All Sessions
-Suite Setup       Open Session    target    ssh    bash    ${IP}    ${PORT}   ${USER}    ${PASSWORD}
 
 *** Test Cases ***
 
-repolist method works
-    ${output}=    Call Module    linux.dnf.repolist    target
-    Should Not Be Empty    ${output}[0][name]
+Open Session without secret
+    Open Session    target    ssh    bash    ${HOST}    ${PORT}   ${USER}    ${PASSWORD}
+    Close All Sessions
+
+Open Session with secret
+    Open Session    target    ssh    bash    connexion.host    ${PORT}   connexion.username    connexion.password   is_secret=True
+    Close All Sessions
 ```
 
 ### Module System
 
 ```python
 # Call functions from loaded modules
-bot = Sysbot("linux.systemd", "linux.dnf") #bot = Sysbot() to load all modules
-result = bot.linux.dnf.repolist("tunneled_server")
+bot = Sysbot("linux.systemd", "linux.dnf") # bot = Sysbot() to load all modules
 
-# Import data using data loaders
-data = bot.import_data_from("csv", file_path="/path/to/data.csv")
+# Open an SSH session to a Linux system
+bot.open_session(
+    alias="my_linux_server",
+    protocol="ssh",
+    product="bash",
+    host="192.168.1.100",
+    port=22,
+    login="username",
+    password="password"
+)
+
+result = bot.linux.dnf.repolist("my_linux_server")
 ```
 
 ### Session Management
@@ -177,33 +186,11 @@ bot.close_all_sessions()
 sysbot/
 ├── Sysbot.py           # Main SysBot class
 ├── connectors/         # Protocol-specific connectors
-├── dataloaders/        # Data loading utilities
+├── plugins/            # Plugins utilities
 ├── utils/
 │   └── engine.py       # Engine class
-└── modules/            # Protocol-specific modules
+└── modules/            # Modules
 ```
-
-## Key Components
-
-### Connection Management
-- **Connection Cache**: Centralized session management using Robot Framework's ConnectionCache
-- **Automatic Cleanup**: Proper cleanup of sessions and tunnels on close
-- **Alias Support**: Named connections for easy reference
-
-### Tunneling System
-- **Nested Tunnels**: Support for multiple SSH hops
-- **Automatic Management**: Tunnels are automatically created and destroyed
-- **JSON Configuration**: Support for tunnel configuration via JSON strings
-
-### Module System
-- **Dynamic Loading**: Modules are automatically discovered and loaded
-- **Modular Functions**: Call specific functions using dot notation
-- **Extensible**: Easy to add new protocol or module support
-
-### Data Loaders
-- **Pluggable System**: Support for different data sources
-- **Module-based**: Each loader is a separate module
-- **Flexible Input**: Support for various data formats
 
 ## Error Handling
 
@@ -224,6 +211,5 @@ Thibault SCIRE - [GitHub](https://github.com/thibaultscire)
 
 ## Acknowledgments
 
-- [Paramiko](https://www.paramiko.org/) for SSH functionality
 - [Robot Framework](https://robotframework.org/) for automation framework
-- [SSHTunnel](https://github.com/pahaz/sshtunnel) for SSH tunneling support
+- [Testinfra](https://testinfra.readthedocs.io/en/latest/) Discovered after development was well advanced but helped me to surpass myself

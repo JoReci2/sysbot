@@ -1,19 +1,22 @@
 *** Settings ***
-Name           Fonctionnal tests linux for dnf module
+Name           linux.dnf
 
 Library        Collections
 Library        sysbot.Sysbot
 
 *** Variables ***
-${IP}=          192.168.1.112
 ${PORT}=        22
-${USER}=        sysbot
-${PASSWORD}=    P@ssw0rd
+
+*** Keywords ***
+
+Init test suite
+    Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
+    Open Session    target    ssh    bash    connexion.host    ${PORT}   connexion.username    connexion.password    is_secret=True
 
 *** Settings ***
 
 Suite Teardown    Close All Sessions
-Suite Setup       Open Session    target    ssh    bash    ${IP}    ${PORT}   ${USER}    ${PASSWORD}
+Suite Setup       Init test suite
 
 *** Test Cases ***
 

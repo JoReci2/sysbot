@@ -24,11 +24,11 @@ SOFTWARE.
 
 import importlib
 import json
-from robot.utils import ConnectionCache
 
 from .utils.engine import ComponentMeta
 from .utils.engine import TunnelingManager
 from .utils.engine import ComponentLoader
+from .utils.cache import Cache as ConnectionCache
 
 
 class Sysbot(metaclass=ComponentMeta):
@@ -56,6 +56,7 @@ class Sysbot(metaclass=ComponentMeta):
         login: str = None,
         password: str = None,
         tunnel_config=None,
+        is_secret=False,
         **kwargs,
     ) -> None:
         tunnels = []
@@ -65,15 +66,23 @@ class Sysbot(metaclass=ComponentMeta):
             if tunnel_config:
                 try:
                     if type(tunnel_config) is str:
-                        tunnel_config = json.loads(tunnel_config)
+                        tunnel_config = json.loads(self._cache.secrets.get(tunnel_config))
                 except Exception as e:
                     raise Exception(f"Error during importing tunnel as json: {e}")
-                target_config = {
-                    "ip": host,
-                    "port": int(self._remote_port),
-                    "username": login,
-                    "password": password,
-                }
+                if is_secret:
+                    target_config = {
+                        "ip": self._cache.secrets.get(host),
+                        "port": int(self._remote_port),
+                        "username": self._cache.secrets.get(login),
+                        "password": self._cache.secrets.get(password),
+                    }
+                else:
+                    target_config = {
+                        "ip": host,
+                        "port": int(self._remote_port),
+                        "username": login,
+                        "password": password,
+                    }
                 TunnelingManager.nested_tunnel(
                     self._protocol, tunnel_config, target_config
                 )
@@ -82,14 +91,19 @@ class Sysbot(metaclass=ComponentMeta):
                 )
                 tunnels = connection["tunnels"]
             else:
-                session = self._protocol.open_session(
-                    host, int(self._remote_port), login, password
-                )
+                if is_secret:
+                    session = self._protocol.open_session(
+                        self._cache.secrets.get(host), int(self._remote_port), self._cache.secrets.get(login), self._cache.secrets.get(password)
+                    )
+                else:
+                    session = self._protocol.open_session(
+                        host, int(self._remote_port), login, password
+                    )
                 if not session:
                     raise Exception("Failed to open direct session")
                 connection = {"session": session, "tunnels": None}
 
-            self._cache.register(connection, alias)
+            self._cache.connections.register(connection, alias)
         except Exception as e:
             for tunnel in reversed(tunnels):
                 tunnel.stop()
@@ -97,7 +111,7 @@ class Sysbot(metaclass=ComponentMeta):
 
     def execute_command(self, alias: str, command: str, **kwargs) -> any:
         try:
-            connection = self._cache.switch(alias)
+            connection = self._cache.connections.switch(alias)
             if not connection or "session" not in connection:
                 raise RuntimeError(f"No valid session found for alias '{alias}'")
 
@@ -112,21 +126,22 @@ class Sysbot(metaclass=ComponentMeta):
 
     def close_all_sessions(self) -> None:
         try:
-            for connection in self._cache._connections:
+            for connection in self._cache.connections.get_all().values():
                 self._protocol.close_session(connection["session"])
                 if connection["tunnels"] is not None:
                     for tunnel in reversed(connection["tunnels"]):
                         tunnel.stop()
-            self._cache.empty_cache()
+            self._cache.connections.clear_all()
         except Exception as e:
             raise Exception(f"Failed to close all sessions: {str(e)}")
 
     def close_session(self, alias: str) -> None:
         try:
-            connection = self._cache.switch(alias)
+            connection = self._cache.connections.switch(alias)
             if not connection or "session" not in connection:
                 raise RuntimeError(f"No valid session found for alias '{alias}'")
-            self._protocol.close_session(connection)
+            self._protocol.close_session(connection["session"])
+            self._cache.connections.clear(alias)
         except Exception as e:
             raise Exception(f"Failed to close session: {str(e)}")
 
@@ -166,17 +181,11 @@ class Sysbot(metaclass=ComponentMeta):
         except Exception as e:
             raise Exception(f"Failed to call function '{function_path}': {str(e)}")
 
-    def import_data_from(self, module: str, **kwargs) -> any:
-        module = module.lower()
+    def get_secret(self, secret_name: str) -> any:
+        return self._cache.secrets.get(secret_name)
 
-        try:
-            module_name = f"sysbot.dataloaders.{module}"
-            loader_module = importlib.import_module(module_name)
-            result = loader_module.load(**kwargs)
-            return result
+    def add_secret(self, secret_name: str, value: any) -> None:
+        self._cache.secrets.register(secret_name, value)
 
-        except ModuleNotFoundError:
-            raise ValueError(f"No loader available for module: {module}")
-
-        except Exception as e:
-            raise RuntimeError(f"An error occurred while processing the module: {e}")
+    def remove_secret(self, secret_name: str) -> None:
+        self._cache.secrets.clear(secret_name)
