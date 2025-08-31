@@ -66,7 +66,9 @@ class Sysbot(metaclass=ComponentMeta):
             if tunnel_config:
                 try:
                     if type(tunnel_config) is str:
-                        tunnel_config = json.loads(self._cache.secrets.get(tunnel_config))
+                        tunnel_config = json.loads(
+                            self._cache.secrets.get(tunnel_config)
+                        )
                 except Exception as e:
                     raise Exception(f"Error during importing tunnel as json: {e}")
                 if is_secret:
@@ -93,7 +95,10 @@ class Sysbot(metaclass=ComponentMeta):
             else:
                 if is_secret:
                     session = self._protocol.open_session(
-                        self._cache.secrets.get(host), int(self._remote_port), self._cache.secrets.get(login), self._cache.secrets.get(password)
+                        self._cache.secrets.get(host),
+                        int(self._remote_port),
+                        self._cache.secrets.get(login),
+                        self._cache.secrets.get(password),
                     )
                 else:
                     session = self._protocol.open_session(
