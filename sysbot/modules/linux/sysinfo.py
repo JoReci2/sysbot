@@ -79,6 +79,6 @@ class Sysinfo(ComponentBase):
                     "user": user,
                     "command": comm,
                     "cpu": pcpu,
-                    "memory": pmem
+                    "memory": pmem,
                 }
         return processes
