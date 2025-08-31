@@ -69,16 +69,3 @@ class Sysinfo(ComponentBase):
                 env_vars[key] = value.strip()
         return env_vars
 
-    def process(self, alias: str) -> dict:
-        output = self.execute_command(alias, "ps -Aww -o pid,user,comm,pcpu,pmem")
-        processes = {}
-        for line in output.splitlines()[1:]:
-            if line:
-                pid, user, comm, pcpu, pmem = line.split(None, 4)
-                processes[pid] = {
-                    "user": user,
-                    "command": comm,
-                    "cpu": pcpu,
-                    "memory": pmem,
-                }
-        return processes
