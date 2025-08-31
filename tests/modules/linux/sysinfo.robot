@@ -62,3 +62,7 @@ keyboard method works
 timezone method works
     ${output}=    Call Components    modules.linux.sysinfo.timezone    target
     Should Contain    ${output}    Etc/UTC
+
+env method works
+    ${output}=    Call Components    modules.linux.sysinfo.env    target
+    Should Be Equal    ${output}[SHELL]    /bin/bash
