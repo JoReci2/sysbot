@@ -59,3 +59,12 @@ class Sysinfo(ComponentBase):
         return self.execute_command(
             alias, "timedatectl | grep 'Time zone' | awk '{print $3}' | tr -d ' '"
         )
+
+    def env(self, alias: str) -> dict:
+        output = self.execute_command(alias, "printenv")
+        env_vars = {}
+        for line in output.splitlines():
+            if "=" in line:
+                key, value = line.split("=", 1)
+                env_vars[key] = value.strip()
+        return env_vars
