@@ -1,5 +1,6 @@
 *** Settings ***
-Name           Fonctionnal tests for main sysbot
+Name           Sysbot
+Description    Fonctionnal tests for main sysbot
 
 Library        Collections
 Library        sysbot.Sysbot

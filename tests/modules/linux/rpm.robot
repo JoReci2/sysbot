@@ -1,5 +1,6 @@
 *** Settings ***
-Name           Fonctionnal tests linux for rpm module with secret features
+Name           linux.rpm
+Description    Fonctionnal tests linux for rpm module with secret features
 
 Library        Collections
 Library        sysbot.Sysbot

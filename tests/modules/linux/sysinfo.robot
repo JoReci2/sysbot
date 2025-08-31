@@ -1,5 +1,6 @@
 *** Settings ***
-Name           Fonctionnal tests linux for systeminfo module with secret features
+Name           linux.systeminfo
+Description    Fonctionnal tests linux for systeminfo module with secret features
 
 Library        Collections
 Library        sysbot.Sysbot

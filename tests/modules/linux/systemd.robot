@@ -1,5 +1,6 @@
 *** Settings ***
-Name           Fonctionnal tests linux for systemd module with secret features
+Name           linux.systemd
+Description    Fonctionnal tests linux for systemd module with secret features
 
 Library        Collections
 Library        sysbot.Sysbot

@@ -1,5 +1,6 @@
 *** Settings ***
-Name           Fonctionnal tests linux for data plugins
+Name           data
+Description    Fonctionnal tests for data plugins
 
 Library        Collections
 Library        sysbot.Sysbot
