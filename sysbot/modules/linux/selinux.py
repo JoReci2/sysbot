@@ -3,8 +3,8 @@ import json
 
 
 class Selinux(ComponentBase):
-    def sestatus(self) -> dict:
-        output = self.execute_command("sestatus")
+    def sestatus(self, alias: str) -> dict:
+        output = self.execute_command(alias, "sestatus")
         data = {}
         for line in output.splitlines():
             if ":" in line:
@@ -12,20 +12,20 @@ class Selinux(ComponentBase):
                 data[key.strip()] = value.strip()
         return json.dumps(data, indent=2)
 
-    def getenforce(self) -> str:
-        return self.execute_command("getenforce")
+    def getenforce(self, alias: str) -> str:
+        return self.execute_command(alias, "getenforce")
 
-    def context_id(self) -> str:
-        return self.execute_command("id -Z")
+    def context_id(self, alias: str) -> str:
+        return self.execute_command(alias, "id -Z")
 
-    def context_ps(self, process: str) -> str:
-        return self.execute_command(f"ps -axZ | grep {process}")
+    def context_ps(self, alias: str, process: str) -> str:
+        return self.execute_command(alias, f"ps -axZ | grep {process}")
 
-    def context_file(self, filename: str) -> str:
-        return self.execute_command(f"ls -Z {filename}")
+    def context_file(self, alias: str, filename: str) -> str:
+        return self.execute_command(alias, f"ls -Z {filename}")
 
-    def getsebool(self) -> dict:
-        output = self.execute_command("getsebool -a")
+    def getsebool(self, alias: str) -> dict:
+        output = self.execute_command(alias, "getsebool -a")
         data = {}
         for line in output.splitlines():
             if "-->" in line:
