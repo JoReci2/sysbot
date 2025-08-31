@@ -66,3 +66,7 @@ timezone method works
 env method works
     ${output}=    Call Components    modules.linux.sysinfo.env    target
     Should Be Equal    ${output}[SHELL]    /bin/bash
+
+process method works
+    ${output}=    Call Components    modules.linux.sysinfo.process    target
+    Should Be Equal    ${output}[1][user]    root
