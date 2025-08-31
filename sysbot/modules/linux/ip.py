@@ -3,10 +3,13 @@ import json
 
 class Ip(ComponentBase):
 
-    def addr(self, alias: str, name: str) -> dict:
-        output = self.execute_command(alias, f"ip --json addr show {name}")
+    def addr(self, alias: str, interface: str) -> dict:
+        output = self.execute_command(alias, f"ip --json addr show {interface}")
         return json.loads(output)
 
     def route(self, alias: str) -> dict:
         output = self.execute_command(alias, f"ip --json route")
         return json.loads(output)
+    
+    def speed(self, alias: str, interface: str) -> str:
+        return self.execute_command(alias, f"cat /sys/class/net/{interface}/speed")
