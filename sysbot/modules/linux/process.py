@@ -2,7 +2,6 @@ from sysbot.utils.engine import ComponentBase
 
 
 class Process(ComponentBase):
-
     def ps(self, alias: str, name: str) -> dict:
         output = self.execute_command(alias, f"ps aux | grep {name} | grep -v grep")
         processes = []
@@ -37,13 +36,16 @@ class Process(ComponentBase):
                     "stack_ptr": parts[2],
                     "tty": parts[9],
                     "time": parts[10],
-                    "command": parts[11] if len(parts) > 11 else ""
+                    "command": parts[11] if len(parts) > 11 else "",
                 }
                 processes.append(process)
         return processes
 
     def security(self, alias: str, name: str) -> dict:
-        output = self.execute_command(alias, f"ps -eo euser,ruser,suser,fuser,f,comm,label | grep {name} | grep -v grep")
+        output = self.execute_command(
+            alias,
+            f"ps -eo euser,ruser,suser,fuser,f,comm,label | grep {name} | grep -v grep",
+        )
         headers = ["euser", "ruser", "suser", "fuser", "f", "comm", "label"]
         processes = []
         for line in output.splitlines():

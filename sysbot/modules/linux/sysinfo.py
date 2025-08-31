@@ -68,4 +68,3 @@ class Sysinfo(ComponentBase):
                 key, value = line.split("=", 1)
                 env_vars[key] = value.strip()
         return env_vars
-
