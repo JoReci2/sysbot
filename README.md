@@ -76,7 +76,7 @@ tunnel_config = [
 # Open session through tunnels
 bot.open_session(
     alias="tunneled_server",
-    protocol="ssh",
+    protocol="ssh", # or http / winrm / ect...
     product="bash",
     host="192.168.3.100",
     port=22,
@@ -211,6 +211,4 @@ Thibault SCIRE - [GitHub](https://github.com/thibaultscire)
 
 ## Acknowledgments
 
-- [Paramiko](https://www.paramiko.org/) for SSH functionality
 - [Robot Framework](https://robotframework.org/) for automation framework
-- [SSHTunnel](https://github.com/pahaz/sshtunnel) for SSH tunneling support
