@@ -70,3 +70,7 @@ env method works
 process method works
     ${output}=    Call Components    modules.linux.sysinfo.process    target
     Should Be Equal    ${output}[1][user]    root
+
+lsblk method works
+    ${output}=    Call Components    modules.linux.sysinfo.lsblk    target
+    Should Be Equal    ${output}[blockdevices][0][name]    zram0

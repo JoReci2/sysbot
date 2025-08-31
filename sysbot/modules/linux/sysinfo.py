@@ -1,4 +1,5 @@
 from sysbot.utils.engine import ComponentBase
+import json
 
 
 class Sysinfo(ComponentBase):
@@ -95,3 +96,7 @@ class Sysinfo(ComponentBase):
                     "memory": pmem,
                 }
         return processes
+
+    def lsblk(self, alias: str) -> dict:
+        output = self.execute_command(alias, "lsblk --json")
+        return json.loads(output)
