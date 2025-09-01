@@ -24,7 +24,11 @@ class Users(ComponentBase):
         return output.split()
 
     def home(self, alias: str, name: str, **kwargs) -> str:
-        return self.execute_command(alias, f"getent passwd {name} | cut -d: -f6", **kwargs)
+        return self.execute_command(
+            alias, f"getent passwd {name} | cut -d: -f6", **kwargs
+        )
 
     def shell(self, alias: str, name: str, **kwargs) -> str:
-        return self.execute_command(alias, f"getent passwd {name} | cut -d: -f7", **kwargs)
+        return self.execute_command(
+            alias, f"getent passwd {name} | cut -d: -f7", **kwargs
+        )
