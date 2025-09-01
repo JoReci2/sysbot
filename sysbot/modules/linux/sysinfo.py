@@ -111,3 +111,7 @@ class Sysinfo(ComponentBase):
     def sysctl(self, alias: str, variable: str) -> str:
         return self.execute_command(alias, f"sysctl -n {variable}")
     
+    def dns(self, alias: str) -> list[str]:
+        output = self.execute_command(alias, "cat /etc/resolv.conf")
+        result = [srv.replace('nameserver ', '') for srv in output.splitlines if srv.startswith('nameserver')]
+        return result
