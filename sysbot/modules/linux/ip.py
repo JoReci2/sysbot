@@ -22,4 +22,4 @@ class Ip(ComponentBase):
         return self.execute_command(alias, f"getent hosts {fqdn} | awk '{{print $1}}'", **kwargs)
 
     def ping(self, alias: str, host: str, **kwargs) -> bool:
-        return self.execute_command(alias, f"ping -W 1 -c 1 {host} > /dev/null 2>&1 ; echo $?", **kwargs) == 0
+        return self.execute_command(alias, f"ping -W 1 -c 1 {host} > /dev/null 2>&1 ; echo $?", **kwargs) == "0"
