@@ -1,5 +1,6 @@
 from sysbot.utils.engine import ComponentBase
 import json
+from datetime import datetime, timezone
 
 
 class Sysinfo(ComponentBase):
@@ -72,6 +73,12 @@ class Sysinfo(ComponentBase):
             **kwargs,
         )
 
+    def datetime_utc(self, alias: str) -> str:
+        output = self.execute_command(alias, "date '+%a %b %d %H:%M:%S %Y %z'")
+        current_time = datetime.strptime(output, "%a %b %d %H:%M:%S %Y %z")
+        utc_time = current_time.astimezone(timezone.utc)
+        return utc_time.strftime("%Y/%m/%d %H:%M")
+
     def env(self, alias: str, **kwargs) -> dict:
         output = self.execute_command(alias, "printenv", **kwargs)
         env_vars = {}
@@ -100,3 +107,25 @@ class Sysinfo(ComponentBase):
     def lsblk(self, alias: str, **kwargs) -> dict:
         output = self.execute_command(alias, "lsblk --json", **kwargs)
         return json.loads(output)
+
+    def sysctl(self, alias: str, variable: str) -> str:
+        return self.execute_command(alias, f"sysctl -n {variable}")
+
+    def dns(self, alias: str) -> list[str]:
+        output = self.execute_command(alias, "cat /etc/resolv.conf")
+        result = [
+            srv.replace("nameserver ", "")
+            for srv in output.splitlines()
+            if srv.startswith("nameserver")
+        ]
+        return result
+
+    def ntp_server(self, alias: str) -> list[str]:
+        output = self.execute_command(alias, "cat /etc/chrony.conf")
+        result = [
+            srv.replace("server ", "")
+            for srv in output.splitlines()
+            if srv.startswith("server ")
+        ]
+        result = [srv.split(" ")[0] if " " in srv else srv for srv in result]
+        return result
