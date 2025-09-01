@@ -3,7 +3,9 @@ from sysbot.utils.engine import ComponentBase
 
 class Process(ComponentBase):
     def ps(self, alias: str, name: str, **kwargs) -> dict:
-        output = self.execute_command(alias, f"ps aux | grep {name} | grep -v grep", **kwargs)
+        output = self.execute_command(
+            alias, f"ps aux | grep {name} | grep -v grep", **kwargs
+        )
         processes = []
         for line in output.splitlines():
             parts = line.split(maxsplit=10)
@@ -25,7 +27,9 @@ class Process(ComponentBase):
         return processes
 
     def thread(self, alias: str, name: str, **kwargs) -> dict:
-        output = self.execute_command(alias, f"ps axms | grep {name} | grep -v grep", **kwargs)
+        output = self.execute_command(
+            alias, f"ps axms | grep {name} | grep -v grep", **kwargs
+        )
         processes = []
         for line in output.splitlines():
             parts = line.split(maxsplit=10)
@@ -42,7 +46,11 @@ class Process(ComponentBase):
         return processes
 
     def security(self, alias: str, name: str, **kwargs) -> dict:
-        output = self.execute_command(alias, f"ps -eo euser,ruser,suser,fuser,f,comm,label | grep {name} | grep -v grep", **kwargs)
+        output = self.execute_command(
+            alias,
+            f"ps -eo euser,ruser,suser,fuser,f,comm,label | grep {name} | grep -v grep",
+            **kwargs,
+        )
         headers = ["euser", "ruser", "suser", "fuser", "f", "comm", "label"]
         processes = []
         for line in output.splitlines():

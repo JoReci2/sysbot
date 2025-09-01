@@ -61,10 +61,16 @@ class Sysinfo(ComponentBase):
         return cpu_info
 
     def keyboard(self, alias: str, **kwargs) -> str:
-        return self.execute_command(alias, "localectl | grep Keymap | awk '{print $3}' | tr -d ' '", **kwargs)
+        return self.execute_command(
+            alias, "localectl | grep Keymap | awk '{print $3}' | tr -d ' '", **kwargs
+        )
 
     def timezone(self, alias: str, **kwargs) -> str:
-        return self.execute_command(alias, "timedatectl | grep 'Time zone' | awk '{print $3}' | tr -d ' '", **kwargs)
+        return self.execute_command(
+            alias,
+            "timedatectl | grep 'Time zone' | awk '{print $3}' | tr -d ' '",
+            **kwargs,
+        )
 
     def env(self, alias: str, **kwargs) -> dict:
         output = self.execute_command(alias, "printenv", **kwargs)
@@ -76,7 +82,9 @@ class Sysinfo(ComponentBase):
         return env_vars
 
     def process(self, alias: str, **kwargs) -> dict:
-        output = self.execute_command(alias, "ps -Aww -o pid,user,comm,pcpu,pmem", **kwargs)
+        output = self.execute_command(
+            alias, "ps -Aww -o pid,user,comm,pcpu,pmem", **kwargs
+        )
         processes = {}
         for line in output.splitlines()[1:]:
             if line:
