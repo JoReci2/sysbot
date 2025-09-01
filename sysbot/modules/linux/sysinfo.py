@@ -1,5 +1,6 @@
 from sysbot.utils.engine import ComponentBase
 import json
+from datetime import datetime, timezone
 
 
 class Sysinfo(ComponentBase):
@@ -72,6 +73,12 @@ class Sysinfo(ComponentBase):
             **kwargs,
         )
 
+    def datetime_utc(self, alias: str) -> str:
+        output = self.execute_command(alias, "date '+%a %b %d %H:%M:%S %Y %z'")
+        current_time = datetime.strptime(output, "%a %b %d %H:%M:%S %Y %z")
+        utc_time = current_time.astimezone(timezone.utc)
+        return utc_time.strftime("%Y/%m/%d %H:%M")
+
     def env(self, alias: str, **kwargs) -> dict:
         output = self.execute_command(alias, "printenv", **kwargs)
         env_vars = {}
@@ -103,3 +110,4 @@ class Sysinfo(ComponentBase):
 
     def sysctl(self, alias: str, variable: str) -> str:
         return self.execute_command(alias, f"sysctl -n {variable}")
+    
