@@ -74,3 +74,19 @@ process method works
 lsblk method works
     ${output}=    Call Components    modules.linux.sysinfo.lsblk    target
     Should Be Equal    ${output}[blockdevices][0][name]    zram0
+
+datetime_utc method works
+    ${output}=    Call Components    modules.linux.sysinfo.datetime_utc    target
+    Should Not Be Empty    ${output}
+
+sysctl method works
+    ${output}=    Call Components    modules.linux.sysinfo.sysctl    target    kernel.pty.nr
+    Should Be Equal    ${output}    2
+
+dns method works
+    ${output}=    Call Components    modules.linux.sysinfo.dns    target
+    Should Contain    ${output}    127.0.0.53
+
+ntp_server method works
+    ${output}=    Call Components    modules.linux.sysinfo.ntp_server    target
+    Should Be Empty   ${output}    127.0.0.53
