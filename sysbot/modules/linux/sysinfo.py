@@ -113,5 +113,11 @@ class Sysinfo(ComponentBase):
     
     def dns(self, alias: str) -> list[str]:
         output = self.execute_command(alias, "cat /etc/resolv.conf")
-        result = [srv.replace('nameserver ', '') for srv in output.splitlines if srv.startswith('nameserver')]
+        result = [srv.replace('nameserver ', '') for srv in output.splitlines() if srv.startswith('nameserver')]
+        return result
+    
+    def ntp_server(self, alias: str) -> list[str]:
+        output = self.execute_command(alias, 'cat /etc/chrony.conf')
+        result = [srv.replace('server ', '') for srv in output.splitlines() if srv.startswith('server ')]
+        result = [srv.split(' ')[0] if ' ' in srv else srv for srv in result]
         return result
