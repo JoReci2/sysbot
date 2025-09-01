@@ -100,3 +100,6 @@ class Sysinfo(ComponentBase):
     def lsblk(self, alias: str, **kwargs) -> dict:
         output = self.execute_command(alias, "lsblk --json", **kwargs)
         return json.loads(output)
+
+    def sysctl(self, alias: str, variable: str) -> str:
+        return self.execute_command(alias, f"sysctl -n {variable}")
