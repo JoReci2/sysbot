@@ -22,7 +22,7 @@ Suite Setup       Init test suite
 
 is_installed method works
     ${output}=    Call Components    modules.linux.rpm.is_installed    target    openssh
-    Should Be Equal    ${output}    ${True}
+    Should Be True    ${output}
 
 version method works
     ${output}=    Call Components    modules.linux.rpm.version    target    openssh

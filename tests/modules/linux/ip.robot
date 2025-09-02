@@ -43,4 +43,4 @@ resolve method works
 
 ping method works
     ${output}=    Call Components    modules.linux.ip.ping    target    www.google.com
-    Should Be Equal    ${output}    ${True}
+    Should Be True    ${output}

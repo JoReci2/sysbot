@@ -21,31 +21,31 @@ Suite Setup       Init test suite
 *** Test Cases ***
 is_present method works
     ${output}=    Call Components    modules.linux.file.is_present    target    /etc/hosts
-    Should Be Equal    ${output}    ${True}
+    Should Be True    ${output}
 
 is_file method works
     ${output}=    Call Components    modules.linux.file.is_file    target    /etc/hosts
-    Should Be Equal    ${output}    ${True}
+    Should Be True    ${output}
 
 is_directory method works
     ${output}=    Call Components    modules.linux.file.is_directory    target    /etc
-    Should Be Equal    ${output}    ${True}
+    Should Be True    ${output}
 
 is_executable method works
     ${output}=    Call Components    modules.linux.file.is_executable    target    /etc
-    Should Be Equal    ${output}    ${True}
+    Should Be True    ${output}
 
 is_pipe method works
     ${output}=    Call Components    modules.linux.file.is_pipe    target    /etc
-    Should Be Equal    ${output}    ${False}
+    Should Not Be True    ${output}
 
 is_socket method works
     ${output}=    Call Components    modules.linux.file.is_socket    target    /run/docker.sock
-    Should Be Equal    ${output}    ${True}
+    Should Be True    ${output}
 
 is_symlink method works
     ${output}=    Call Components    modules.linux.file.is_symlink    target    /etc/systemd/system/systemd-homed.service.wants/systemd-homed-activate.service
-    Should Be Equal    ${output}    ${True}
+    Should Be True    ${output}
 
 realpath method works
     ${output}=    Call Components    modules.linux.file.realpath    target    /etc/systemd/system/systemd-homed.service.wants/systemd-homed-activate.service
@@ -85,4 +85,4 @@ content method works
 
 contains method works
     ${output}=    Call Components    modules.linux.file.contains    target    /etc/hosts    127.0.0.1
-    Should Be Equal    ${output}    ${True}
+    Should Be True    ${output}
