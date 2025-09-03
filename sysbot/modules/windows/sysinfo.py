@@ -21,8 +21,9 @@ class Sysinfo(ComponentBase):
     def env(self, alias: str, name: str, **kwargs) -> str:
         return self.execute_command(alias, f"[Environment]::GetEnvironmentVariable('{name}')", **kwargs)
  
-    def process(self, alias: str, name: str, **kwargs) -> dict:
-        output = self.execute_command(alias, f"Get-Process -Name {name} | ConvertTo-Json", **kwargs)
+    def win32_process(self, alias: str, **kwargs) -> dict:
+        command = "Get-WmiObject -Class Win32_Process | Select-Object ProcessName, PageFileUsage, PeakVirtualSize, PrivatePageCount | ConvertTo-Json"
+        output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
  
     def win32_operatingsystem(self, alias: str, **kwargs) -> dict:
@@ -47,6 +48,11 @@ class Sysinfo(ComponentBase):
  
     def win32_logicaldisk(self, alias: str, **kwargs) -> dict:
         command = "Get-WmiObject -Class Win32_LogicalDisk | Select-Object Caption, FileSystem, Size | ConvertTo-Json"
+        output = self.execute_command(alias, command, **kwargs)
+        return json.loads(output)
+    
+    def win32_service(self, alias: str, **kwargs) -> dict:
+        command = "Get-WmiObject -Class Win32_Service | Select-Object Name, DisplayName, StartName, State, StartMode | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
  
