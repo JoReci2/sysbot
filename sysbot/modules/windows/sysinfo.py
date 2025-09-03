@@ -26,23 +26,28 @@ class Sysinfo(ComponentBase):
         return json.loads(output)
  
     def win32_operatingsystem(self, alias: str, **kwargs) -> dict:
-        output = self.execute_command(alias, "Get-WmiObject -Class Win32_OperatingSystem | ConvertTo-Json", **kwargs)
+        command = "Get-WmiObject -Class Win32_OperatingSystem | Select-Object Caption, InstallDate, Version, BootDevice, BuildNumber, MUILanguages, SystemDirectory, SystemDrive, WindowsDirectory | ConvertTo-Json"
+        output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
  
     def win32_physicalmemory(self, alias: str, **kwargs) -> dict:
-        output = self.execute_command(alias, "Get-WmiObject -Class Win32_PhysicalMemory | ConvertTo-Json", **kwargs)
+        command = "Get-WmiObject -Class Win32_PhysicalMemory | Select-Object Capacity | ConvertTo-Json"
+        output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
  
     def win32_processor(self, alias: str, **kwargs) -> dict:
-        output = self.execute_command(alias, "Get-WmiObject -class Win32_Processor | ConvertTo-Json", **kwargs)
+        command = "Get-WmiObject -class Win32_Processor | Select-Object Caption, DeviceID, MaxClockSpeed, NumberOfCores, NumberOfLogicalProcessors | ConvertTo-Json"
+        output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
  
     def win32_diskdrive(self, alias: str, **kwargs) -> dict:
-        output = self.execute_command(alias, "Get-WmiObject -Class Win32_DiskDrive | ConvertTo-Json", **kwargs)
+        command = "Get-WmiObject -Class Win32_DiskDrive | Select-Object Name, Caption, Partitions, BytesPerSector, Size, SerialNumber | ConvertTo-Json"
+        output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
  
     def win32_logicaldisk(self, alias: str, **kwargs) -> dict:
-        output = self.execute_command(alias, "Get-WmiObject -Class Win32_LogicalDisk | ConvertTo-Json", **kwargs)
+        command = "Get-WmiObject -Class Win32_LogicalDisk | Select-Object Caption, FileSystem, Size | ConvertTo-Json"
+        output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
  
     def roles(self, alias: str, **kwargs) -> dict:
