@@ -3,7 +3,7 @@ from sysbot.utils.helper import Windows
 import json
 
 
-class Sysinfo(ComponentBase):
+class Ip(ComponentBase):
 
     def addr(self, alias: str, **kwargs) -> dict:
         command = Windows.get_cim_class(
