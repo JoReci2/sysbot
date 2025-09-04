@@ -1,14 +1,12 @@
 from sysbot.utils.engine import ComponentBase
+from sysbot.utils.helper import Windows
 import json
 
 
 class Sysinfo(ComponentBase):
 
-    def __get_cim_class__(namespace: str, classname: str, property: str) -> dict:
-        return f"Get-CimInstance -Namespace {namespace} -ClassName {classname} | Select-Object {property} | ConvertTo-Json"
-
     def addr(self, alias: str, **kwargs) -> dict:
-        command = self.__get_cim_class__(
+        command = Windows.get_cim_class(
             namespace="root\cimv2", 
             classname="Win32_NetworkAdapterConfiguration", 
             property="DHCPEnabled, IPAddress, IPSubnet, DefaultIPGateway, DNSServerSearchOrder, ServiceName, Index, MTU"
@@ -17,7 +15,7 @@ class Sysinfo(ComponentBase):
         return json.loads(output)
     
     def link(self, alias: str, **kwargs) -> dict:
-        command = self.__get_cim_class__(
+        command = Windows.get_cim_class(
             namespace="root/StandardCimv2",
             classname="MSFT_NetAdapter",
             property="Name, Status, LinkSpeed, PhysicalMediaType, MacAddress"
@@ -26,7 +24,7 @@ class Sysinfo(ComponentBase):
         return json.loads(output)
 
     def route(self, alias: str, **kwargs) -> dict:
-        command = self.__get_cim_class__(
+        command = Windows.get_cim_class(
             namespace="root/StandardCimv2",
             classname="MSFT_NetRoute",
             property="InterfaceAlias, NextHop, State, DestinationPrefix"
