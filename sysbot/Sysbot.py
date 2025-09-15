@@ -27,7 +27,7 @@ import json
 from .utils.engine import ComponentMeta
 from .utils.engine import TunnelingManager
 from .utils.engine import ComponentLoader
-from .utils.cache import Cache as ConnectionCache
+from .utils.engine import Cache
 
 
 class Sysbot(metaclass=ComponentMeta):
@@ -42,7 +42,7 @@ class Sysbot(metaclass=ComponentMeta):
             components.extend([f"modules.{module}" for module in all_modules])
             components.extend([f"plugins.{plugin}" for plugin in all_plugins])
         ComponentLoader.load_components(self, components)
-        self._cache = ConnectionCache("No sessions created")
+        self._cache = Cache("No sessions created")
         self._protocol = None
 
     def open_session(
