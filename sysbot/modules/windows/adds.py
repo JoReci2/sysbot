@@ -35,6 +35,8 @@ class Adds(ComponentBase):
         filter_escaped = filter.replace("'", "''")
         command = f"Get-ADUser -Filter '{filter_escaped}' | Select-Object Name, SamAccountName, UserPrincipalName, DistinguishedName, Enabled | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
+        if not output or output.strip() == "":
+            return []
         result = json.loads(output)
         return result if isinstance(result, list) else [result]
 
@@ -52,6 +54,8 @@ class Adds(ComponentBase):
         filter_escaped = filter.replace("'", "''")
         command = f"Get-ADGroup -Filter '{filter_escaped}' | Select-Object Name, SamAccountName, DistinguishedName, GroupCategory, GroupScope | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
+        if not output or output.strip() == "":
+            return []
         result = json.loads(output)
         return result if isinstance(result, list) else [result]
 
@@ -61,6 +65,8 @@ class Adds(ComponentBase):
         identity_escaped = identity.replace("'", "''")
         command = f"Get-ADGroupMember -Identity '{identity_escaped}' | Select-Object Name, SamAccountName, DistinguishedName, ObjectClass | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
+        if not output or output.strip() == "":
+            return []
         result = json.loads(output)
         return result if isinstance(result, list) else [result]
 
@@ -78,6 +84,8 @@ class Adds(ComponentBase):
         filter_escaped = filter.replace("'", "''")
         command = f"Get-ADOrganizationalUnit -Filter '{filter_escaped}' | Select-Object Name, DistinguishedName, Description | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
+        if not output or output.strip() == "":
+            return []
         result = json.loads(output)
         return result if isinstance(result, list) else [result]
 
@@ -95,5 +103,7 @@ class Adds(ComponentBase):
         filter_escaped = filter.replace("'", "''")
         command = f"Get-ADComputer -Filter '{filter_escaped}' | Select-Object Name, DNSHostName, DistinguishedName, Enabled, OperatingSystem | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
+        if not output or output.strip() == "":
+            return []
         result = json.loads(output)
         return result if isinstance(result, list) else [result]
