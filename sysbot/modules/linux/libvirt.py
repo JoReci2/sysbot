@@ -1,4 +1,5 @@
 from sysbot.utils.engine import ComponentBase
+import shlex
 
 
 class Libvirt(ComponentBase):
@@ -27,7 +28,9 @@ class Libvirt(ComponentBase):
         Returns:
             Dictionary containing domain information
         """
-        output = self.execute_command(alias, f"virsh dominfo {domain}", **kwargs)
+        output = self.execute_command(
+            alias, f"virsh dominfo {shlex.quote(domain)}", **kwargs
+        )
         info = {}
         for line in output.strip().split("\n"):
             if ":" in line:
@@ -46,7 +49,9 @@ class Libvirt(ComponentBase):
         Returns:
             Domain state as string
         """
-        output = self.execute_command(alias, f"virsh domstate {domain}", **kwargs)
+        output = self.execute_command(
+            alias, f"virsh domstate {shlex.quote(domain)}", **kwargs
+        )
         return output.strip()
 
     def pool_list(self, alias: str, **kwargs) -> list:
@@ -74,7 +79,9 @@ class Libvirt(ComponentBase):
         Returns:
             Dictionary containing pool information
         """
-        output = self.execute_command(alias, f"virsh pool-info {pool}", **kwargs)
+        output = self.execute_command(
+            alias, f"virsh pool-info {shlex.quote(pool)}", **kwargs
+        )
         info = {}
         for line in output.strip().split("\n"):
             if ":" in line:
@@ -109,7 +116,9 @@ class Libvirt(ComponentBase):
         Returns:
             Dictionary containing network information
         """
-        output = self.execute_command(alias, f"virsh net-info {network}", **kwargs)
+        output = self.execute_command(
+            alias, f"virsh net-info {shlex.quote(network)}", **kwargs
+        )
         info = {}
         for line in output.strip().split("\n"):
             if ":" in line:
