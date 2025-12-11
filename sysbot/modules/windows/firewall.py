@@ -4,6 +4,39 @@ from typing import Dict, List
 
 
 class Firewall(ComponentBase):
+    @staticmethod
+    def _escape_powershell_string(value: str) -> str:
+        """Escape special characters in PowerShell strings to prevent injection.
+
+        Args:
+            value: String to escape
+
+        Returns:
+            Escaped string safe for PowerShell
+        """
+        # Escape single quotes by doubling them (PowerShell convention)
+        return value.replace("'", "''")
+
+    @staticmethod
+    def _validate_profile_name(profile: str) -> str:
+        """Validate and sanitize firewall profile name.
+
+        Args:
+            profile: Profile name to validate
+
+        Returns:
+            Validated profile name
+
+        Raises:
+            ValueError: If profile name is invalid
+        """
+        valid_profiles = ["Domain", "Private", "Public"]
+        if profile not in valid_profiles:
+            raise ValueError(
+                f"Invalid profile name: {profile}. Must be one of {valid_profiles}"
+            )
+        return profile
+
     def getProfiles(self, alias: str, **kwargs) -> Dict:
         """Get all firewall profiles (Domain, Private, Public).
 
@@ -28,8 +61,12 @@ class Firewall(ComponentBase):
 
         Returns:
             Dictionary containing specific profile information
+
+        Raises:
+            ValueError: If profile name is invalid
         """
-        command = f"Get-NetFirewallProfile -Name {profile} | Select-Object Name, Enabled, DefaultInboundAction, DefaultOutboundAction, LogAllowed, LogBlocked, LogFileName, LogMaxSizeKilobytes | ConvertTo-Json"
+        validated_profile = self._validate_profile_name(profile)
+        command = f"Get-NetFirewallProfile -Name {validated_profile} | Select-Object Name, Enabled, DefaultInboundAction, DefaultOutboundAction, LogAllowed, LogBlocked, LogFileName, LogMaxSizeKilobytes | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
 
@@ -58,7 +95,8 @@ class Firewall(ComponentBase):
         Returns:
             Dictionary containing rule information
         """
-        command = f"Get-NetFirewallRule -Name '{name}' | Select-Object Name, DisplayName, Enabled, Direction, Action, Profile, Description | ConvertTo-Json"
+        escaped_name = self._escape_powershell_string(name)
+        command = f"Get-NetFirewallRule -Name '{escaped_name}' | Select-Object Name, DisplayName, Enabled, Direction, Action, Profile, Description | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
 
@@ -75,7 +113,8 @@ class Firewall(ComponentBase):
         Returns:
             List of dictionaries containing matching rules
         """
-        command = f"Get-NetFirewallRule -DisplayName '{display_name}' | Select-Object Name, DisplayName, Enabled, Direction, Action, Profile | ConvertTo-Json"
+        escaped_display_name = self._escape_powershell_string(display_name)
+        command = f"Get-NetFirewallRule -DisplayName '{escaped_display_name}' | Select-Object Name, DisplayName, Enabled, Direction, Action, Profile | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
 
