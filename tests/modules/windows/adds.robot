@@ -4,6 +4,9 @@ Name           windows.adds
 Library        Collections
 Library        sysbot.Sysbot
 
+Suite Teardown    Close All Sessions
+Suite Setup       Init test suite
+
 *** Variables ***
 ${PORT}=        5986
 
@@ -12,11 +15,6 @@ ${PORT}=        5986
 Init test suite
     Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
     Open Session    target    winrm    powershell    connexion.host    ${PORT}   connexion.username    connexion.password    is_secret=True
-
-*** Settings ***
-
-Suite Teardown    Close All Sessions
-Suite Setup       Init test suite
 
 *** Test Cases ***
 get_domain method works

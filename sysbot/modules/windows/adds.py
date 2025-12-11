@@ -29,7 +29,9 @@ class Adds(ComponentBase):
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
             return []
-        return json.loads(output)
+        result = json.loads(output)
+        # PowerShell ConvertTo-Json returns a single object (not an array) when there's only one result
+        return result if isinstance(result, list) else [result]
 
     def search_users(self, alias: str, filter_query: str, **kwargs) -> list:
         """Search Active Directory users with a custom filter."""
@@ -39,7 +41,9 @@ class Adds(ComponentBase):
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
             return []
-        return json.loads(output)
+        result = json.loads(output)
+        # PowerShell ConvertTo-Json returns a single object (not an array) when there's only one result
+        return result if isinstance(result, list) else [result]
 
     def get_group(self, alias: str, identity: str, **kwargs) -> dict:
         """Get a specific Active Directory group by identity."""
@@ -55,7 +59,9 @@ class Adds(ComponentBase):
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
             return []
-        return json.loads(output)
+        result = json.loads(output)
+        # PowerShell ConvertTo-Json returns a single object (not an array) when there's only one result
+        return result if isinstance(result, list) else [result]
 
     def get_group_members(self, alias: str, identity: str, **kwargs) -> list:
         """Get members of a specific Active Directory group."""
@@ -65,7 +71,9 @@ class Adds(ComponentBase):
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
             return []
-        return json.loads(output)
+        result = json.loads(output)
+        # PowerShell ConvertTo-Json returns a single object (not an array) when there's only one result
+        return result if isinstance(result, list) else [result]
 
     def get_ou(self, alias: str, identity: str, **kwargs) -> dict:
         """Get a specific Active Directory organizational unit by identity."""
@@ -81,7 +89,9 @@ class Adds(ComponentBase):
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
             return []
-        return json.loads(output)
+        result = json.loads(output)
+        # PowerShell ConvertTo-Json returns a single object (not an array) when there's only one result
+        return result if isinstance(result, list) else [result]
 
     def get_gpo(self, alias: str, name: str, **kwargs) -> dict:
         """Get a specific Group Policy Object by name."""
@@ -97,7 +107,9 @@ class Adds(ComponentBase):
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
             return []
-        return json.loads(output)
+        result = json.loads(output)
+        # PowerShell ConvertTo-Json returns a single object (not an array) when there's only one result
+        return result if isinstance(result, list) else [result]
 
     def get_gpo_report(self, alias: str, name: str, **kwargs) -> str:
         """Get a Group Policy Object report in XML format."""
