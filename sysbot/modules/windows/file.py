@@ -26,7 +26,7 @@ class File(ComponentBase):
         return output.strip().lower() == "true"
 
     def size(self, alias: str, path: str, **kwargs) -> str:
-        """Get file size in bytes."""
+        """Get file size in bytes. Note: Only works with files, not directories."""
         escaped_path = path.replace("'", "''")
         command = f"(Get-Item -Path '{escaped_path}').Length"
         return self.execute_command(alias, command, **kwargs)
@@ -46,7 +46,7 @@ class File(ComponentBase):
     def attributes(self, alias: str, path: str, **kwargs) -> dict:
         """Get file/directory attributes."""
         escaped_path = path.replace("'", "''")
-        command = f"Get-Item -Path '{escaped_path}' | Select-Object Name, FullName, Length, CreationTime, LastWriteTime, LastAccessTime, Attributes, Extension | ConvertTo-Json"
+        command = f"Get-Item -Path '{escaped_path}' | Select-Object Name, FullName, Length, CreationTime, LastWriteTime, LastAccessTime, Attributes, Extension | ConvertTo-Json -Compress"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
 
@@ -64,9 +64,9 @@ class File(ComponentBase):
         command = f"(Get-Acl -Path '{escaped_path}').Owner"
         return self.execute_command(alias, command, **kwargs)
 
-    def list_directory(self, alias: str, path: str, **kwargs) -> dict:
-        """List contents of a directory."""
+    def list_directory(self, alias: str, path: str, **kwargs) -> list:
+        """List contents of a directory. Returns empty list for empty directories."""
         escaped_path = path.replace("'", "''")
-        command = f"Get-ChildItem -Path '{escaped_path}' | Select-Object Name, Length, LastWriteTime, Attributes | ConvertTo-Json"
+        command = f"@(Get-ChildItem -Path '{escaped_path}' | Select-Object Name, Length, LastWriteTime, Attributes) | ConvertTo-Json -AsArray -Compress"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
