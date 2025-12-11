@@ -37,7 +37,7 @@ class Firewall(ComponentBase):
             )
         return profile
 
-    def getProfiles(self, alias: str, **kwargs) -> Dict:
+    def getProfiles(self, alias: str, **kwargs) -> List[Dict]:
         """Get all firewall profiles (Domain, Private, Public).
 
         Args:
@@ -45,7 +45,7 @@ class Firewall(ComponentBase):
             **kwargs: Additional arguments for execute_command
 
         Returns:
-            Dictionary containing firewall profile information
+            List of dictionaries containing firewall profile information
         """
         command = "Get-NetFirewallProfile | Select-Object Name, Enabled, DefaultInboundAction, DefaultOutboundAction | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
@@ -128,7 +128,7 @@ class Firewall(ComponentBase):
         Returns:
             List of dictionaries containing enabled rules
         """
-        command = "Get-NetFirewallRule -Enabled True | Select-Object Name, DisplayName, Direction, Action, Profile | ConvertTo-Json"
+        command = "Get-NetFirewallRule -Enabled True | Select-Object Name, DisplayName, Enabled, Direction, Action, Profile | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
 
@@ -142,7 +142,7 @@ class Firewall(ComponentBase):
         Returns:
             List of dictionaries containing inbound rules
         """
-        command = "Get-NetFirewallRule -Direction Inbound | Select-Object Name, DisplayName, Enabled, Action, Profile | ConvertTo-Json"
+        command = "Get-NetFirewallRule -Direction Inbound | Select-Object Name, DisplayName, Enabled, Direction, Action, Profile | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
 
@@ -156,7 +156,7 @@ class Firewall(ComponentBase):
         Returns:
             List of dictionaries containing outbound rules
         """
-        command = "Get-NetFirewallRule -Direction Outbound | Select-Object Name, DisplayName, Enabled, Action, Profile | ConvertTo-Json"
+        command = "Get-NetFirewallRule -Direction Outbound | Select-Object Name, DisplayName, Enabled, Direction, Action, Profile | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
 
