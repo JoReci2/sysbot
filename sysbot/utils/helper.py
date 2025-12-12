@@ -82,6 +82,8 @@ class Security:
             context = ssl.create_default_context()
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
+            # Set minimum TLS version to 1.2 for security
+            context.minimum_version = ssl.TLSVersion.TLSv1_2
 
             # Create socket and wrap with SSL
             sock = socket.create_connection((host, port), timeout=timeout)
