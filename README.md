@@ -35,13 +35,12 @@ from sysbot.Sysbot import Sysbot
 # Create a SysBot instance
 bot = Sysbot()
 
-# Open an SSH session to a Linux system
+# Open an SSH session to a Linux system (port defaults to 22)
 bot.open_session(
     alias="my_linux_server",
     protocol="ssh",
     product="bash",
     host="192.168.1.100",
-    port=22,
     login="username",
     password="password"
 )
@@ -50,8 +49,36 @@ bot.open_session(
 result = bot.execute_command("my_linux_server", "ls -la")
 print(result)
 
+# Get full structured response
+full_response = bot.execute_command("my_linux_server", "uname -a", get_full_response=True)
+print(f"Status: {full_response['StatusCode']}")
+print(f"Result: {full_response['Result']}")
+print(f"Metadata: {full_response['Metadata']}")
+
 # Close all sessions
 bot.close_all_sessions()
+```
+
+### Localhost Execution
+
+```python
+from sysbot.Sysbot import Sysbot
+
+bot = Sysbot()
+
+# Open a localhost session (no credentials needed)
+bot.open_session(
+    alias="local",
+    protocol="localhost",
+    product="bash",
+    host="localhost"
+)
+
+# Execute commands on the local system
+result = bot.execute_command("local", "echo Hello from localhost")
+print(result)  # Output: Hello from localhost
+
+bot.close_session("local")
 ```
 
 ### SSH Tunneling
@@ -73,13 +100,12 @@ tunnel_config = [
     }
 ]
 
-# Open session through tunnels
+# Open session through tunnels (port defaults to 22)
 bot.open_session(
     alias="tunneled_server",
-    protocol="ssh", # or http / winrm / ect...
+    protocol="ssh", # or http / winrm / etc...
     product="bash",
     host="192.168.3.100",
-    port=22,
     login="final_user",
     password="final_pass",
     tunnel_config=tunnel_config
@@ -165,20 +191,52 @@ bot.close_all_sessions()
 
 ## Supported Protocols
 
-### SSH
-- **Bash**: Full support for bash via SSH
-- **Powershell**: Support for powershell via SSH (requires SSH server)
+SysBot now uses a unified connector architecture with standardized response formats and default ports.
 
-### HTTP
-- **BasicAuth**: Support for API connections
-- **vsphere**: Support for ESXi and vCenter
+### SSH (Port 22)
+- **Bash**: Generic SSH connector using Netmiko with automatic device type detection
+  - Supports Linux, Unix, network devices, and other SSH-enabled systems
+  - Automatic device type detection for optimized handling
+- **Powershell**: PowerShell over SSH for Windows systems with SSH server enabled
 
-### WinRM
-- **Powershell**: Native Windows Remote Management support
+### WinRM (Port 5986 - HTTPS)
+- **Powershell**: Native Windows Remote Management support for Windows systems
+
+### HTTP/HTTPS
+- **HTTP (Port 80)** / **HTTPS (Port 443)**
+  - **BasicAuth**: RESTful API connections with basic authentication
+  - **vsphere**: VMware vSphere/ESXi connections (uses pyVmomi)
 
 ### Socket
-- **TCP**: Native TCP socket with ssl if needed
-- **UDP**: Native UDP socket
+- **TCP**: Raw TCP socket with optional SSL/TLS support (requires explicit port)
+- **UDP**: Connectionless UDP socket communication (requires explicit port)
+
+### Localhost
+- **Bash**: Execute commands directly on the local system without network connection
+  - Automatically detects OS (Windows/Linux) and uses appropriate shell
+  - No credentials required
+
+## Connector Features
+
+### Default Ports
+All connectors now support default ports - you can omit the port parameter and the connector will use the standard port for the protocol.
+
+### Structured Response Format
+All connectors now return a standardized response format:
+```python
+{
+    "StatusCode": 0,           # 0 = success, non-zero = error
+    "Result": "command output", # The actual result data
+    "Error": None,             # Error message if any
+    "Metadata": {              # Additional information
+        "host": "hostname",
+        "port": 22,
+        # ... connector-specific metadata
+    }
+}
+```
+
+By default, `execute_command` returns just the `Result` field for backward compatibility. Use `get_full_response=True` to get the complete structured response.
 
 ## Architecture
 
@@ -186,6 +244,12 @@ bot.close_all_sessions()
 sysbot/
 ├── Sysbot.py           # Main SysBot class
 ├── connectors/         # Protocol-specific connectors
+│   ├── config.py       # Default ports and response format
+│   ├── ssh/            # SSH connectors (Netmiko-based)
+│   ├── winrm/          # WinRM connectors
+│   ├── http/           # HTTP/HTTPS connectors
+│   ├── socket/         # Socket connectors (TCP/UDP)
+│   └── localhost/      # Local execution connector
 ├── plugins/            # Plugins utilities
 ├── utils/
 │   └── engine.py       # Engine class

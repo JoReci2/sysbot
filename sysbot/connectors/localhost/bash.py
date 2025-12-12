@@ -59,6 +59,10 @@ class Bash(ConnectorInterface):
                 error="Invalid session"
             )
         
+        # Filter out Sysbot-specific parameters
+        subprocess_kwargs = {k: v for k, v in kwargs.items() 
+                           if k not in ['get_full_response']}
+        
         # Determine shell to use
         if shell is None:
             shell = session.get("shell", "bash")
@@ -82,7 +86,7 @@ class Bash(ConnectorInterface):
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                **kwargs
+                **subprocess_kwargs
             )
             
             # Return structured response
