@@ -16,11 +16,10 @@ ${ENGINE_NAME}=       secret
 Vault Plugin Is Loaded
     [Documentation]    Verify that the vault plugin is properly loaded and accessible
     [Tags]    vault    smoke
-    # Try to call the vault plugin method - if it's loaded, this should work
-    # Using a try-catch pattern to verify plugin is accessible
-    ${status}=    Run Keyword And Return Status    
-    ...    Evaluate    callable(getattr(getattr(__import__('sysbot.Sysbot', fromlist=['Sysbot']).Sysbot().plugins, 'vault', None), 'dump_engine', None))
-    Should Be True    ${status}    Vault plugin should be loaded with dump_engine method
+    # Simply verify we can call the plugin's method - it will return {} if vault isn't reachable
+    ${result}=    Call Components    plugins.vault.dump_engine    fake_token    https://127.0.0.1:8200    fake_engine
+    # If we got here without AttributeError, the plugin and method exist
+    Should Be Equal As Strings    ${result.__class__.__name__}    dict
 
 Dump Vault Engine Without Secret Storage
     [Documentation]    Test dumping a Vault engine and retrieving secrets directly

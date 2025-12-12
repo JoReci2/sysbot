@@ -51,17 +51,30 @@ class Vault(ComponentBase):
     def _dump_with_version_detection(self, vault_url: str, engine_name: str, headers: dict, verify_ssl: bool) -> dict:
         """
         Attempt to dump secrets by detecting the KV engine version.
-        Tries KV v2 first (more common), then falls back to KV v1.
+        First tries to get engine info from Vault API, then tries both versions if needed.
         """
+        # First, try to get engine version from Vault's mount info
+        engine_info = self._get_engine_info(vault_url, engine_name, headers, verify_ssl)
+        
+        # If we got version info, use it directly
+        if engine_info and engine_info.get('type') == 'kv':
+            version = engine_info.get('options', {}).get('version', '2')
+            if version == '2':
+                return self._dump_kv_v2_engine(vault_url, engine_name, headers, verify_ssl)
+            else:
+                return self._dump_kv_v1_engine(vault_url, engine_name, headers, verify_ssl)
+        
+        # If we couldn't determine version from API, try both versions
         # Try KV v2 first (most common)
         try:
             secrets = self._dump_kv_v2_engine(vault_url, engine_name, headers, verify_ssl)
-            if secrets:  # If we got any secrets, it's likely KV v2
-                return secrets
+            # KV v2 worked if we got a dict back (even if empty)
+            return secrets
         except Exception:
+            # KV v2 failed, try KV v1
             pass
         
-        # If KV v2 didn't work or returned no secrets, try KV v1
+        # Try KV v1
         try:
             secrets = self._dump_kv_v1_engine(vault_url, engine_name, headers, verify_ssl)
             return secrets
