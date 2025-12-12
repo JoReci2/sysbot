@@ -71,7 +71,8 @@ class Vault(ComponentBase):
             # KV v2 worked if we got a dict back (even if empty)
             return secrets
         except Exception:
-            # KV v2 failed, try KV v1
+            # KV v2 failed (wrong version, permission issue, etc.), try KV v1
+            # Any exceptions are intentionally caught to allow fallback to v1
             pass
         
         # Try KV v1

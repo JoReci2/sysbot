@@ -15,6 +15,7 @@ setup(
         "pywinrm",
         "pyOpenSSL",
         "pytz",
+        "requests",
     ],
     author="Thibault SCIRE",
     author_email="thibault.scire@outlook.com",
