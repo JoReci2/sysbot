@@ -110,7 +110,8 @@ bot.plugins.vault.dump_engine(
     token="hvs.CAESIJ...",
     url="https://vault.example.com:8200",
     engine_name="secret",
-    key="vault_secrets"
+    key="vault_secrets",
+    verify_ssl=False  # Set to True for production with valid certificates
 )
 # Access Vault secrets using dot notation
 db_url = bot.get_secret("vault_secrets.myapp/config.database_url")
