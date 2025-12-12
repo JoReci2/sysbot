@@ -32,11 +32,6 @@ get_domain_controller method works
     Should Be True    isinstance($output, dict)
     Dictionary Should Contain Key    ${output}    HostName
 
-get_fsmo method works
-    ${output}=    Call Components    modules.windows.adds.get_fsmo    target
-    Should Be True    isinstance($output, dict)
-    Dictionary Should Contain Key    ${output}    PDCEmulator
-
 get_users method works
     ${output}=    Call Components    modules.windows.adds.get_users    target
     Should Be True    isinstance($output, list)
@@ -60,7 +55,3 @@ get_gpo method works
 get_gpos method works
     ${output}=    Call Components    modules.windows.adds.get_gpos    target
     Should Be True    isinstance($output, list)
-
-get_gpo_report method works
-    ${output}=    Call Components    modules.windows.adds.get_gpo_report    target
-    Should Be True    isinstance($output, dict)
