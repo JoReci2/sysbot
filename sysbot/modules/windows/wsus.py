@@ -12,35 +12,16 @@ class Wsus(ComponentBase):
         return json.loads(output)
 
     def get_update(self, alias: str, update_id: str = None, classification: str = None, approval: str = None, status: str = None, **kwargs) -> list:
-        """Get WSUS updates with optional filters.
-        
-        Args:
-            alias: The connection alias
-            update_id: Specific update GUID (optional)
-            classification: Filter by classification (e.g., Critical, Security, All) (optional)
-            approval: Filter by approval status (Approved, Unapproved, Declined, Any) (optional)
-            status: Filter by status (Any, Installed, FailedOrNeeded) (optional)
-        
-        Returns:
-            List of update objects
-        """
+        """Get WSUS updates with optional filters."""
         params = []
         if update_id:
-            # Escape single quotes to prevent injection
-            escaped_id = update_id.replace("'", "''")
-            params.append(f"-UpdateId '{escaped_id}'")
+            params.append(f"-UpdateId '{update_id}'")
         if classification:
-            # Escape single quotes to prevent injection
-            escaped_classification = classification.replace("'", "''")
-            params.append(f"-Classification {escaped_classification}")
+            params.append(f"-Classification {classification}")
         if approval:
-            # Escape single quotes to prevent injection
-            escaped_approval = approval.replace("'", "''")
-            params.append(f"-Approval {escaped_approval}")
+            params.append(f"-Approval {approval}")
         if status:
-            # Escape single quotes to prevent injection
-            escaped_status = status.replace("'", "''")
-            params.append(f"-Status {escaped_status}")
+            params.append(f"-Status {status}")
         
         param_str = " ".join(params) if params else ""
         command = f"Get-WsusUpdate {param_str} | Select-Object Title, UpdateId, Classification, Approval, ComputersNeedingThisUpdate, ComputersInstalledThisUpdate | ConvertTo-Json"
@@ -54,20 +35,10 @@ class Wsus(ComponentBase):
         return result
 
     def get_computer(self, alias: str, computer_name: str = None, **kwargs) -> list:
-        """Get computers registered with WSUS.
-        
-        Args:
-            alias: The connection alias
-            computer_name: Filter by computer name (optional)
-        
-        Returns:
-            List of computer objects
-        """
+        """Get computers registered with WSUS."""
         params = []
         if computer_name:
-            # Escape single quotes to prevent injection
-            escaped_name = computer_name.replace("'", "''")
-            params.append(f"-ComputerTargetName '{escaped_name}'")
+            params.append(f"-ComputerTargetName '{computer_name}'")
         
         param_str = " ".join(params) if params else ""
         command = f"Get-WsusComputer {param_str} | Select-Object FullDomainName, IPAddress, LastReportedStatusTime, LastSyncTime, OSDescription | ConvertTo-Json"
