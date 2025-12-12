@@ -51,16 +51,34 @@ class Sysbot(metaclass=ComponentMeta):
         protocol: str,
         product: str,
         host: str,
-        port: int,
+        port: int = None,
         login: str = None,
         password: str = None,
         tunnel_config=None,
         is_secret=False,
         **kwargs,
     ) -> None:
+        """
+        Open a connection session using the specified protocol and product.
+        
+        Args:
+            alias (str): Unique identifier for this session
+            protocol (str): Protocol type (ssh, winrm, http, https, socket, localhost)
+            product (str): Product/shell type (bash, powershell, tcp, udp, basicauth, etc.)
+            host (str): Hostname or IP address
+            port (int): Port number (optional, will use protocol defaults if not specified)
+            login (str): Username for authentication
+            password (str): Password for authentication
+            tunnel_config: SSH tunnel configuration (optional)
+            is_secret (bool): Whether credentials are stored as secrets
+            **kwargs: Additional parameters passed to the connector
+        """
         tunnels = []
         self._protocol = TunnelingManager.get_protocol(protocol, product)
-        self._remote_port = int(port)
+        
+        # Use port if provided, otherwise let connector use its default
+        self._remote_port = int(port) if port is not None else port
+        
         try:
             if tunnel_config:
                 try:
@@ -73,14 +91,14 @@ class Sysbot(metaclass=ComponentMeta):
                 if is_secret:
                     target_config = {
                         "ip": self._cache.secrets.get(host),
-                        "port": int(self._remote_port),
+                        "port": self._remote_port,
                         "username": self._cache.secrets.get(login),
                         "password": self._cache.secrets.get(password),
                     }
                 else:
                     target_config = {
                         "ip": host,
-                        "port": int(self._remote_port),
+                        "port": self._remote_port,
                         "username": login,
                         "password": password,
                     }
@@ -95,13 +113,14 @@ class Sysbot(metaclass=ComponentMeta):
                 if is_secret:
                     session = self._protocol.open_session(
                         self._cache.secrets.get(host),
-                        int(self._remote_port),
+                        self._remote_port,
                         self._cache.secrets.get(login),
                         self._cache.secrets.get(password),
+                        **kwargs
                     )
                 else:
                     session = self._protocol.open_session(
-                        host, int(self._remote_port), login, password
+                        host, self._remote_port, login, password, **kwargs
                     )
                 if not session:
                     raise Exception("Failed to open direct session")
@@ -114,6 +133,20 @@ class Sysbot(metaclass=ComponentMeta):
             raise Exception(f"Failed to open session: {str(e)}")
 
     def execute_command(self, alias: str, command: str, **kwargs) -> any:
+        """
+        Execute a command through the connector associated with the given alias.
+        
+        Args:
+            alias (str): The connection alias
+            command (str): The command to execute
+            **kwargs: Additional parameters for the connector
+            
+        Returns:
+            The result of the command execution. For connectors returning structured
+            responses (dict with StatusCode, Result, Error), returns the Result field
+            for backward compatibility. Use get_full_response=True to get the complete
+            structured response.
+        """
         try:
             connection = self._cache.connections.switch(alias)
             if not connection or "session" not in connection:
@@ -122,7 +155,24 @@ class Sysbot(metaclass=ComponentMeta):
             result = self._protocol.execute_command(
                 connection["session"], command, **kwargs
             )
-            return result
+            
+            # Check if result is a structured response (new format)
+            if isinstance(result, dict) and "StatusCode" in result and "Result" in result:
+                # If caller wants full response, return it
+                if kwargs.get("get_full_response", False):
+                    return result
+                
+                # Check for errors
+                if result["StatusCode"] != 0:
+                    error_msg = result.get("Error", "Unknown error")
+                    raise Exception(f"Command failed with status {result['StatusCode']}: {error_msg}")
+                
+                # Return just the Result field for backward compatibility
+                return result["Result"]
+            else:
+                # Old format (plain string or other), return as-is
+                return result
+                
         except ValueError as ve:
             raise ValueError(f"Alias '{alias}' does not exist: {str(ve)}")
         except Exception as e:

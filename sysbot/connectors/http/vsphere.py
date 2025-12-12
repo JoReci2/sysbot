@@ -1,72 +1,105 @@
 from pyVim.connect import SmartConnect, Disconnect
 from sysbot.utils.engine import ConnectorInterface
+from sysbot.connectors.config import DEFAULT_PORTS, create_response
 
 
 class Vsphere(ConnectorInterface):
     """
-    This class provides methods for interacting with VMware systems.
-    It uses the pyVim library to establish and manage connections.
+    VMware vSphere connector using pyVmomi library.
+    Supports connections to ESXi hosts and vCenter servers.
     """
 
-    def open_session(self, host, port, login, password):
+    def open_session(self, host, port=None, login=None, password=None, **kwargs):
         """
-        Opens a session to a VMware system.
+        Opens a session to a VMware vSphere system.
 
         Args:
             host (str): Hostname or IP address of the VMware system.
-            port (int): Port of the VMware service.
+            port (int): Port of the VMware service (default: 443).
             login (str): Username for the session.
             password (str): Password for the session.
+            **kwargs: Additional connection parameters
 
         Returns:
-            vim.ServiceInstance: An authenticated VMware client session.
+            dict: Session information including authenticated VMware client.
 
         Raises:
             Exception: If there is an error opening the session.
         """
+        if port is None:
+            port = DEFAULT_PORTS["https"]
+            
         try:
             client = SmartConnect(
                 host=host,
                 port=port,
                 user=login,
                 pwd=password,
-                disableSslCertValidation=True,
+                disableSslCertValidation=kwargs.get("disable_ssl_verification", True),
             )
-            return client
+            
+            return {
+                "client": client,
+                "host": host,
+                "port": port
+            }
         except Exception as e:
-            raise Exception(f"Failed to open VMware session: {str(e)}")
+            raise Exception(f"Failed to open VMware session to {host}:{port}: {str(e)}")
 
-    def execute_command(self, session, command, options):
+    def execute_command(self, session, command, options=None, **kwargs):
         """
-        Placeholder for executing a command on a VMware system.
+        Returns the vSphere session for direct API usage.
+        
+        Note: vSphere uses direct API calls rather than command execution.
+        This method returns the session object for use with vSphere modules.
 
         Args:
-            session (vim.ServiceInstance): The VMware client session.
-            command (str): The command to execute (currently a placeholder).
+            session (dict): The VMware session dictionary.
+            command (str): Not used for vSphere (kept for interface compatibility)
+            options (dict): Not used for vSphere (kept for interface compatibility)
+            **kwargs: Additional parameters
 
         Returns:
-            vim.ServiceInstance: The same session, as this is a placeholder.
-
-        Raises:
-            NotImplementedError: As this method is a placeholder.
+            dict: Standardized response containing the vSphere client session
         """
+        if not session or "client" not in session:
+            return create_response(
+                status_code=1,
+                result=None,
+                error="Invalid session: vSphere client not found"
+            )
+            
         try:
-            # This function is a placeholder and does not execute any command
-            return session
+            return create_response(
+                status_code=0,
+                result=session["client"],
+                error=None,
+                metadata={
+                    "host": session.get("host"),
+                    "port": session.get("port"),
+                    "note": "Use the Result field to access vSphere API directly"
+                }
+            )
         except Exception as e:
-            raise Exception(f"Failed to execute command: {str(e)}")
+            return create_response(
+                status_code=1,
+                result=None,
+                error=f"Failed to execute command: {str(e)}",
+                metadata={"host": session.get("host")}
+            )
 
     def close_session(self, session):
         """
         Closes an open session to a VMware system.
 
         Args:
-            session (vim.ServiceInstance): The VMware client session to close.
+            session (dict): The VMware session dictionary to close.
 
         Raises:
             Exception: If there is an error closing the session.
         """
-        try:
-            Disconnect(session)
-        except Exception as e:
-            raise Exception(f"Failed to close VMware session: {str(e)}")
+        if session and "client" in session:
+            try:
+                Disconnect(session["client"])
+            except Exception as e:
+                raise Exception(f"Failed to close VMware session: {str(e)}")
