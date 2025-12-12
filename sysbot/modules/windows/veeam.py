@@ -3,13 +3,17 @@ import json
 
 
 class Veeam(ComponentBase):
-    def get_server(self, alias: str, **kwargs) -> dict:
+    def get_server(self, alias: str, **kwargs) -> list:
         """Get Veeam Backup & Replication server information."""
         command = "Get-VBRServer | Select-Object Name, Description, Type, Info | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
-            return {}
-        return json.loads(output)
+            return []
+        result = json.loads(output)
+        # Wrap single objects in a list
+        if isinstance(result, dict):
+            return [result]
+        return result
 
     def get_backup_repository(self, alias: str, name: str = None, **kwargs) -> list:
         """Get backup repositories."""
@@ -113,10 +117,14 @@ class Veeam(ComponentBase):
             return [result]
         return result
 
-    def get_server_session(self, alias: str, **kwargs) -> dict:
+    def get_server_session(self, alias: str, **kwargs) -> list:
         """Get server session information."""
         command = "Get-VBRServerSession | Select-Object User, Server, Port | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
-            return {}
-        return json.loads(output)
+            return []
+        result = json.loads(output)
+        # Wrap single objects in a list
+        if isinstance(result, dict):
+            return [result]
+        return result

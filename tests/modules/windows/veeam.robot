@@ -19,7 +19,7 @@ Init test suite
 *** Test Cases ***
 get_server method works
     ${output}=    Call Components    modules.windows.veeam.get_server    target
-    Should Be True    isinstance($output, dict)
+    Should Be True    isinstance($output, list)
 
 get_backup_repository method works
     ${output}=    Call Components    modules.windows.veeam.get_backup_repository    target
@@ -47,4 +47,4 @@ get_vi_server method works
 
 get_server_session method works
     ${output}=    Call Components    modules.windows.veeam.get_server_session    target
-    Should Be True    isinstance($output, dict)
+    Should Be True    isinstance($output, list)
