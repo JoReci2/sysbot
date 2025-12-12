@@ -4,26 +4,8 @@ from sysbot.utils.engine import ComponentBase
 
 
 class Vault(ComponentBase):
-    """
-    Plugin for interacting with HashiCorp Vault.
-    Allows dumping all secrets from a Vault engine and storing them in Sysbot's secret manager.
-    """
 
     def dump_engine(self, token: str, url: str, engine_name: str, key: str = None, verify_ssl: bool = False) -> Union[dict, str]:
-        """
-        Dump all secrets from a HashiCorp Vault engine.
-        
-        Args:
-            token: Vault authentication token
-            url: Vault server URL (e.g., 'https://vault.example.com:8200')
-            engine_name: Name of the secrets engine to dump
-            key: Optional key to store secrets in Sysbot's secret manager
-            verify_ssl: Whether to verify SSL certificates (default: False for self-signed certs)
-            
-        Returns:
-            Dictionary containing all secrets from the engine if key is None,
-            otherwise returns "Imported" after storing in secret manager
-        """
         try:
             # Normalize URL - remove trailing slash if present
             vault_url = url.rstrip('/')
@@ -49,10 +31,6 @@ class Vault(ComponentBase):
             raise RuntimeError(f"Error dumping Vault engine: {e}")
     
     def _dump_with_version_detection(self, vault_url: str, engine_name: str, headers: dict, verify_ssl: bool) -> dict:
-        """
-        Attempt to dump secrets by detecting the KV engine version.
-        First tries to get engine info from Vault API, then tries both versions if needed.
-        """
         # First, try to get engine version from Vault's mount info
         engine_info = self._get_engine_info(vault_url, engine_name, headers, verify_ssl)
         
@@ -83,7 +61,6 @@ class Vault(ComponentBase):
             raise RuntimeError(f"Failed to dump secrets from engine '{engine_name}'. Ensure the engine exists and token has proper permissions: {e}")
     
     def _get_engine_info(self, vault_url: str, engine_name: str, headers: dict, verify_ssl: bool) -> dict:
-        """Get information about the secrets engine."""
         try:
             response = requests.get(
                 f"{vault_url}/v1/sys/mounts/{engine_name}",
@@ -100,7 +77,6 @@ class Vault(ComponentBase):
             return {}
     
     def _dump_kv_v2_engine(self, vault_url: str, engine_name: str, headers: dict, verify_ssl: bool) -> dict:
-        """Dump all secrets from a KV v2 engine."""
         all_secrets = {}
         
         # List all secrets recursively
@@ -128,7 +104,6 @@ class Vault(ComponentBase):
         return all_secrets
     
     def _dump_kv_v1_engine(self, vault_url: str, engine_name: str, headers: dict, verify_ssl: bool) -> dict:
-        """Dump all secrets from a KV v1 engine."""
         all_secrets = {}
         
         # List all secrets recursively
@@ -155,20 +130,6 @@ class Vault(ComponentBase):
         return all_secrets
     
     def _list_secrets_recursive(self, vault_url: str, engine_name: str, path: str, headers: dict, is_v2: bool = True, verify_ssl: bool = False) -> list:
-        """
-        Recursively list all secret paths in the engine.
-        
-        Args:
-            vault_url: Base Vault URL
-            engine_name: Name of the secrets engine
-            path: Current path to list (empty string for root)
-            headers: Request headers with authentication
-            is_v2: Whether this is a KV v2 engine
-            verify_ssl: Whether to verify SSL certificates
-            
-        Returns:
-            List of all secret paths
-        """
         secret_paths = []
         
         try:
