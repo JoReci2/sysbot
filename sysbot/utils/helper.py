@@ -18,19 +18,6 @@ class Timezone:
 
     @staticmethod
     def convert_to_offset(timezone: str) -> str:
-        """
-        Converts the provided timezone to an offset.
-
-        Args:
-            timezone (str): The timezone name (e.g., 'America/New_York', 'Europe/Paris')
-
-        Returns:
-            str: The timezone offset in format '+HH:MM' or '-HH:MM'
-
-        Raises:
-            pytz.UnknownTimeZoneError: If the timezone is unknown
-            Exception: If conversion fails
-        """
         try:
             tz = pytz.timezone(timezone)
             dt = datetime.datetime.now(tz)
@@ -48,15 +35,23 @@ class Security:
     Utility class for security-related operations.
     """
 
-    @staticmethod
-    def get_certificate_informations(host: str, port: int, timeout: int = 30) -> dict:
+    def __init__(self, sysbot_instance):
+        """
+        Initialize Security class with a Sysbot instance.
+
+        Args:
+            sysbot_instance: Instance of the Sysbot class
+        """
+        self._sysbot = sysbot_instance
+
+    def get_certificate_informations(self, host: str, port: int, tunnel=None) -> dict:
         """
         Get information about web service certificate.
 
         Args:
             host (str): The hostname or IP address
             port (int): The port number
-            timeout (int): Connection timeout in seconds (default: 30)
+            tunnel: Optional tunnel configuration
 
         Returns:
             dict: Dictionary containing certificate information including:
@@ -75,47 +70,15 @@ class Security:
         Raises:
             Exception: If certificate retrieval or parsing fails
         """
-        sock = None
-        ssl_sock = None
+        self._sysbot.open_session('get_certificate', 'socket', 'tcp', host, port, tunnel)
         try:
-            # Create SSL context
-            context = ssl.create_default_context()
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            # Set minimum TLS version to 1.2 for security
-            context.minimum_version = ssl.TLSVersion.TLSv1_2
-
-            # Create socket and wrap with SSL
-            sock = socket.create_connection((host, port), timeout=timeout)
-            ssl_sock = context.wrap_socket(sock, server_hostname=host)
-
-            try:
-                der_cert = ssl_sock.getpeercert(True)
-            except ssl.SSLError as e:
-                raise Exception(f"Failed to retrieve certificate: {str(e)}") from e
-            except socket.error as e:
-                raise Exception(f"Socket error while retrieving certificate: {str(e)}") from e
-
-        except socket.timeout:
-            raise Exception(f"Connection to {host}:{port} timed out")
-        except socket.gaierror as e:
-            raise Exception(f"Failed to resolve hostname {host}: {str(e)}") from e
-        except ConnectionRefusedError:
-            raise Exception(f"Connection refused to {host}:{port}")
+            der_cert = self._sysbot._cache.connections.switch('get_certificate')['session'].getpeercert(True)
+        except ssl.SSLError as e:
+            raise Exception(f"Failed to retrieve certificate: {str(e)}")
+        except socket.error as e:
+            raise Exception(f"Socket error while retrieving certificate: {str(e)}")
         except Exception as e:
-            raise Exception(f"Unexpected error while retrieving certificate: {str(e)}") from e
-        finally:
-            if ssl_sock:
-                try:
-                    ssl_sock.close()
-                except Exception:
-                    pass
-            elif sock:
-                try:
-                    sock.close()
-                except Exception:
-                    pass
-
+            raise Exception(f"Unexpected error while retrieving certificate: {str(e)}")
         try:
             certificate = ssl.DER_cert_to_PEM_cert(der_cert)
             x509 = crypto.load_certificate(crypto.FILETYPE_PEM, certificate)
@@ -143,4 +106,4 @@ class Security:
 
             return cert_info
         except Exception as e:
-            raise Exception(f"Failed to get certificate information: {str(e)}") from e
+            raise Exception(f"Failed to get certificate informations: {str(e)}")
