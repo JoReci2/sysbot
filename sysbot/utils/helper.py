@@ -37,10 +37,10 @@ class Timezone:
             offset = dt.strftime("%z")
             formatted_offset = offset[:3] + ':' + offset[3:]
             return formatted_offset
-        except pytz.UnknownTimeZoneError as e:
+        except pytz.UnknownTimeZoneError:
             raise pytz.UnknownTimeZoneError(f"Unknown timezone: {timezone}")
         except Exception as e:
-            raise Exception(f"Failed to convert timezone to offset: {str(e)}")
+            raise Exception(f"Failed to convert timezone to offset: {str(e)}") from e
 
 
 class Security:
@@ -76,6 +76,7 @@ class Security:
             Exception: If certificate retrieval or parsing fails
         """
         sock = None
+        ssl_sock = None
         try:
             # Create SSL context
             context = ssl.create_default_context()
@@ -89,22 +90,29 @@ class Security:
             try:
                 der_cert = ssl_sock.getpeercert(True)
             except ssl.SSLError as e:
-                raise Exception(f"Failed to retrieve certificate: {str(e)}")
+                raise Exception(f"Failed to retrieve certificate: {str(e)}") from e
             except socket.error as e:
-                raise Exception(f"Socket error while retrieving certificate: {str(e)}")
-            finally:
-                ssl_sock.close()
+                raise Exception(f"Socket error while retrieving certificate: {str(e)}") from e
 
         except socket.timeout:
             raise Exception(f"Connection to {host}:{port} timed out")
         except socket.gaierror as e:
-            raise Exception(f"Failed to resolve hostname {host}: {str(e)}")
+            raise Exception(f"Failed to resolve hostname {host}: {str(e)}") from e
         except ConnectionRefusedError:
             raise Exception(f"Connection refused to {host}:{port}")
         except Exception as e:
-            if sock:
-                sock.close()
-            raise Exception(f"Unexpected error while retrieving certificate: {str(e)}")
+            raise Exception(f"Unexpected error while retrieving certificate: {str(e)}") from e
+        finally:
+            if ssl_sock:
+                try:
+                    ssl_sock.close()
+                except Exception:
+                    pass
+            elif sock:
+                try:
+                    sock.close()
+                except Exception:
+                    pass
 
         try:
             certificate = ssl.DER_cert_to_PEM_cert(der_cert)
@@ -133,4 +141,4 @@ class Security:
 
             return cert_info
         except Exception as e:
-            raise Exception(f"Failed to get certificate informations: {str(e)}")
+            raise Exception(f"Failed to get certificate information: {str(e)}") from e
