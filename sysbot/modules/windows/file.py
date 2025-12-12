@@ -53,6 +53,12 @@ class File(ComponentBase):
         command = f"""(Get-Acl -Path '{path}').Owner"""
         return self.execute_command(alias, command, **kwargs)
 
+    def permissions(self, alias: str, path: str, **kwargs) -> dict:
+        """Get file/directory permissions (ACL information)."""
+        command = f"""Get-Acl -Path '{path}' | Select-Object Owner, Group, AccessToString, @{{Name='Access';Expression={{$_.Access | Select-Object FileSystemRights, AccessControlType, IdentityReference, IsInherited, InheritanceFlags, PropagationFlags}}}} | ConvertTo-Json -Compress -Depth 3"""
+        output = self.execute_command(alias, command, **kwargs)
+        return json.loads(output)
+
     def list_directory(self, alias: str, path: str, **kwargs) -> list:
         """List contents of a directory. Returns empty list for empty directories."""
         command = f"""@(Get-ChildItem -Path '{path}' | Select-Object Name, Length, LastWriteTime, Attributes) | ConvertTo-Json -AsArray -Compress"""

@@ -69,6 +69,11 @@ owner method works
     ${output}=    Call Components    modules.windows.file.owner    target    C:\\Windows
     Should Not Be Empty    ${output}
 
+permissions method works
+    ${output}=    Call Components    modules.windows.file.permissions    target    C:\\Windows
+    Dictionary Should Contain Key    ${output}    Owner
+    Dictionary Should Contain Key    ${output}    Access
+
 list_directory method works
     ${output}=    Call Components    modules.windows.file.list_directory    target    C:\\Windows\\System32\\drivers\\etc
     Should Not Be Empty    ${output}
