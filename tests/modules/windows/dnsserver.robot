@@ -26,6 +26,12 @@ get_zones method works
     ${output}=    Call Components    modules.windows.dnsserver.get_zones    target
     Should Be True    isinstance($output, list)
 
+get_resource_records method works
+    ${zones}=    Call Components    modules.windows.dnsserver.get_zones    target
+    ${zone_name}=    Set Variable    ${zones[0]['ZoneName']}
+    ${output}=    Call Components    modules.windows.dnsserver.get_resource_records    target    ${zone_name}
+    Should Be True    isinstance($output, list)
+
 get_forwarder method works
     ${output}=    Call Components    modules.windows.dnsserver.get_forwarder    target
     Should Be True    isinstance($output, dict)

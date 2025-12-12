@@ -11,8 +11,6 @@ class Dnsserver(ComponentBase):
 
     def get_zone(self, alias: str, zone_name: str, **kwargs) -> dict:
         """Get specific DNS zone by name."""
-        # Escape single quotes to prevent injection
-        zone_name = zone_name.replace("'", "''")
         command = f"Get-DnsServerZone -Name '{zone_name}' | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
@@ -29,21 +27,9 @@ class Dnsserver(ComponentBase):
             return [result]
         return result
 
-    def get_resource_record(self, alias: str, zone_name: str, name: str = None, rr_type: str = None, **kwargs) -> list:
-        """Get DNS resource records from a zone."""
-        # Escape single quotes to prevent injection
-        zone_name = zone_name.replace("'", "''")
-        command = f"Get-DnsServerResourceRecord -ZoneName '{zone_name}'"
-        
-        if name:
-            name = name.replace("'", "''")
-            command += f" -Name '{name}'"
-        
-        if rr_type:
-            rr_type = rr_type.replace("'", "''")
-            command += f" -RRType '{rr_type}'"
-        
-        command += " | ConvertTo-Json"
+    def get_resource_records(self, alias: str, zone_name: str, **kwargs) -> list:
+        """Get all DNS resource records from a zone."""
+        command = f"Get-DnsServerResourceRecord -ZoneName '{zone_name}' | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
             return []
