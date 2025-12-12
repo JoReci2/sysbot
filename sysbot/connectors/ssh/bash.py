@@ -71,6 +71,10 @@ class Bash(ConnectorInterface):
 
         Returns:
             dict: Standardized response with StatusCode, Result, Error, and Metadata
+            
+        Note:
+            Netmiko's send_command doesn't capture exit codes by default.
+            For critical operations, consider checking command output for error indicators.
         """
         if not session or "connection" not in session:
             return create_response(
@@ -107,14 +111,25 @@ class Bash(ConnectorInterface):
                     strip_command=kwargs.get("strip_command", True)
                 )
             
+            # Check for common error indicators in output
+            # Note: This is a best-effort approach since we don't have direct exit code access
+            error_indicators = ["command not found", "permission denied", "no such file"]
+            status_code = 0
+            error = None
+            
+            if any(indicator in output.lower() for indicator in error_indicators):
+                status_code = 1
+                error = "Command execution may have failed (error indicators detected)"
+            
             return create_response(
-                status_code=0,
+                status_code=status_code,
                 result=output,
-                error=None,
+                error=error,
                 metadata={
                     "device_type": session.get("device_type"),
                     "host": session.get("host"),
-                    "port": session.get("port")
+                    "port": session.get("port"),
+                    "note": "Exit code not available via Netmiko - status based on output analysis"
                 }
             )
         except Exception as e:

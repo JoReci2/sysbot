@@ -72,6 +72,11 @@ class Powershell(ConnectorInterface):
 
         Returns:
             dict: Standardized response with StatusCode, Result, Error, and Metadata
+            
+        Security Note:
+            PowerShell commands are base64 encoded which may expose sensitive data
+            in process lists or logs. Avoid passing sensitive data in commands when
+            process monitoring or logging is active.
         """
         if not session or "connection" not in session:
             return create_response(
@@ -87,6 +92,7 @@ class Powershell(ConnectorInterface):
             if runas:
                 if username and password:
                     # Create credentials for RunAs
+                    # WARNING: Plain text password in script - minimize logging exposure
                     ps_command = (
                         f"Start-Process PowerShell -Credential $credential "
                         f'-ArgumentList "-Command", "{command}" -Wait -NoNewWindow'
@@ -112,20 +118,34 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
             ).decode("ascii")
             
             # Execute through netmiko
+            # PowerShell will output error stream to console, check for error indicators
             output = connection.send_command(
                 f"powershell.exe -encodedcommand {encoded_command}",
                 strip_prompt=kwargs.get("strip_prompt", True),
                 strip_command=kwargs.get("strip_command", True)
             )
             
+            # Check for PowerShell error indicators
+            error_indicators = [
+                "exception", "error:", "cannot", "failed", 
+                "access denied", "not recognized"
+            ]
+            status_code = 0
+            error = None
+            
+            if any(indicator in output.lower() for indicator in error_indicators):
+                status_code = 1
+                error = "PowerShell command may have failed (error indicators detected)"
+            
             return create_response(
-                status_code=0,
+                status_code=status_code,
                 result=output,
-                error=None,
+                error=error,
                 metadata={
                     "device_type": session.get("device_type"),
                     "host": session.get("host"),
-                    "port": session.get("port")
+                    "port": session.get("port"),
+                    "note": "Exit code not available via Netmiko - status based on output analysis"
                 }
             )
         except Exception as e:

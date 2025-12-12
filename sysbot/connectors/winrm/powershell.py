@@ -72,6 +72,11 @@ class Powershell(ConnectorInterface):
 
         Returns:
             dict: Standardized response with StatusCode, Result, Error, and Metadata
+            
+        Security Note:
+            When using runas with credentials, passwords are passed as plain text in
+            PowerShell scripts. Ensure WinRM is used over HTTPS and consider the
+            security implications in environments with active logging or monitoring.
 
         Raises:
             Exception: If there is an error executing the command.

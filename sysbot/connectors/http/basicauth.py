@@ -89,10 +89,13 @@ class Basicauth(ConnectorInterface):
             except ValueError:
                 result_data = response.text
             
+            # Check for success: 2xx status codes only
+            is_success = 200 <= response.status_code < 300
+            
             return create_response(
-                status_code=response.status_code,
+                status_code=0 if is_success else response.status_code,
                 result=result_data,
-                error=None if response.status_code < 400 else f"HTTP {response.status_code}: {response.reason}",
+                error=None if is_success else f"HTTP {response.status_code}: {response.reason}",
                 metadata={
                     "host": session["host"],
                     "port": session["port"],
