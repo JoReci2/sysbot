@@ -3,8 +3,8 @@ import json
 
 
 class Veeam(ComponentBase):
-    def get_server(self, alias: str, **kwargs) -> list:
-        """Get Veeam Backup & Replication server information."""
+    def get_servers(self, alias: str, **kwargs) -> list:
+        """Get managed servers in Veeam Backup & Replication."""
         command = "Get-VBRServer | Select-Object Name, Description, Type, Info | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
@@ -15,7 +15,7 @@ class Veeam(ComponentBase):
             return [result]
         return result
 
-    def get_backup_repository(self, alias: str, name: str = None, **kwargs) -> list:
+    def get_backup_repositories(self, alias: str, name: str = None, **kwargs) -> list:
         """Get backup repositories."""
         if name:
             # Escape single quotes to prevent injection
@@ -32,7 +32,7 @@ class Veeam(ComponentBase):
             return [result]
         return result
 
-    def get_job(self, alias: str, name: str = None, **kwargs) -> list:
+    def get_jobs(self, alias: str, name: str = None, **kwargs) -> list:
         """Get backup and replication jobs."""
         if name:
             # Escape single quotes to prevent injection
@@ -49,7 +49,7 @@ class Veeam(ComponentBase):
             return [result]
         return result
 
-    def get_backup(self, alias: str, name: str = None, **kwargs) -> list:
+    def get_backups(self, alias: str, name: str = None, **kwargs) -> list:
         """Get backups."""
         if name:
             # Escape single quotes to prevent injection
@@ -66,7 +66,7 @@ class Veeam(ComponentBase):
             return [result]
         return result
 
-    def get_restore_point(self, alias: str, backup_name: str = None, **kwargs) -> list:
+    def get_restore_points(self, alias: str, backup_name: str = None, **kwargs) -> list:
         """Get restore points."""
         if backup_name:
             # Escape single quotes to prevent injection
@@ -83,7 +83,7 @@ class Veeam(ComponentBase):
             return [result]
         return result
 
-    def get_backup_session(self, alias: str, job_name: str = None, **kwargs) -> list:
+    def get_backup_sessions(self, alias: str, job_name: str = None, **kwargs) -> list:
         """Get backup sessions."""
         if job_name:
             # Escape single quotes to prevent injection
@@ -100,7 +100,7 @@ class Veeam(ComponentBase):
             return [result]
         return result
 
-    def get_vi_server(self, alias: str, name: str = None, **kwargs) -> list:
+    def get_vi_servers(self, alias: str, name: str = None, **kwargs) -> list:
         """Get vSphere servers managed by Veeam."""
         if name:
             # Escape single quotes to prevent injection
@@ -117,7 +117,7 @@ class Veeam(ComponentBase):
             return [result]
         return result
 
-    def get_server_session(self, alias: str, **kwargs) -> list:
+    def get_server_sessions(self, alias: str, **kwargs) -> list:
         """Get server session information."""
         command = "Get-VBRServerSession | Select-Object User, Server, Port | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
