@@ -1,8 +1,11 @@
 import requests
 import urllib3
+from typing import Union
 from sysbot.utils.engine import ComponentBase
 
 # Disable SSL warnings for self-signed certificates
+# Note: SSL verification is disabled to support self-signed certificates in dev/test environments
+# For production use, consider using properly signed certificates
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -12,7 +15,7 @@ class Vault(ComponentBase):
     Allows dumping all secrets from a Vault engine and storing them in Sysbot's secret manager.
     """
 
-    def dump_engine(self, token: str, url: str, engine_name: str, key: str = None) -> dict:
+    def dump_engine(self, token: str, url: str, engine_name: str, key: str = None) -> Union[dict, str]:
         """
         Dump all secrets from a HashiCorp Vault engine.
         
@@ -98,9 +101,8 @@ class Vault(ComponentBase):
                     data = response.json()
                     if 'data' in data and 'data' in data['data']:
                         all_secrets[path] = data['data']['data']
-            except Exception as e:
-                # Log error but continue with other secrets
-                print(f"Warning: Failed to retrieve secret at {path}: {e}")
+            except Exception:
+                # Skip secrets that fail to retrieve and continue with others
                 continue
         
         return all_secrets
@@ -126,9 +128,8 @@ class Vault(ComponentBase):
                     data = response.json()
                     if 'data' in data:
                         all_secrets[path] = data['data']
-            except Exception as e:
-                # Log error but continue with other secrets
-                print(f"Warning: Failed to retrieve secret at {path}: {e}")
+            except Exception:
+                # Skip secrets that fail to retrieve and continue with others
                 continue
         
         return all_secrets
@@ -179,8 +180,8 @@ class Vault(ComponentBase):
                             secret_path = f"{path}{key}" if path else key
                             secret_paths.append(secret_path)
             
-        except Exception as e:
-            # If listing fails, just return empty list for this path
-            print(f"Warning: Failed to list secrets at {path}: {e}")
+        except Exception:
+            # If listing fails, return empty list for this path
+            pass
         
         return secret_paths
