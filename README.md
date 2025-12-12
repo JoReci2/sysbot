@@ -104,6 +104,16 @@ secret_data = bot.get_secret("my_secret.0.name")
 bot.add_secret("new_secret", "very_secret_value")
 bot.get_secret("new_secret")
 bot.remove_secret("new_secret")
+
+# Using Vault plugin to dump HashiCorp Vault secrets
+bot.plugins.vault.dump_engine(
+    token="hvs.CAESIJ...",
+    url="https://vault.example.com:8200",
+    engine_name="secret",
+    key="vault_secrets"
+)
+# Access Vault secrets using dot notation
+db_url = bot.get_secret("vault_secrets.myapp/config.database_url")
 ```
 
 ### Using with Robot Framework
