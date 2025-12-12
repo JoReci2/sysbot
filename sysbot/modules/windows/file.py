@@ -55,7 +55,14 @@ class File(ComponentBase):
 
     def permissions(self, alias: str, path: str, **kwargs) -> dict:
         """Get file/directory permissions (ACL information)."""
-        command = f"""Get-Acl -Path '{path}' | Select-Object Owner, Group, AccessToString, @{{Name='Access';Expression={{$_.Access | Select-Object FileSystemRights, AccessControlType, IdentityReference, IsInherited, InheritanceFlags, PropagationFlags}}}} | ConvertTo-Json -Compress -Depth 3"""
+        command = f"""
+Get-Acl -Path '{path}' | Select-Object Owner, Group, AccessToString, @{{
+    Name='Access';
+    Expression={{
+        $_.Access | Select-Object FileSystemRights, AccessControlType, IdentityReference, IsInherited, InheritanceFlags, PropagationFlags
+    }}
+}} | ConvertTo-Json -Compress -Depth 3
+""".strip()
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
 
