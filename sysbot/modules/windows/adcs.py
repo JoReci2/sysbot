@@ -7,12 +7,16 @@ class Adcs(ComponentBase):
         """Get Certificate Authority information."""
         command = "Get-CertificationAuthority | Select-Object Name, Type, ConfigString, Certificate | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
+        if not output or output.strip() == "":
+            return {}
         return json.loads(output)
 
     def get_ca_property(self, alias: str, **kwargs) -> dict:
         """Get Certificate Authority properties."""
         command = "Get-CAProperty | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
+        if not output or output.strip() == "":
+            return {}
         return json.loads(output)
 
     def get_issued_certificates(self, alias: str, **kwargs) -> list:
@@ -67,12 +71,16 @@ class Adcs(ComponentBase):
         """Get Certificate Revocation List information."""
         command = "Get-CACrlDistributionPoint | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
+        if not output or output.strip() == "":
+            return {}
         return json.loads(output)
 
     def get_certificate(self, alias: str, request_id: int, **kwargs) -> dict:
         """Get specific certificate by request ID."""
         command = f"Get-IssuedRequest -RequestId {request_id} | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
+        if not output or output.strip() == "":
+            return {}
         return json.loads(output)
 
     def get_revoked_certificates(self, alias: str, **kwargs) -> list:
