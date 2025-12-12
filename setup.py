@@ -14,6 +14,7 @@ setup(
         "pyVmomi",
         "pywinrm",
         "pyOpenSSL",
+        "pytz",
     ],
     author="Thibault SCIRE",
     author_email="thibault.scire@outlook.com",
