@@ -7,6 +7,8 @@ class Wsus(ComponentBase):
         """Get WSUS server information."""
         command = "Get-WsusServer | Select-Object Name, PortNumber, ServerProtocolVersion, UpdateServer | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
+        if not output or output.strip() == "":
+            return {}
         return json.loads(output)
 
     def get_update(self, alias: str, update_id: str = None, classification: str = None, approval: str = None, status: str = None, **kwargs) -> list:
@@ -28,11 +30,17 @@ class Wsus(ComponentBase):
             escaped_id = update_id.replace("'", "''")
             params.append(f"-UpdateId '{escaped_id}'")
         if classification:
-            params.append(f"-Classification {classification}")
+            # Escape single quotes to prevent injection
+            escaped_classification = classification.replace("'", "''")
+            params.append(f"-Classification {escaped_classification}")
         if approval:
-            params.append(f"-Approval {approval}")
+            # Escape single quotes to prevent injection
+            escaped_approval = approval.replace("'", "''")
+            params.append(f"-Approval {escaped_approval}")
         if status:
-            params.append(f"-Status {status}")
+            # Escape single quotes to prevent injection
+            escaped_status = status.replace("'", "''")
+            params.append(f"-Status {escaped_status}")
         
         param_str = " ".join(params) if params else ""
         command = f"Get-WsusUpdate {param_str} | Select-Object Title, UpdateId, Classification, Approval, ComputersNeedingThisUpdate, ComputersInstalledThisUpdate | ConvertTo-Json"
@@ -100,4 +108,6 @@ class Wsus(ComponentBase):
         """Get WSUS server status and statistics."""
         command = "Get-WsusServer | Get-WsusServerStatistics | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
+        if not output or output.strip() == "":
+            return {}
         return json.loads(output)
