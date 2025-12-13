@@ -1,0 +1,79 @@
+= SysBot Documentation
+
+Welcome to the SysBot documentation!
+
+== Documentation Files
+
+* **link:index.adoc[index.adoc]** - Main documentation index and overview
+* **link:setup.adoc[setup.adoc]** - Installation and configuration guide
+* **link:quickstart.adoc[quickstart.adoc]** - Quick start guide with examples
+* **link:robotframework.adoc[robotframework.adoc]** - Working with Robot Framework test suites
+* **link:unittest.adoc[unittest.adoc]** - Working with Python unittest test suites
+* **link:developer.adoc[developer.adoc]** - Developer guide for contributors
+* **link:references.adoc[references.adoc]** - Complete API reference documentation
+
+== Getting Started
+
+Start with link:index.adoc[index.adoc] for an overview, then proceed to:
+
+1. link:setup.adoc[Setup] - Install and configure SysBot
+2. link:quickstart.adoc[Quick Start] - Learn basic usage
+3. link:robotframework.adoc[Robot Framework] or link:unittest.adoc[unittest] - Choose your testing framework
+4. link:developer.adoc[Developer Guide] - If you want to contribute or extend SysBot
+5. link:references.adoc[References] - Detailed API documentation
+
+== Viewing Documentation
+
+=== AsciiDoc Viewers
+
+These AsciiDoc files can be viewed:
+
+* **On GitHub**: GitHub natively renders AsciiDoc files
+* **Using AsciiDoctor**: Install AsciiDoctor and convert to HTML
+* **Using an IDE**: Many IDEs have AsciiDoc preview plugins (VS Code, IntelliJ, etc.)
+
+=== Converting to HTML
+
+To convert documentation to HTML:
+
+[source,bash]
+----
+# Install AsciiDoctor
+gem install asciidoctor
+
+# Convert a single file
+asciidoctor docs/index.adoc
+
+# Convert all files
+asciidoctor docs/*.adoc
+----
+
+=== Converting to PDF
+
+To convert documentation to PDF:
+
+[source,bash]
+----
+# Install AsciiDoctor PDF
+gem install asciidoctor-pdf
+
+# Convert to PDF
+asciidoctor-pdf docs/index.adoc
+----
+
+== Contributing to Documentation
+
+When contributing to documentation:
+
+1. Follow AsciiDoc syntax
+2. Keep sections organized with proper headings
+3. Include code examples where appropriate
+4. Use consistent formatting
+5. Update the main index.adoc if adding new sections
+
+== Support
+
+For documentation issues or questions:
+
+* GitHub Issues: https://github.com/JoReci2/sysbot/issues
+* GitHub Repository: https://github.com/JoReci2/sysbot

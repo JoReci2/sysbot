@@ -1,0 +1,862 @@
+= Developer Guide
+:toc: left
+:toclevels: 3
+:sectnums:
+:icons: font
+:source-highlighter: highlight.js
+
+== Introduction
+
+This guide is for developers who want to contribute to SysBot or extend its functionality. You'll learn about the architecture, development setup, and how to create custom modules and plugins.
+
+== Development Environment Setup
+
+=== Prerequisites
+
+* Python 3.7 or higher (Python 3.8+ recommended)
+* Git
+* pip
+* Virtual environment tool (venv or virtualenv)
+
+=== Clone the Repository
+
+[source,bash]
+----
+# Clone the repository
+git clone https://github.com/JoReci2/sysbot.git
+cd sysbot
+
+# Create a virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Linux/macOS:
+source venv/bin/activate
+
+# On Windows:
+venv\Scripts\activate
+----
+
+=== Install Development Dependencies
+
+[source,bash]
+----
+# Install development tools
+pip install build ruff bandit radon safety
+
+# Install the package in development mode
+pip install -e .
+----
+
+=== Development Tools
+
+==== Ruff (Linting and Formatting)
+
+[source,bash]
+----
+# Run ruff linter
+ruff check .
+
+# Format code with ruff
+ruff format .
+----
+
+==== Bandit (Security)
+
+[source,bash]
+----
+# Run security checks
+bandit -r sysbot/
+----
+
+==== Radon (Code Complexity)
+
+[source,bash]
+----
+# Check code complexity
+radon cc sysbot/ -a
+
+# Check maintainability index
+radon mi sysbot/
+----
+
+==== Safety (Dependency Checks)
+
+[source,bash]
+----
+# Check for security vulnerabilities in dependencies
+safety check
+----
+
+== Architecture Overview
+
+=== Project Structure
+
+----
+sysbot/
+├── Sysbot.py           # Main SysBot class
+├── __init__.py
+├── connectors/         # Protocol-specific connectors
+│   ├── __init__.py
+│   ├── config.py       # Connector configuration
+│   ├── localhost/      # Local command execution
+│   ├── ssh/           # SSH connections (bash, powershell)
+│   ├── winrm/         # Windows Remote Management
+│   ├── http/          # HTTP/HTTPS connections
+│   └── socket/        # Socket connections (TCP, UDP)
+├── modules/           # System-specific modules
+│   ├── __init__.py
+│   ├── linux/         # Linux modules
+│   │   ├── file.py
+│   │   ├── systemd.py
+│   │   ├── dnf.py
+│   │   └── ...
+│   └── windows/       # Windows modules
+│       ├── file.py
+│       ├── adds.py
+│       ├── adcs.py
+│       └── ...
+├── plugins/           # Utility plugins
+│   ├── __init__.py
+│   └── data.py        # Data loading plugins
+└── utils/             # Utility functions
+    ├── __init__.py
+    ├── engine.py      # Engine class for dynamic loading
+    └── helper.py      # Helper utilities
+----
+
+=== Core Components
+
+==== Sysbot.py
+
+The main class that manages all operations:
+
+* Session management
+* Connection handling
+* Module and plugin loading
+* Secret management
+
+==== Connectors
+
+Protocol-specific connection handlers:
+
+* All connectors return standardized responses
+* Each connector handles a specific protocol (SSH, WinRM, HTTP, Socket)
+* Connectors use default ports from config.py
+
+**Standard Response Format:**
+
+[source,python]
+----
+{
+    "StatusCode": 0,        # Exit code (0 = success)
+    "Result": "...",        # Command output
+    "Error": "",            # Error message (if any)
+    "Metadata": {}          # Additional metadata
+}
+----
+
+==== Modules
+
+Pre-built functionality for specific systems:
+
+* Organized by operating system (linux, windows)
+* Each module provides system-specific operations
+* Dynamically loaded based on configuration
+
+==== Plugins
+
+Utility components for data management and external integrations:
+
+* Data plugins load CSV, JSON, YAML files
+* Can store data in secret manager
+* Return "Imported" when storing as secret
+
+==== Engine
+
+Dynamic component loading system:
+
+* Discovers and loads modules
+* Manages module lifecycle
+* Provides access to module functions
+
+== Code Standards
+
+=== Style Guide
+
+* Follow PEP 8 for Python code style
+* Use `snake_case` for functions and variables
+* Use `PascalCase` for classes
+* Use `UPPER_CASE` for constants
+* Use lowercase for module names
+
+=== Naming Conventions
+
+[source,python]
+----
+# Variables and functions
+def execute_command(alias, command):
+    result_data = process_output(command)
+    return result_data
+
+# Classes
+class SysBot:
+    pass
+
+class ComponentBase:
+    pass
+
+# Constants
+DEFAULT_PORT = 22
+MAX_RETRIES = 3
+TIMEOUT_SECONDS = 30
+
+# Modules
+# sysbot/modules/linux/systemd.py
+# sysbot/connectors/ssh/bash.py
+----
+
+=== Documentation
+
+Use Google-style docstrings:
+
+[source,python]
+----
+def open_session(alias, protocol, product, host, port, login, password):
+    """Open a connection session to a remote system.
+    
+    Args:
+        alias: Unique identifier for the session
+        protocol: Connection protocol (ssh, winrm, http, socket)
+        product: Product type (bash, powershell, basicauth, etc.)
+        host: Target host address
+        port: Connection port
+        login: Username for authentication
+        password: Password for authentication
+    
+    Returns:
+        None
+    
+    Raises:
+        Exception: If connection fails
+        
+    Example:
+        >>> bot.open_session("server1", "ssh", "bash", 
+        ...                  "192.168.1.100", 22, "user", "pass")
+    """
+    pass
+----
+
+=== Error Handling
+
+Use exception chaining to preserve tracebacks:
+
+[source,python]
+----
+try:
+    result = some_operation()
+except Exception as e:
+    raise Exception(f"Operation failed: {str(e)}") from e
+----
+
+=== Security Best Practices
+
+==== TLS Version
+
+Always use TLS 1.2 or higher:
+
+[source,python]
+----
+import ssl
+
+context = ssl.create_default_context()
+context.minimum_version = ssl.TLSVersion.TLSv1_2
+----
+
+==== Input Sanitization
+
+For PowerShell commands with user input, escape single quotes:
+
+[source,python]
+----
+# Escape single quotes to prevent injection
+parameter = parameter.replace("'", "''")
+command = f"Get-SomeCommand -Name '{parameter}'"
+----
+
+NOTE: PowerShell commands via WinRM are base64 encoded before transmission, but proper escaping is still recommended for defense in depth.
+
+==== SQL Injection Prevention
+
+Use parameterized queries, never string concatenation:
+
+[source,python]
+----
+# Good
+cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+
+# Bad
+cursor.execute(f"SELECT * FROM users WHERE id = {user_id}")
+----
+
+== Creating Custom Modules
+
+=== Module Structure
+
+Modules are organized by operating system and functionality:
+
+[source,python]
+----
+# sysbot/modules/linux/mymodule.py
+
+def my_function(connector, alias, parameter):
+    """
+    Execute a custom operation.
+    
+    Args:
+        connector: The connector instance to use
+        alias: Session alias
+        parameter: Custom parameter
+    
+    Returns:
+        Result from the operation
+    """
+    command = f"echo {parameter}"
+    result = connector.execute(alias, command)
+    return result
+----
+
+=== Module Example: Linux File Operations
+
+[source,python]
+----
+# sysbot/modules/linux/file.py
+
+def exists(connector, alias, path):
+    """
+    Check if a file or directory exists.
+    
+    Args:
+        connector: The connector instance
+        alias: Session alias
+        path: Path to check
+    
+    Returns:
+        bool: True if exists, False otherwise
+    """
+    command = f"test -e '{path}' && echo 'true' || echo 'false'"
+    result = connector.execute(alias, command)
+    
+    if result["StatusCode"] == 0:
+        return "true" in result["Result"].lower()
+    return False
+
+
+def read(connector, alias, path):
+    """
+    Read file contents.
+    
+    Args:
+        connector: The connector instance
+        alias: Session alias
+        path: Path to file
+    
+    Returns:
+        str: File contents
+    """
+    command = f"cat '{path}'"
+    result = connector.execute(alias, command)
+    
+    if result["StatusCode"] == 0:
+        return result["Result"]
+    raise Exception(f"Failed to read file: {result['Error']}")
+
+
+def write(connector, alias, path, content):
+    """
+    Write content to file.
+    
+    Args:
+        connector: The connector instance
+        alias: Session alias
+        path: Path to file
+        content: Content to write
+    
+    Returns:
+        bool: True if successful
+    """
+    # Escape content for shell
+    escaped_content = content.replace("'", "'\\''")
+    command = f"echo '{escaped_content}' > '{path}'"
+    result = connector.execute(alias, command)
+    
+    return result["StatusCode"] == 0
+----
+
+=== Module Example: Windows Registry
+
+[source,python]
+----
+# sysbot/modules/windows/registry.py
+
+def get_value(connector, alias, path, name):
+    """
+    Get registry value.
+    
+    Args:
+        connector: The connector instance
+        alias: Session alias
+        path: Registry path
+        name: Value name
+    
+    Returns:
+        Registry value
+    """
+    # Escape single quotes for PowerShell
+    path = path.replace("'", "''")
+    name = name.replace("'", "''")
+    
+    command = f"Get-ItemProperty -Path '{path}' -Name '{name}' | Select-Object -ExpandProperty '{name}'"
+    result = connector.execute(alias, command)
+    
+    if result["StatusCode"] == 0:
+        return result["Result"].strip()
+    raise Exception(f"Failed to get registry value: {result['Error']}")
+
+
+def set_value(connector, alias, path, name, value, value_type="String"):
+    """
+    Set registry value.
+    
+    Args:
+        connector: The connector instance
+        alias: Session alias
+        path: Registry path
+        name: Value name
+        value: Value to set
+        value_type: Registry value type
+    
+    Returns:
+        bool: True if successful
+    """
+    path = path.replace("'", "''")
+    name = name.replace("'", "''")
+    value = str(value).replace("'", "''")
+    
+    command = f"Set-ItemProperty -Path '{path}' -Name '{name}' -Value '{value}' -Type {value_type}"
+    result = connector.execute(alias, command)
+    
+    return result["StatusCode"] == 0
+----
+
+=== Using Modules
+
+Modules are automatically discovered and loaded:
+
+[source,python]
+----
+from sysbot.Sysbot import Sysbot
+
+# Load specific modules
+bot = Sysbot("linux.file", "linux.systemd")
+
+# Or load all modules
+bot = Sysbot()
+
+# Use module functions
+bot.open_session("server", "ssh", "bash", "192.168.1.100", 22, "user", "pass")
+exists = bot.linux.file.exists("server", "/etc/hosts")
+----
+
+== Creating Custom Plugins
+
+=== Plugin Structure
+
+Plugins extend `ComponentBase` and follow a specific pattern:
+
+[source,python]
+----
+# sysbot/plugins/myplugin.py
+
+from sysbot.utils.engine import ComponentBase
+
+
+class MyPlugin(ComponentBase):
+    """Custom plugin for specific functionality."""
+    
+    def __init__(self, secret_manager):
+        """
+        Initialize plugin.
+        
+        Args:
+            secret_manager: Secret manager instance
+        """
+        super().__init__(secret_manager)
+    
+    def my_function(self, parameter, key=None):
+        """
+        Custom plugin function.
+        
+        Args:
+            parameter: Function parameter
+            key: Optional key to store result in secret manager
+        
+        Returns:
+            "Imported" if key provided, otherwise returns data directly
+        """
+        # Process data
+        data = process_data(parameter)
+        
+        # If key provided, store in secret manager
+        if key:
+            self.add_to_secrets(key, data)
+            return "Imported"
+        
+        # Otherwise return data directly
+        return data
+----
+
+=== Plugin Example: Configuration Loader
+
+[source,python]
+----
+# sysbot/plugins/config.py
+
+from sysbot.utils.engine import ComponentBase
+import configparser
+
+
+class ConfigPlugin(ComponentBase):
+    """Plugin for loading INI configuration files."""
+    
+    def __init__(self, secret_manager):
+        super().__init__(secret_manager)
+    
+    def ini(self, filepath, key=None):
+        """
+        Load INI configuration file.
+        
+        Args:
+            filepath: Path to INI file
+            key: Optional key to store in secret manager
+        
+        Returns:
+            "Imported" if key provided, otherwise returns config dict
+        """
+        config = configparser.ConfigParser()
+        config.read(filepath)
+        
+        # Convert to dictionary
+        config_dict = {
+            section: dict(config[section])
+            for section in config.sections()
+        }
+        
+        if key:
+            self.add_to_secrets(key, config_dict)
+            return "Imported"
+        
+        return config_dict
+----
+
+=== Data Plugin Pattern
+
+The data plugin demonstrates the standard pattern:
+
+[source,python]
+----
+# sysbot/plugins/data.py
+
+from sysbot.utils.engine import ComponentBase
+import csv
+import json
+import yaml
+
+
+class DataPlugin(ComponentBase):
+    """Plugin for loading data files."""
+    
+    def csv(self, filepath, key=None):
+        """Load CSV file."""
+        with open(filepath, 'r') as f:
+            reader = csv.DictReader(f)
+            data = list(reader)
+        
+        if key:
+            self.add_to_secrets(key, data)
+            return "Imported"
+        return data
+    
+    def json(self, filepath, key=None):
+        """Load JSON file."""
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+        
+        if key:
+            self.add_to_secrets(key, data)
+            return "Imported"
+        return data
+    
+    def yaml(self, filepath, key=None):
+        """Load YAML file."""
+        with open(filepath, 'r') as f:
+            data = yaml.safe_load(f)
+        
+        if key:
+            self.add_to_secrets(key, data)
+            return "Imported"
+        return data
+----
+
+== Testing
+
+=== Running Tests
+
+[source,bash]
+----
+# Run all Robot Framework tests
+robot tests/
+
+# Run specific test suite
+robot tests/sysbot.robot
+
+# Run with output directory
+robot --outputdir results/ tests/
+
+# Run with specific tag
+robot --include smoke tests/
+----
+
+=== Writing Tests
+
+Follow the existing test structure:
+
+[source,robot]
+----
+*** Settings ***
+Name           My Module Tests
+
+Library        Collections
+Library        sysbot.Sysbot
+
+*** Variables ***
+${HOST}        192.168.1.100
+${PORT}        22
+${USER}        testuser
+${PASSWORD}    testpass
+
+*** Settings ***
+Suite Setup       Open Test Session
+Suite Teardown    Close All Sessions
+
+*** Test Cases ***
+
+Test Module Function
+    [Documentation]    Test custom module function
+    [Tags]    module    custom
+    
+    ${result}=    Call Components    mymodule.my_function    server    parameter
+    Should Not Be Empty    ${result}
+
+*** Keywords ***
+
+Open Test Session
+    Open Session    server    ssh    bash    ${HOST}    ${PORT}    ${USER}    ${PASSWORD}
+----
+
+=== Test Best Practices
+
+* Use descriptive test names
+* Tag tests appropriately
+* Document test purpose
+* Clean up resources in teardown
+* Keep tests independent
+* Use keywords for reusable logic
+
+== Contributing
+
+=== Contribution Workflow
+
+. Fork the repository
+. Create a feature branch
+. Make your changes
+. Run tests and linters
+. Commit with descriptive messages
+. Push to your fork
+. Create a pull request
+
+=== Commit Messages
+
+Follow Conventional Commits:
+
+[source,bash]
+----
+# Feature
+git commit -m "feat: add new module for XYZ"
+
+# Bug fix
+git commit -m "fix: resolve connection timeout issue"
+
+# Documentation
+git commit -m "docs: update API reference"
+
+# Refactoring
+git commit -m "refactor: improve error handling"
+
+# Tests
+git commit -m "test: add tests for new module"
+
+# Chore
+git commit -m "chore: update dependencies"
+----
+
+=== Pull Request Process
+
+. Ensure all tests pass
+. Update documentation
+. Follow code standards
+. Provide clear PR description
+. Address review feedback
+
+=== Code Review Checklist
+
+* [ ] Code follows style guide
+* [ ] Tests are included
+* [ ] Documentation is updated
+* [ ] No security vulnerabilities
+* [ ] Error handling is proper
+* [ ] Code is maintainable
+
+== Building and Packaging
+
+=== Building the Package
+
+[source,bash]
+----
+# Install build tools
+pip install build
+
+# Build the package
+python -m build
+
+# This creates:
+# - dist/sysbot-*.whl
+# - dist/sysbot-*.tar.gz
+----
+
+=== Installing Locally
+
+[source,bash]
+----
+# Install from source
+pip install -e .
+
+# Install built package
+pip install dist/sysbot-*.whl
+----
+
+=== Publishing to PyPI
+
+[source,bash]
+----
+# Install twine
+pip install twine
+
+# Upload to PyPI
+twine upload dist/*
+
+# Upload to Test PyPI
+twine upload --repository testpypi dist/*
+----
+
+== Troubleshooting
+
+=== Common Issues
+
+==== Module Not Found
+
+If modules are not loading:
+
+. Check module is in correct directory
+. Ensure `__init__.py` exists
+. Verify module syntax is correct
+
+==== Import Errors
+
+[source,bash]
+----
+# Reinstall in development mode
+pip install -e .
+----
+
+==== Test Failures
+
+[source,bash]
+----
+# Run with verbose output
+robot -L DEBUG tests/
+
+# Check test logs
+cat results/log.html
+----
+
+=== Debugging
+
+==== Enable Debug Logging
+
+[source,python]
+----
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+----
+
+==== Use Python Debugger
+
+[source,python]
+----
+import pdb
+
+def my_function():
+    # Set breakpoint
+    pdb.set_trace()
+    # Code continues here
+----
+
+== Resources
+
+=== Documentation
+
+* link:setup.adoc[Setup Guide]
+* link:quickstart.adoc[Quick Start]
+* link:robotframework.adoc[Robot Framework Guide]
+* link:unittest.adoc[unittest Guide]
+* link:references.adoc[API References]
+
+=== External Resources
+
+* Python Documentation: https://docs.python.org/3/
+* Robot Framework: https://robotframework.org/
+* PEP 8 Style Guide: https://pep8.org/
+* Conventional Commits: https://www.conventionalcommits.org/
+
+=== Community
+
+* GitHub Issues: https://github.com/JoReci2/sysbot/issues
+* GitHub Discussions: https://github.com/JoReci2/sysbot/discussions
+* Contributing Guide: See CONTRIBUTING.rst
+
+== Support
+
+For development questions:
+
+* Check existing issues
+* Create a new issue with [DEV] prefix
+* Provide code examples and error messages
+* Include Python version and OS information
+
+== License
+
+SysBot is licensed under the MIT License. See LICENSE file for details.
+
+By contributing to SysBot, you agree that your contributions will be licensed under the same MIT License.
