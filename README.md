@@ -212,6 +212,21 @@ SysBot provides comprehensive error handling:
 - **Session Validation**: Verification of session validity before operations
 - **Module Errors**: Clear error messages for module and function calls
 
+## Contributing
+
+Contributions are welcome! Please see [DEVELOPMENT.md](DEVELOPMENT.md) for development setup, code quality tools, and guidelines.
+
+### Development Tools
+
+This project uses:
+- **Tox** for automated testing and quality checks
+- **Ruff** for fast Python linting
+- **Radon** for code complexity analysis
+- **Bandit** for security vulnerability scanning
+- **Pre-commit hooks** for automated code quality checks
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed instructions.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -27,6 +27,7 @@ select = [
 ]
 ignore = [
     "E501",  # line too long (handled by formatter)
+    "W293",  # blank line contains whitespace (can be auto-fixed)
 ]
 
 [tool.bandit]
