@@ -9,7 +9,5 @@ bandit[toml]>=1.7.6
 pytest>=7.4.0
 pytest-cov>=4.1.0
 
-# Documentation
-sphinx>=7.2.0
-sphinx-rtd-theme>=2.0.0
-asciidoctor>=0.1.0
+# Documentation (Note: asciidoctor must be installed via system package manager)
+# Install with: sudo apt-get install asciidoctor ruby-asciidoctor-pdf

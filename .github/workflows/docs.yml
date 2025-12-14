@@ -43,8 +43,8 @@ jobs:
             fi
           done
           
-          # If index.adoc doesn't exist, create a simple index.html
-          if [ ! -f ../_site/index.html ]; then
+          # If index.adoc was not found, create a simple index.html
+          if [ ! -f "index.adoc" ]; then
             cat > ../_site/index.html << 'EOF'
           <!DOCTYPE html>
           <html>
