@@ -222,17 +222,20 @@ class DatabaseListener:
             suite_info['_id'] = result_doc.inserted_id
         else:
             cursor = self.connection.cursor()
-            cursor.execute("""
-                INSERT INTO test_suites (name, doc, start_time, metadata)
-                VALUES (?, ?, ?, ?)
-            """ if self.db_type == "sqlite" else """
-                INSERT INTO test_suites (name, doc, start_time, metadata)
-                VALUES (%s, %s, %s, %s) RETURNING id
-            """, (suite_info['name'], suite_info['doc'], suite_info['start_time'], suite_info['metadata']))
-            
-            if self.db_type == "sqlite":
+            if self.db_type == "sqlite" or self.db_type == "mysql":
+                cursor.execute("""
+                    INSERT INTO test_suites (name, doc, start_time, metadata)
+                    VALUES (%s, %s, %s, %s)
+                """ if self.db_type == "mysql" else """
+                    INSERT INTO test_suites (name, doc, start_time, metadata)
+                    VALUES (?, ?, ?, ?)
+                """, (suite_info['name'], suite_info['doc'], suite_info['start_time'], suite_info['metadata']))
                 suite_info['id'] = cursor.lastrowid
-            else:
+            else:  # PostgreSQL
+                cursor.execute("""
+                    INSERT INTO test_suites (name, doc, start_time, metadata)
+                    VALUES (%s, %s, %s, %s) RETURNING id
+                """, (suite_info['name'], suite_info['doc'], suite_info['start_time'], suite_info['metadata']))
                 suite_info['id'] = cursor.fetchone()[0]
             
             self.connection.commit()
@@ -290,17 +293,20 @@ class DatabaseListener:
             test_info['_id'] = result_doc.inserted_id
         else:
             cursor = self.connection.cursor()
-            cursor.execute("""
-                INSERT INTO test_cases (suite_id, name, doc, tags, start_time)
-                VALUES (?, ?, ?, ?, ?)
-            """ if self.db_type == "sqlite" else """
-                INSERT INTO test_cases (suite_id, name, doc, tags, start_time)
-                VALUES (%s, %s, %s, %s, %s) RETURNING id
-            """, (test_info['suite_id'], test_info['name'], test_info['doc'], test_info['tags'], test_info['start_time']))
-            
-            if self.db_type == "sqlite":
+            if self.db_type == "sqlite" or self.db_type == "mysql":
+                cursor.execute("""
+                    INSERT INTO test_cases (suite_id, name, doc, tags, start_time)
+                    VALUES (%s, %s, %s, %s, %s)
+                """ if self.db_type == "mysql" else """
+                    INSERT INTO test_cases (suite_id, name, doc, tags, start_time)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (test_info['suite_id'], test_info['name'], test_info['doc'], test_info['tags'], test_info['start_time']))
                 test_info['id'] = cursor.lastrowid
-            else:
+            else:  # PostgreSQL
+                cursor.execute("""
+                    INSERT INTO test_cases (suite_id, name, doc, tags, start_time)
+                    VALUES (%s, %s, %s, %s, %s) RETURNING id
+                """, (test_info['suite_id'], test_info['name'], test_info['doc'], test_info['tags'], test_info['start_time']))
                 test_info['id'] = cursor.fetchone()[0]
             
             self.connection.commit()
