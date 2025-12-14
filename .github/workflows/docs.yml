@@ -1,0 +1,87 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install AsciiDoc tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y asciidoctor
+
+      - name: Build documentation
+        run: |
+          mkdir -p _site
+          cd docs
+          
+          # Convert all .adoc files to HTML
+          for file in *.adoc; do
+            if [ -f "$file" ]; then
+              asciidoctor -D ../_site "$file"
+            fi
+          done
+          
+          # If index.adoc doesn't exist, create a simple index.html
+          if [ ! -f ../_site/index.html ]; then
+            cat > ../_site/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>SysBot Documentation</title>
+            <meta charset="UTF-8">
+          </head>
+          <body>
+            <h1>SysBot Documentation</h1>
+            <ul>
+              <li><a href="setup.html">Setup</a></li>
+              <li><a href="quickstart.html">Quick Start</a></li>
+              <li><a href="robotframework.html">Robot Framework</a></li>
+              <li><a href="unittest.html">Unit Test</a></li>
+              <li><a href="developer.html">Developer Guide</a></li>
+              <li><a href="references.html">References</a></li>
+            </ul>
+          </body>
+          </html>
+          EOF
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

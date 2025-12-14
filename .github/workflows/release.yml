@@ -1,0 +1,148 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        run: |
+          python -m build
+          
+      - name: Publish to GitHub Packages
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
+        run: |
+          # For GitHub Packages, use:
+          # twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
+          # Note: GitHub Packages for Python requires additional configuration
+          echo "Package built successfully. Configure PYPI_API_TOKEN secret to publish."
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: ./
+          artifact-name: sbom-sysbot.spdx.json
+          output-file: sbom-sysbot.spdx.json
+
+      - name: Run vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'json'
+          output: 'vulnerability-report.json'
+
+      - name: Run vulnerability scan (table format)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          output: 'vulnerability-report.txt'
+
+      - name: Install AsciiDoc tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y asciidoctor ruby-asciidoctor-pdf
+
+      - name: Generate PDF documentation
+        run: |
+          cd docs
+          asciidoctor-pdf -o ../documentation.pdf index.adoc
+
+      - name: Get milestone issues
+        id: milestone
+        run: |
+          # Extract version from tag (v1.0.0 -> 1.0.0)
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          # Find milestone by version
+          MILESTONE=$(gh api repos/${{ github.repository }}/milestones --jq ".[] | select(.title == \"$VERSION\") | .number")
+          
+          if [ -n "$MILESTONE" ]; then
+            echo "milestone=$MILESTONE" >> $GITHUB_OUTPUT
+            
+            # Get issues from milestone
+            gh api repos/${{ github.repository }}/issues \
+              --method GET \
+              -f milestone="$MILESTONE" \
+              -f state=all \
+              --jq '.[] | "- #\(.number): \(.title)"' > milestone-issues.txt
+          else
+            echo "No milestone found for version $VERSION"
+            echo "No milestone issues" > milestone-issues.txt
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release Notes
+        id: release_notes
+        run: |
+          cat > release-notes.md << 'EOF'
+          ## Release Notes
+          
+          ### Changes in this release
+          
+          EOF
+          
+          if [ -f milestone-issues.txt ]; then
+            cat milestone-issues.txt >> release-notes.md
+          fi
+          
+          cat >> release-notes.md << 'EOF'
+          
+          ### Artifacts
+          
+          - Python Package (dist/)
+          - SBOM (sbom-sysbot.spdx.json)
+          - Vulnerability Analysis (vulnerability-report.txt)
+          - Documentation PDF (documentation.pdf)
+          
+          ### Installation
+          
+          ```bash
+          pip install sysbot==${{ steps.milestone.outputs.version }}
+          ```
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: release-notes.md
+          files: |
+            dist/*
+            sbom-sysbot.spdx.json
+            vulnerability-report.json
+            vulnerability-report.txt
+            documentation.pdf
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

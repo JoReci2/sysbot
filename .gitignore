@@ -9,3 +9,24 @@ dist/
 report.html
 log.html
 output.xml
+
+# Tox
+.tox/
+test-results/
+
+# Build artifacts
+build/
+*.pyc
+
+# Coverage and test reports
+.coverage
+htmlcov/
+.pytest_cache/
+bandit-report.json
+
+# Documentation build
+_site/
+docs/_build/
+
+# Pre-commit
+.pre-commit-cache/

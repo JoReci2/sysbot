@@ -1,3 +1,38 @@
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 120
+target-version = "py37"
+exclude = [
+    ".git",
+    ".tox",
+    "__pycache__",
+    "*.egg-info",
+    ".venv",
+    "dist",
+    "build",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.bandit]
+exclude_dirs = [
+    "tests",
+    ".tox",
+    ".venv",
+]
+skips = ["B404", "B603"]  # Skip import subprocess and subprocess without shell check
