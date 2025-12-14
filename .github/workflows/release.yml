@@ -82,12 +82,12 @@ jobs:
             asciidoctor-pdf -o ../documentation.pdf index.adoc
           else
             echo "Warning: index.adoc not found, creating placeholder"
-            cat > ../documentation.txt << 'EOF'
+            cat > ../documentation.txt << 'DOCEOF'
           Documentation Not Available
           
           The documentation source file (index.adoc) was not found in the docs directory.
           Please refer to the project README for basic information.
-          EOF
+          DOCEOF
           fi
 
       - name: Get milestone issues
@@ -142,7 +142,7 @@ jobs:
           ### Installation
           
           ```bash
-          pip install sysbot==${{ steps.milestone.outputs.version }}
+          pip install sysbot==${{ steps.milestone.outputs.version || github.ref_name }}
           ```
           EOF
 
