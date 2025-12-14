@@ -53,10 +53,14 @@ Open a connection session to a remote system.
   - SSH: "bash", "powershell"
   - WinRM: "powershell"
 <<<<<<< HEAD
+<<<<<<< HEAD
   - HTTP: "none", "basic", "apikey", "bearer", "jwt", "oauth1", "oauth2", "hmac", "certificate", "openid", "saml"
 =======
   - HTTP: "generic", "basicauth", "vsphere"
 >>>>>>> 87a4e97 (Add comprehensive documentation for HTTP connector)
+=======
+  - HTTP: "http"
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
   - Socket: "tcp", "udp"
 * `host` (str): Target host address or IP
 * `port` (int): Connection port (optional, uses defaults from config)
@@ -327,6 +331,7 @@ bot.open_session("windows", "winrm", "powershell", "192.168.1.200",
 
 * **Default Ports**: 80 (HTTP), 443 (HTTPS)
 <<<<<<< HEAD
+<<<<<<< HEAD
 * **Products**: Each authentication method is a separate product
   - "none": No authentication
   - "basic": HTTP Basic Authentication
@@ -357,11 +362,14 @@ Each authentication method has its own dedicated class:
 * **Saml**: SAML with pre-obtained assertion
 =======
 * **Products**: "generic", "basicauth", "vsphere"
+=======
+* **Product**: "http"
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
 * **Authentication Methods**: none, basic, apikey, bearer, jwt, oauth1, oauth2, hmac, certificate, openid, saml
 
-==== Generic HTTP Connector
+==== HTTP Connector
 
-The generic HTTP connector supports multiple authentication methods and both HTTP and HTTPS protocols.
+The HTTP connector supports multiple authentication methods and both HTTP and HTTPS protocols.
 
 **Supported Authentication Methods:**
 
@@ -385,6 +393,7 @@ The generic HTTP connector supports multiple authentication methods and both HTT
 [source,python]
 ----
 <<<<<<< HEAD
+<<<<<<< HEAD
 bot.open_session("api", "http", "none", "api.example.com", 443,
                 protocol="https")
 ----
@@ -399,6 +408,9 @@ bot.open_session("api", "http", "basic", "api.example.com", 443,
 
 =======
 bot.open_session("api", "http", "generic", "api.example.com", 443,
+=======
+bot.open_session("api", "http", "http", "api.example.com", 443,
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
                 protocol="https", auth_method="none")
 ----
 
@@ -406,7 +418,7 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 "user", "pass", protocol="https", auth_method="basic")
 
 # Or use the backward-compatible basicauth connector
@@ -420,10 +432,14 @@ bot.open_session("api", "http", "basicauth", "api.example.com",
 [source,python]
 ----
 <<<<<<< HEAD
+<<<<<<< HEAD
 bot.open_session("api", "http", "apikey", "api.example.com", 443,
                 login="your-api-key", protocol="https",
 =======
 bot.open_session("api", "http", "generic", "api.example.com", 443,
+=======
+bot.open_session("api", "http", "http", "api.example.com", 443,
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
                 login="your-api-key", protocol="https", auth_method="apikey",
 >>>>>>> 87a4e97 (Add comprehensive documentation for HTTP connector)
                 api_key_name="X-API-Key", api_key_location="header")
@@ -434,10 +450,14 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 [source,python]
 ----
 <<<<<<< HEAD
+<<<<<<< HEAD
 bot.open_session("api", "http", "apikey", "api.example.com", 443,
                 login="your-api-key", protocol="https",
 =======
 bot.open_session("api", "http", "generic", "api.example.com", 443,
+=======
+bot.open_session("api", "http", "http", "api.example.com", 443,
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
                 login="your-api-key", protocol="https", auth_method="apikey",
 >>>>>>> 87a4e97 (Add comprehensive documentation for HTTP connector)
                 api_key_name="api_key", api_key_location="query")
@@ -448,10 +468,14 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 [source,python]
 ----
 <<<<<<< HEAD
+<<<<<<< HEAD
 bot.open_session("api", "http", "bearer", "api.example.com", 443,
                 protocol="https",
 =======
 bot.open_session("api", "http", "generic", "api.example.com", 443,
+=======
+bot.open_session("api", "http", "http", "api.example.com", 443,
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
                 protocol="https", auth_method="bearer",
 >>>>>>> 87a4e97 (Add comprehensive documentation for HTTP connector)
                 token="your-bearer-token")
@@ -462,11 +486,15 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 [source,python]
 ----
 <<<<<<< HEAD
+<<<<<<< HEAD
 bot.open_session("api", "http", "jwt", "api.example.com", 443,
                 login="username", password="jwt-secret",
                 protocol="https",
 =======
 bot.open_session("api", "http", "generic", "api.example.com", 443,
+=======
+bot.open_session("api", "http", "http", "api.example.com", 443,
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
                 login="username", password="jwt-secret",
                 protocol="https", auth_method="jwt",
 >>>>>>> 87a4e97 (Add comprehensive documentation for HTTP connector)
@@ -479,12 +507,16 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 [source,python]
 ----
 <<<<<<< HEAD
+<<<<<<< HEAD
 bot.open_session("api", "http", "oauth1", "api.example.com", 443,
                 protocol="https",
                 login="consumer_key",
                 password="consumer_secret",
 =======
 bot.open_session("api", "http", "generic", "api.example.com", 443,
+=======
+bot.open_session("api", "http", "http", "api.example.com", 443,
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
                 protocol="https", auth_method="oauth1",
                 oauth_consumer_key="consumer_key",
                 oauth_consumer_secret="consumer_secret",
@@ -498,10 +530,14 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 [source,python]
 ----
 <<<<<<< HEAD
+<<<<<<< HEAD
 bot.open_session("api", "http", "oauth2", "api.example.com", 443,
                 protocol="https",
 =======
 bot.open_session("api", "http", "generic", "api.example.com", 443,
+=======
+bot.open_session("api", "http", "http", "api.example.com", 443,
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
                 protocol="https", auth_method="oauth2",
 >>>>>>> 87a4e97 (Add comprehensive documentation for HTTP connector)
                 oauth_client_id="client_id",
@@ -515,11 +551,15 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 [source,python]
 ----
 <<<<<<< HEAD
+<<<<<<< HEAD
 bot.open_session("api", "http", "hmac", "api.example.com", 443,
                 password="hmac-secret", protocol="https",
                 hmac_algorithm="sha256")
 =======
 bot.open_session("api", "http", "generic", "api.example.com", 443,
+=======
+bot.open_session("api", "http", "http", "api.example.com", 443,
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
                 password="hmac-secret", protocol="https",
                 auth_method="hmac", hmac_algorithm="sha256")
 >>>>>>> 87a4e97 (Add comprehensive documentation for HTTP connector)
@@ -530,10 +570,14 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 [source,python]
 ----
 <<<<<<< HEAD
+<<<<<<< HEAD
 bot.open_session("api", "http", "certificate", "api.example.com", 443,
                 protocol="https",
 =======
 bot.open_session("api", "http", "generic", "api.example.com", 443,
+=======
+bot.open_session("api", "http", "http", "api.example.com", 443,
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
                 protocol="https", auth_method="certificate",
 >>>>>>> 87a4e97 (Add comprehensive documentation for HTTP connector)
                 cert_path="/path/to/client-cert.pem",
@@ -545,10 +589,14 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 [source,python]
 ----
 <<<<<<< HEAD
+<<<<<<< HEAD
 bot.open_session("api", "http", "openid", "api.example.com", 443,
                 protocol="https",
 =======
 bot.open_session("api", "http", "generic", "api.example.com", 443,
+=======
+bot.open_session("api", "http", "http", "api.example.com", 443,
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
                 protocol="https", auth_method="openid",
 >>>>>>> 87a4e97 (Add comprehensive documentation for HTTP connector)
                 access_token="your-access-token",
@@ -560,10 +608,14 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 [source,python]
 ----
 <<<<<<< HEAD
+<<<<<<< HEAD
 bot.open_session("api", "http", "saml", "api.example.com", 443,
                 protocol="https",
 =======
 bot.open_session("api", "http", "generic", "api.example.com", 443,
+=======
+bot.open_session("api", "http", "http", "api.example.com", 443,
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
                 protocol="https", auth_method="saml",
 >>>>>>> 87a4e97 (Add comprehensive documentation for HTTP connector)
                 saml_assertion="base64-encoded-saml-assertion")
@@ -604,6 +656,7 @@ response = bot.execute_command("api", "/api/v1/users",
 =======
 ----
 
+<<<<<<< HEAD
 **vSphere Connection:**
 
 [source,python]
@@ -613,6 +666,8 @@ bot.open_session("vcenter", "http", "vsphere", "vcenter.example.com",
 >>>>>>> 87a4e97 (Add comprehensive documentation for HTTP connector)
 ----
 
+=======
+>>>>>>> e8aec21 (Refactor: move HTTP connector to single file sysbot/connectors/http.py with Http class)
 === Socket Connector
 
 ==== Configuration
