@@ -205,7 +205,7 @@ sysbot/
 
 ## Database Listener Plugin
 
-SysBot includes a Robot Framework listener plugin that can store test results in various databases:
+SysBot includes a Robot Framework listener plugin that can store test results in various databases using SQLAlchemy:
 
 ```bash
 # Store results in SQLite
@@ -220,6 +220,8 @@ robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql:
 # Store results in MongoDB
 robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb tests/
 ```
+
+**Requirements**: SQLAlchemy for SQL databases, pymongo for MongoDB
 
 For more details, see [Database Listener Documentation](docs/listener_plugin.md).
 

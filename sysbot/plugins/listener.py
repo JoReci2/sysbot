@@ -48,6 +48,8 @@ class DatabaseListener:
         """
         self.db_type = db_type.lower()
         self.connection_string = connection_string
+        self.session = None
+        self.engine = None
         self.connection = None
         self.current_suite = None
         self.current_test = None
@@ -59,49 +61,50 @@ class DatabaseListener:
     def _connect(self):
         """Establish database connection based on type."""
         try:
-            if self.db_type == "sqlite":
-                self._connect_sqlite()
-            elif self.db_type == "mysql":
-                self._connect_mysql()
-            elif self.db_type == "postgresql":
-                self._connect_postgresql()
-            elif self.db_type == "mongodb":
+            if self.db_type == "mongodb":
                 self._connect_mongodb()
             else:
-                raise ValueError(f"Unsupported database type: {self.db_type}")
+                self._connect_sql()
         except Exception as e:
             raise Exception(f"Failed to connect to {self.db_type} database: {e}") from e
     
-    def _connect_sqlite(self):
-        """Connect to SQLite database."""
-        import sqlite3
-        self.connection = sqlite3.connect(self.connection_string)
-        self.connection.row_factory = sqlite3.Row
-    
-    def _connect_mysql(self):
-        """Connect to MySQL database."""
+    def _connect_sql(self):
+        """Connect to SQL database using SQLAlchemy."""
         try:
-            import mysql.connector
-            from urllib.parse import urlparse
+            from sqlalchemy import create_engine
+            from sqlalchemy.orm import sessionmaker
             
-            parsed = urlparse(self.connection_string)
-            self.connection = mysql.connector.connect(
-                host=parsed.hostname or 'localhost',
-                port=parsed.port or 3306,
-                user=parsed.username,
-                password=parsed.password,
-                database=parsed.path.lstrip('/') if parsed.path else 'testdb'
-            )
-        except ImportError:
-            raise ImportError("mysql-connector-python is required for MySQL support. Install it with: pip install mysql-connector-python")
-    
-    def _connect_postgresql(self):
-        """Connect to PostgreSQL database."""
-        try:
-            import psycopg2
-            self.connection = psycopg2.connect(self.connection_string)
-        except ImportError:
-            raise ImportError("psycopg2 is required for PostgreSQL support. Install it with: pip install psycopg2-binary")
+            # Build connection URL
+            if self.db_type == "sqlite":
+                url = f"sqlite:///{self.connection_string}"
+            elif self.db_type == "mysql":
+                # Ensure mysql:// is replaced with mysql+mysqlconnector://
+                if self.connection_string.startswith("mysql://"):
+                    url = self.connection_string.replace("mysql://", "mysql+mysqlconnector://", 1)
+                else:
+                    url = self.connection_string
+            elif self.db_type == "postgresql":
+                # Ensure postgresql:// is replaced with postgresql+psycopg2://
+                if self.connection_string.startswith("postgresql://"):
+                    url = self.connection_string.replace("postgresql://", "postgresql+psycopg2://", 1)
+                else:
+                    url = self.connection_string
+            else:
+                raise ValueError(f"Unsupported SQL database type: {self.db_type}")
+            
+            self.engine = create_engine(url)
+            Session = sessionmaker(bind=self.engine)
+            self.session = Session()
+            
+        except ImportError as e:
+            if "sqlalchemy" in str(e).lower():
+                raise ImportError("SQLAlchemy is required for SQL database support. Install it with: pip install sqlalchemy")
+            elif "mysqlconnector" in str(e).lower() or "mysql" in str(e).lower():
+                raise ImportError("mysql-connector-python is required for MySQL support. Install it with: pip install mysql-connector-python")
+            elif "psycopg2" in str(e).lower():
+                raise ImportError("psycopg2 is required for PostgreSQL support. Install it with: pip install psycopg2-binary")
+            else:
+                raise
     
     def _connect_mongodb(self):
         """Connect to MongoDB database."""
@@ -115,10 +118,6 @@ class DatabaseListener:
             self.connection = client[db_name]
         except ImportError:
             raise ImportError("pymongo is required for MongoDB support. Install it with: pip install pymongo")
-    
-    def _get_placeholder(self):
-        """Get the SQL parameter placeholder for the current database type."""
-        return '?' if self.db_type == 'sqlite' else '%s'
     
     def _get_metadata(self, data):
         """Safely extract and convert metadata to JSON string."""
@@ -138,63 +137,50 @@ class DatabaseListener:
             self._create_sql_tables()
     
     def _create_sql_tables(self):
-        """Create SQL tables for storing test results."""
-        cursor = self.connection.cursor()
+        """Create SQL tables using SQLAlchemy."""
+        from sqlalchemy import Table, Column, Integer, String, DateTime, Text, ForeignKey, MetaData
         
-        # Determine the auto-increment syntax for the database
-        if self.db_type == "sqlite":
-            id_column = "id INTEGER PRIMARY KEY AUTOINCREMENT"
-        elif self.db_type == "mysql":
-            id_column = "id INTEGER PRIMARY KEY AUTO_INCREMENT"
-        else:  # postgresql
-            id_column = "id SERIAL PRIMARY KEY"
+        metadata = MetaData()
         
-        # Suites table
-        cursor.execute(f"""
-            CREATE TABLE IF NOT EXISTS test_suites (
-                {id_column},
-                name TEXT NOT NULL,
-                doc TEXT,
-                start_time TIMESTAMP,
-                end_time TIMESTAMP,
-                status TEXT,
-                message TEXT,
-                metadata TEXT
-            )
-        """)
+        # Define test_suites table
+        self.test_suites_table = Table('test_suites', metadata,
+            Column('id', Integer, primary_key=True, autoincrement=True),
+            Column('name', String(500), nullable=False),
+            Column('doc', Text),
+            Column('start_time', DateTime),
+            Column('end_time', DateTime),
+            Column('status', String(50)),
+            Column('message', Text),
+            Column('metadata', Text)
+        )
         
-        # Tests table
-        cursor.execute(f"""
-            CREATE TABLE IF NOT EXISTS test_cases (
-                {id_column},
-                suite_id INTEGER,
-                name TEXT NOT NULL,
-                doc TEXT,
-                tags TEXT,
-                start_time TIMESTAMP,
-                end_time TIMESTAMP,
-                status TEXT,
-                message TEXT,
-                FOREIGN KEY (suite_id) REFERENCES test_suites(id)
-            )
-        """)
+        # Define test_cases table
+        self.test_cases_table = Table('test_cases', metadata,
+            Column('id', Integer, primary_key=True, autoincrement=True),
+            Column('suite_id', Integer, ForeignKey('test_suites.id')),
+            Column('name', String(500), nullable=False),
+            Column('doc', Text),
+            Column('tags', Text),
+            Column('start_time', DateTime),
+            Column('end_time', DateTime),
+            Column('status', String(50)),
+            Column('message', Text)
+        )
         
-        # Keywords table
-        cursor.execute(f"""
-            CREATE TABLE IF NOT EXISTS keywords (
-                {id_column},
-                test_id INTEGER,
-                name TEXT NOT NULL,
-                library TEXT,
-                start_time TIMESTAMP,
-                end_time TIMESTAMP,
-                status TEXT,
-                message TEXT,
-                FOREIGN KEY (test_id) REFERENCES test_cases(id)
-            )
-        """)
+        # Define keywords table
+        self.keywords_table = Table('keywords', metadata,
+            Column('id', Integer, primary_key=True, autoincrement=True),
+            Column('test_id', Integer, ForeignKey('test_cases.id')),
+            Column('name', String(500), nullable=False),
+            Column('library', String(255)),
+            Column('start_time', DateTime),
+            Column('end_time', DateTime),
+            Column('status', String(50)),
+            Column('message', Text)
+        )
         
-        self.connection.commit()
+        # Create all tables
+        metadata.create_all(self.engine)
     
     def start_suite(self, data, result):
         """Called when a test suite starts."""
@@ -209,22 +195,11 @@ class DatabaseListener:
             result_doc = self.connection.test_suites.insert_one(suite_info)
             suite_info['_id'] = result_doc.inserted_id
         else:
-            cursor = self.connection.cursor()
-            placeholder = self._get_placeholder()
-            if self.db_type == "sqlite" or self.db_type == "mysql":
-                cursor.execute(f"""
-                    INSERT INTO test_suites (name, doc, start_time, metadata)
-                    VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})
-                """, (suite_info['name'], suite_info['doc'], suite_info['start_time'], suite_info['metadata']))
-                suite_info['id'] = cursor.lastrowid
-            else:  # PostgreSQL
-                cursor.execute("""
-                    INSERT INTO test_suites (name, doc, start_time, metadata)
-                    VALUES (%s, %s, %s, %s) RETURNING id
-                """, (suite_info['name'], suite_info['doc'], suite_info['start_time'], suite_info['metadata']))
-                suite_info['id'] = cursor.fetchone()[0]
-            
-            self.connection.commit()
+            # Insert using SQLAlchemy
+            ins = self.test_suites_table.insert().values(**suite_info)
+            result = self.session.execute(ins)
+            self.session.commit()
+            suite_info['id'] = result.inserted_primary_key[0]
         
         self.current_suite = suite_info
     
@@ -247,14 +222,16 @@ class DatabaseListener:
                 }}
             )
         else:
-            cursor = self.connection.cursor()
-            placeholder = self._get_placeholder()
-            cursor.execute(f"""
-                UPDATE test_suites
-                SET end_time = {placeholder}, status = {placeholder}, message = {placeholder}
-                WHERE id = {placeholder}
-            """, (end_time, status, message, self.current_suite['id']))
-            self.connection.commit()
+            # Update using SQLAlchemy
+            upd = self.test_suites_table.update().where(
+                self.test_suites_table.c.id == self.current_suite['id']
+            ).values(
+                end_time=end_time,
+                status=status,
+                message=message
+            )
+            self.session.execute(upd)
+            self.session.commit()
         
         self.current_suite = None
     
@@ -275,22 +252,11 @@ class DatabaseListener:
             result_doc = self.connection.test_cases.insert_one(test_info)
             test_info['_id'] = result_doc.inserted_id
         else:
-            cursor = self.connection.cursor()
-            placeholder = self._get_placeholder()
-            if self.db_type == "sqlite" or self.db_type == "mysql":
-                cursor.execute(f"""
-                    INSERT INTO test_cases (suite_id, name, doc, tags, start_time)
-                    VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
-                """, (test_info['suite_id'], test_info['name'], test_info['doc'], test_info['tags'], test_info['start_time']))
-                test_info['id'] = cursor.lastrowid
-            else:  # PostgreSQL
-                cursor.execute("""
-                    INSERT INTO test_cases (suite_id, name, doc, tags, start_time)
-                    VALUES (%s, %s, %s, %s, %s) RETURNING id
-                """, (test_info['suite_id'], test_info['name'], test_info['doc'], test_info['tags'], test_info['start_time']))
-                test_info['id'] = cursor.fetchone()[0]
-            
-            self.connection.commit()
+            # Insert using SQLAlchemy
+            ins = self.test_cases_table.insert().values(**test_info)
+            result = self.session.execute(ins)
+            self.session.commit()
+            test_info['id'] = result.inserted_primary_key[0]
         
         self.current_test = test_info
     
@@ -313,14 +279,16 @@ class DatabaseListener:
                 }}
             )
         else:
-            cursor = self.connection.cursor()
-            placeholder = self._get_placeholder()
-            cursor.execute(f"""
-                UPDATE test_cases
-                SET end_time = {placeholder}, status = {placeholder}, message = {placeholder}
-                WHERE id = {placeholder}
-            """, (end_time, status, message, self.current_test['id']))
-            self.connection.commit()
+            # Update using SQLAlchemy
+            upd = self.test_cases_table.update().where(
+                self.test_cases_table.c.id == self.current_test['id']
+            ).values(
+                end_time=end_time,
+                status=status,
+                message=message
+            )
+            self.session.execute(upd)
+            self.session.commit()
         
         self.current_test = None
     
@@ -339,13 +307,10 @@ class DatabaseListener:
         if self.db_type == "mongodb":
             self.connection.keywords.insert_one(keyword_info)
         else:
-            cursor = self.connection.cursor()
-            placeholder = self._get_placeholder()
-            cursor.execute(f"""
-                INSERT INTO keywords (test_id, name, library, start_time)
-                VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})
-            """, (keyword_info['test_id'], keyword_info['name'], keyword_info['library'], keyword_info['start_time']))
-            self.connection.commit()
+            # Insert using SQLAlchemy
+            ins = self.keywords_table.insert().values(**keyword_info)
+            self.session.execute(ins)
+            self.session.commit()
     
     def end_keyword(self, data, result):
         """Called when a keyword ends."""
@@ -355,11 +320,14 @@ class DatabaseListener:
     
     def close(self):
         """Close database connection."""
-        if self.connection:
-            if self.db_type == "mongodb":
+        if self.db_type == "mongodb":
+            if self.connection:
                 self.connection.client.close()
-            else:
-                self.connection.close()
+        else:
+            if self.session:
+                self.session.close()
+            if self.engine:
+                self.engine.dispose()
     
     def __del__(self):
         """Cleanup when listener is destroyed."""

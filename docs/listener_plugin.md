@@ -1,31 +1,29 @@
 # Database Listener Plugin
 
-A Robot Framework listener plugin that stores test execution results in various databases.
+A Robot Framework listener plugin that stores test execution results in various databases using SQLAlchemy for SQL databases.
 
 ## Supported Databases
 
-- **SQLite** - File-based database (no additional dependencies)
-- **MySQL** - Requires `mysql-connector-python`
-- **PostgreSQL** - Requires `psycopg2-binary`
-- **MongoDB** - Requires `pymongo`
+- **SQLite** - File-based database
+- **MySQL** - Relational database
+- **PostgreSQL** - Advanced relational database
+- **MongoDB** - NoSQL document database
 
 ## Installation
 
-### SQLite (No additional dependencies)
-SQLite support is built-in with Python.
+### Core Requirements
 
-### MySQL
 ```bash
+# SQLAlchemy is required for SQL databases (SQLite, MySQL, PostgreSQL)
+pip install sqlalchemy
+
+# For MySQL support
 pip install mysql-connector-python
-```
 
-### PostgreSQL
-```bash
+# For PostgreSQL support
 pip install psycopg2-binary
-```
 
-### MongoDB
-```bash
+# For MongoDB support
 pip install pymongo
 ```
 
@@ -189,31 +187,23 @@ db.test_cases.aggregate([
 db.test_cases.find({ status: "FAIL" })
 ```
 
-## Example: Complete Workflow
-
-```bash
-# Run tests with listener
-robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db tests/
-
-# Query results
-sqlite3 results.db "SELECT name, status FROM test_cases;"
-
-# Export to CSV
-sqlite3 -header -csv results.db "SELECT * FROM test_cases;" > results.csv
-```
-
 ## Notes
 
-- The database and tables/collections are created automatically if they don't exist
-- For SQL databases, the listener uses transactions to ensure data consistency
+- The database and tables/collections are created automatically if they don't exist using SQLAlchemy
+- SQL databases use SQLAlchemy ORM for better maintainability and database portability
 - MongoDB doesn't require schema initialization
-- Connection errors are raised at listener initialization
+- Connection errors are raised at listener initialization with clear dependency installation instructions
 - The listener automatically closes database connections when tests complete
+
+## Architecture
+
+- **SQL Databases (SQLite, MySQL, PostgreSQL)**: Uses SQLAlchemy for database abstraction and ORM
+- **MongoDB**: Uses pymongo driver directly for NoSQL operations
 
 ## Error Handling
 
 If a database connection fails, the listener will raise an exception with details:
-- For missing dependencies, it will suggest the required package to install
+- For missing dependencies (SQLAlchemy, database drivers), it will suggest the required package to install
 - For connection errors, it will provide the error message from the database driver
 
 ## License
