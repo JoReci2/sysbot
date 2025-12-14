@@ -57,7 +57,7 @@ Open a connection session to a remote system.
 * `product` (str): Product type:
   - SSH: "bash", "powershell"
   - WinRM: "powershell"
-  - HTTP: "basicauth", "vsphere"
+  - HTTP: "generic", "basicauth", "vsphere"
   - Socket: "tcp", "udp"
 * `host` (str): Target host address or IP
 * `port` (int): Connection port (optional, uses defaults from config)
@@ -327,17 +327,186 @@ bot.open_session("windows", "winrm", "powershell", "192.168.1.200",
 ==== Configuration
 
 * **Default Ports**: 80 (HTTP), 443 (HTTPS)
-* **Products**: "basicauth", "vsphere"
+* **Products**: "generic", "basicauth", "vsphere"
+* **Authentication Methods**: none, basic, apikey, bearer, jwt, oauth1, oauth2, hmac, certificate, openid, saml
 
-==== Usage
+==== Generic HTTP Connector
+
+The generic HTTP connector supports multiple authentication methods and both HTTP and HTTPS protocols.
+
+**Supported Authentication Methods:**
+
+* **none**: No authentication
+* **basic**: HTTP Basic Authentication (username/password)
+* **apikey**: API Key in header or query parameter
+* **bearer**: Bearer token (JWT or other)
+* **jwt**: JWT token generation and authentication
+* **oauth1**: OAuth 1.0
+* **oauth2**: OAuth 2.0
+* **hmac**: HMAC signature authentication
+* **certificate**: Client certificate authentication
+* **openid**: OpenID Connect
+* **saml**: SAML authentication (placeholder)
+
+==== Usage Examples
+
+**No Authentication:**
 
 [source,python]
 ----
-# Basic authentication
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https", auth_method="none")
+----
+
+**Basic Authentication:**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                "user", "pass", protocol="https", auth_method="basic")
+
+# Or use the backward-compatible basicauth connector
 bot.open_session("api", "http", "basicauth", "api.example.com", 
                 443, "user", "pass")
+----
 
-# vSphere connection
+**API Key Authentication (Header):**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                login="your-api-key", protocol="https", auth_method="apikey",
+                api_key_name="X-API-Key", api_key_location="header")
+----
+
+**API Key Authentication (Query Parameter):**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                login="your-api-key", protocol="https", auth_method="apikey",
+                api_key_name="api_key", api_key_location="query")
+----
+
+**Bearer Token Authentication:**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https", auth_method="bearer",
+                token="your-bearer-token")
+----
+
+**JWT Authentication (with token generation):**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                login="username", password="jwt-secret",
+                protocol="https", auth_method="jwt",
+                jwt_algorithm="HS256", jwt_expiry=3600,
+                jwt_claims={"role": "admin"})
+----
+
+**OAuth 1.0 Authentication:**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https", auth_method="oauth1",
+                oauth_consumer_key="consumer_key",
+                oauth_consumer_secret="consumer_secret",
+                oauth_token="access_token",
+                oauth_token_secret="token_secret")
+----
+
+**OAuth 2.0 Authentication:**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https", auth_method="oauth2",
+                oauth_client_id="client_id",
+                oauth_client_secret="client_secret",
+                oauth_token_url="https://api.example.com/oauth/token",
+                access_token="your-access-token")
+----
+
+**HMAC Signature Authentication:**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                password="hmac-secret", protocol="https",
+                auth_method="hmac", hmac_algorithm="sha256")
+----
+
+**Client Certificate Authentication:**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https", auth_method="certificate",
+                cert_path="/path/to/client-cert.pem",
+                key_path="/path/to/client-key.pem")
+----
+
+**OpenID Connect Authentication:**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https", auth_method="openid",
+                access_token="your-access-token",
+                openid_discovery_url="https://provider.example.com/.well-known/openid-configuration")
+----
+
+**SAML Authentication:**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https", auth_method="saml",
+                saml_assertion="base64-encoded-saml-assertion")
+----
+
+**Execute HTTP Commands:**
+
+[source,python]
+----
+# GET request
+response = bot.execute_command("api", "/api/v1/users",
+                              options={"method": "GET"})
+
+# POST request with JSON
+response = bot.execute_command("api", "/api/v1/users",
+                              options={"method": "POST",
+                                      "json": {"name": "John", "email": "john@example.com"}})
+
+# PUT request with data
+response = bot.execute_command("api", "/api/v1/users/123",
+                              options={"method": "PUT",
+                                      "data": "update data"})
+
+# DELETE request
+response = bot.execute_command("api", "/api/v1/users/123",
+                              options={"method": "DELETE"})
+
+# With query parameters
+response = bot.execute_command("api", "/api/v1/users",
+                              options={"method": "GET",
+                                      "params": {"page": 1, "limit": 10}})
+
+# With custom headers
+response = bot.execute_command("api", "/api/v1/users",
+                              options={"method": "GET",
+                                      "headers": {"X-Custom-Header": "value"}})
+----
+
+**vSphere Connection:**
+
+[source,python]
+----
 bot.open_session("vcenter", "http", "vsphere", "vcenter.example.com",
                 443, "administrator@vsphere.local", "pass")
 ----

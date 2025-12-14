@@ -1,0 +1,529 @@
+= HTTP/HTTPS Connector Guide
+:toc: left
+:toclevels: 3
+:sectnums:
+:icons: font
+:source-highlighter: highlight.js
+
+== Introduction
+
+The SysBot HTTP connector provides a flexible and comprehensive interface for interacting with HTTP and HTTPS APIs. It supports multiple authentication methods and modern API standards.
+
+== Features
+
+* Support for both HTTP and HTTPS protocols
+* Multiple authentication methods (Basic, API Key, OAuth, JWT, etc.)
+* All HTTP methods (GET, POST, PUT, DELETE, PATCH, etc.)
+* JSON and form data support
+* Custom headers and query parameters
+* SSL/TLS certificate verification options
+* Client certificate authentication
+* Session management and reuse
+
+== Supported Authentication Methods
+
+The generic HTTP connector supports the following authentication methods:
+
+=== None (No Authentication)
+
+For public APIs that don't require authentication.
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https", auth_method="none")
+----
+
+=== Basic Authentication
+
+HTTP Basic Authentication using username and password.
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                "username", "password",
+                protocol="https", auth_method="basic")
+----
+
+Or use the backward-compatible connector:
+
+[source,python]
+----
+bot.open_session("api", "http", "basicauth", "api.example.com", 443,
+                "username", "password")
+----
+
+=== API Key Authentication
+
+API key can be sent in headers or query parameters.
+
+**Header-based API Key:**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                login="your-api-key-here",
+                protocol="https",
+                auth_method="apikey",
+                api_key_name="X-API-Key",
+                api_key_location="header")
+----
+
+**Query Parameter API Key:**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                login="your-api-key-here",
+                protocol="https",
+                auth_method="apikey",
+                api_key_name="api_key",
+                api_key_location="query")
+----
+
+=== Bearer Token Authentication
+
+For APIs using bearer tokens (including pre-generated JWT tokens).
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https",
+                auth_method="bearer",
+                token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+----
+
+=== JWT Authentication with Token Generation
+
+Automatically generate JWT tokens on each request.
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                login="username",
+                password="your-jwt-secret",
+                protocol="https",
+                auth_method="jwt",
+                jwt_algorithm="HS256",
+                jwt_expiry=3600,
+                jwt_claims={"role": "admin", "scope": "full"})
+----
+
+**JWT Parameters:**
+
+* `jwt_secret` or `password`: Secret key for signing the JWT
+* `jwt_algorithm`: Algorithm for signing (default: HS256)
+* `jwt_expiry`: Token expiration in seconds (default: 3600)
+* `jwt_claims`: Additional claims to include in the token
+
+=== OAuth 1.0 Authentication
+
+For APIs using OAuth 1.0.
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https",
+                auth_method="oauth1",
+                oauth_consumer_key="your_consumer_key",
+                oauth_consumer_secret="your_consumer_secret",
+                oauth_token="your_access_token",
+                oauth_token_secret="your_token_secret")
+----
+
+=== OAuth 2.0 Authentication
+
+For APIs using OAuth 2.0 with access tokens.
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https",
+                auth_method="oauth2",
+                oauth_client_id="your_client_id",
+                oauth_client_secret="your_client_secret",
+                oauth_token_url="https://api.example.com/oauth/token",
+                access_token="your_access_token")
+----
+
+**Note:** This assumes you already have an access token. For the full OAuth 2.0 flow (authorization code grant), you'll need to handle the authorization step externally.
+
+=== HMAC Signature Authentication
+
+For APIs requiring HMAC signature verification.
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                password="your-hmac-secret",
+                protocol="https",
+                auth_method="hmac",
+                hmac_algorithm="sha256")
+----
+
+The connector will automatically generate an HMAC signature for each request based on:
+* HTTP method
+* Request path
+* Query parameters
+* Request body
+
+=== Client Certificate Authentication
+
+For APIs requiring client certificates (mutual TLS).
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https",
+                auth_method="certificate",
+                cert_path="/path/to/client-cert.pem",
+                key_path="/path/to/client-key.pem")
+----
+
+**Certificate Only (no separate key):**
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https",
+                auth_method="certificate",
+                cert_path="/path/to/client-cert-with-key.pem")
+----
+
+=== OpenID Connect Authentication
+
+For APIs using OpenID Connect (OIDC).
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https",
+                auth_method="openid",
+                access_token="your_access_token",
+                openid_discovery_url="https://provider.com/.well-known/openid-configuration")
+----
+
+=== SAML Authentication
+
+Placeholder for SAML authentication with pre-obtained assertion.
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                protocol="https",
+                auth_method="saml",
+                saml_assertion="base64-encoded-saml-assertion")
+----
+
+**Note:** Full SAML flow typically requires external handling of IdP interaction.
+
+== Making HTTP Requests
+
+=== Basic GET Request
+
+[source,python]
+----
+response = bot.execute_command("api", "/api/v1/users")
+print(response.status_code)
+print(response.text)
+print(response.json())
+----
+
+=== GET Request with Query Parameters
+
+[source,python]
+----
+response = bot.execute_command("api", "/api/v1/users",
+                              options={"method": "GET",
+                                      "params": {"page": 1, "limit": 10}})
+----
+
+=== POST Request with JSON Data
+
+[source,python]
+----
+user_data = {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "admin"
+}
+
+response = bot.execute_command("api", "/api/v1/users",
+                              options={"method": "POST",
+                                      "json": user_data})
+----
+
+=== PUT Request
+
+[source,python]
+----
+updated_data = {
+    "name": "John Smith",
+    "email": "john.smith@example.com"
+}
+
+response = bot.execute_command("api", "/api/v1/users/123",
+                              options={"method": "PUT",
+                                      "json": updated_data})
+----
+
+=== DELETE Request
+
+[source,python]
+----
+response = bot.execute_command("api", "/api/v1/users/123",
+                              options={"method": "DELETE"})
+----
+
+=== POST Request with Form Data
+
+[source,python]
+----
+form_data = "name=John&email=john@example.com"
+
+response = bot.execute_command("api", "/api/v1/users",
+                              options={"method": "POST",
+                                      "data": form_data})
+----
+
+=== Request with Custom Headers
+
+[source,python]
+----
+custom_headers = {
+    "X-Custom-Header": "CustomValue",
+    "X-Request-ID": "12345"
+}
+
+response = bot.execute_command("api", "/api/v1/users",
+                              options={"method": "GET",
+                                      "headers": custom_headers})
+----
+
+=== Request with Timeout
+
+[source,python]
+----
+response = bot.execute_command("api", "/api/v1/users",
+                              options={"method": "GET",
+                                      "timeout": 60})
+----
+
+== Robot Framework Examples
+
+=== Basic Usage in Robot Framework
+
+[source,robot]
+----
+*** Settings ***
+Library    sysbot.Sysbot
+
+*** Variables ***
+${API_HOST}=        api.example.com
+${API_PORT}=        443
+${API_KEY}=         your-api-key
+
+*** Test Cases ***
+Test API With API Key
+    Open Session    api    http    generic    ${API_HOST}    ${API_PORT}
+    ...    login=${API_KEY}
+    ...    protocol=https
+    ...    auth_method=apikey
+    ...    api_key_name=X-API-Key
+    ...    api_key_location=header
+    
+    ${response}=    Execute Command    api    /api/v1/users
+    ...    options={"method": "GET"}
+    
+    Should Be Equal As Numbers    ${response.status_code}    200
+    
+    Close Session    api
+----
+
+=== POST Request with JSON
+
+[source,robot]
+----
+*** Test Cases ***
+Create User Via API
+    Open Session    api    http    generic    ${API_HOST}    ${API_PORT}
+    ...    ${USERNAME}    ${PASSWORD}
+    ...    protocol=https
+    ...    auth_method=basic
+    
+    ${user_data}=    Create Dictionary    name=John Doe    email=john@example.com
+    
+    ${response}=    Execute Command    api    /api/v1/users
+    ...    options={"method": "POST", "json": ${user_data}}
+    
+    Should Be Equal As Numbers    ${response.status_code}    201
+    
+    Close Session    api
+----
+
+=== Using Secrets
+
+[source,robot]
+----
+*** Settings ***
+Suite Setup    Import API Credentials
+
+*** Test Cases ***
+API Test With Secrets
+    Open Session    api    http    generic    
+    ...    api_config.host    443
+    ...    api_config.api_key    api_config.secret
+    ...    is_secret=True
+    ...    protocol=https
+    ...    auth_method=apikey
+    
+    ${response}=    Execute Command    api    /api/v1/data
+    Should Be Equal As Numbers    ${response.status_code}    200
+    
+    Close Session    api
+
+*** Keywords ***
+Import API Credentials
+    Call Components    plugins.data.yaml    credentials.yml    key=api_config
+----
+
+== Advanced Usage
+
+=== SSL Certificate Verification
+
+By default, SSL verification is disabled (`verify_ssl=False`). To enable it:
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                "username", "password",
+                protocol="https",
+                auth_method="basic",
+                verify_ssl=True)
+----
+
+=== HTTP (non-HTTPS) Connections
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 80,
+                protocol="http",
+                auth_method="none")
+----
+
+=== Multiple Authentication Headers
+
+Some APIs require multiple authentication mechanisms. You can combine auth methods with custom headers:
+
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                login="api-key",
+                protocol="https",
+                auth_method="apikey",
+                api_key_name="X-API-Key")
+
+# Add additional auth header in request
+response = bot.execute_command("api", "/api/v1/data",
+                              options={"headers": {"X-Secret-Token": "secret123"}})
+----
+
+== Response Handling
+
+The `execute_command` method returns a `requests.Response` object with the following properties:
+
+* `response.status_code`: HTTP status code (e.g., 200, 404)
+* `response.text`: Response body as text
+* `response.json()`: Parse response as JSON (if applicable)
+* `response.headers`: Response headers (dict)
+* `response.content`: Response body as bytes
+* `response.ok`: True if status code is < 400
+
+[source,python]
+----
+response = bot.execute_command("api", "/api/v1/users")
+
+if response.ok:
+    data = response.json()
+    print(f"Found {len(data)} users")
+else:
+    print(f"Error: {response.status_code} - {response.text}")
+----
+
+== Error Handling
+
+All HTTP errors are raised as exceptions:
+
+[source,python]
+----
+try:
+    response = bot.execute_command("api", "/api/v1/users")
+    data = response.json()
+except Exception as e:
+    print(f"Request failed: {e}")
+----
+
+== Best Practices
+
+1. **Use HTTPS**: Always use HTTPS for production APIs
+2. **Store Secrets Securely**: Use SysBot's secret management for credentials
+3. **Handle Timeouts**: Set appropriate timeouts for long-running requests
+4. **Check Status Codes**: Always check `response.status_code` or `response.ok`
+5. **Enable SSL Verification**: In production, use `verify_ssl=True`
+6. **Close Sessions**: Always close sessions when done
+
+== Migration Guide
+
+=== Migrating from basicauth to generic
+
+If you're using the old `basicauth` connector:
+
+**Old code:**
+[source,python]
+----
+bot.open_session("api", "http", "basicauth", "api.example.com", 443,
+                "user", "pass")
+----
+
+**New code (equivalent):**
+[source,python]
+----
+bot.open_session("api", "http", "generic", "api.example.com", 443,
+                "user", "pass", protocol="https", auth_method="basic")
+----
+
+**Note:** The `basicauth` connector still works and has been updated to use the generic connector internally, so existing code will continue to function without changes.
+
+== Troubleshooting
+
+=== SSL Certificate Errors
+
+If you encounter SSL certificate errors:
+
+[source,python]
+----
+# Disable SSL verification (not recommended for production)
+verify_ssl=False
+
+# Or provide a CA bundle
+# Note: This requires additional implementation
+----
+
+=== Authentication Failures
+
+* Verify credentials are correct
+* Check if the API requires specific headers or formats
+* Ensure the authentication method matches the API requirements
+* Check token expiration (for JWT, OAuth)
+
+=== Connection Timeouts
+
+* Increase timeout value: `options={"timeout": 120}`
+* Check network connectivity
+* Verify host and port are correct
+
+== See Also
+
+* link:references.adoc[API References]
+* link:quickstart.adoc[Quick Start Guide]
+* link:unittest.adoc[Unit Testing Guide]
