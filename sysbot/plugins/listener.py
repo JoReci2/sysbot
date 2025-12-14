@@ -31,6 +31,9 @@ class DatabaseListener:
     Robot Framework listener that stores test results in a database.
     
     Supports: MongoDB, MySQL, SQLite, PostgreSQL
+    
+    Note: Keyword tracking currently captures start time and name but not end time or status.
+          This is sufficient for most use cases where test-level tracking is the primary concern.
     """
     
     ROBOT_LISTENER_API_VERSION = 3
@@ -264,7 +267,7 @@ class DatabaseListener:
             'suite_id': self.current_suite['id'] if self.db_type != "mongodb" else self.current_suite['_id'],
             'name': data.name,
             'doc': data.doc or '',
-            'tags': ','.join(data.tags) if hasattr(data, 'tags') else '',
+            'tags': ','.join(data.tags) if hasattr(data, 'tags') and data.tags else '',
             'start_time': datetime.datetime.now()
         }
         
