@@ -25,6 +25,14 @@ import datetime
 import json
 from typing import Any, Dict, Optional
 
+# SQLAlchemy imports (will be used for SQL databases)
+try:
+    from sqlalchemy import Table, Column, Integer, String, DateTime, Text, ForeignKey, MetaData, create_engine
+    from sqlalchemy.orm import sessionmaker
+    SQLALCHEMY_AVAILABLE = True
+except ImportError:
+    SQLALCHEMY_AVAILABLE = False
+
 
 class DatabaseListener:
     """
@@ -51,6 +59,10 @@ class DatabaseListener:
         self.session = None
         self.engine = None
         self.connection = None
+        self.metadata = None
+        self.test_suites_table = None
+        self.test_cases_table = None
+        self.keywords_table = None
         self.current_suite = None
         self.current_test = None
         
@@ -70,20 +82,32 @@ class DatabaseListener:
     
     def _connect_sql(self):
         """Connect to SQL database using SQLAlchemy."""
+        if not SQLALCHEMY_AVAILABLE:
+            raise ImportError("SQLAlchemy is required for SQL database support. Install it with: pip install sqlalchemy")
+        
         try:
-            from sqlalchemy import create_engine
-            from sqlalchemy.orm import sessionmaker
-            
             # Build connection URL
             if self.db_type == "sqlite":
                 url = f"sqlite:///{self.connection_string}"
             elif self.db_type == "mysql":
+                # Check for mysql-connector-python
+                try:
+                    import mysql.connector
+                except ImportError:
+                    raise ImportError("mysql-connector-python is required for MySQL support. Install it with: pip install mysql-connector-python")
+                
                 # Ensure mysql:// is replaced with mysql+mysqlconnector://
                 if self.connection_string.startswith("mysql://"):
                     url = self.connection_string.replace("mysql://", "mysql+mysqlconnector://", 1)
                 else:
                     url = self.connection_string
             elif self.db_type == "postgresql":
+                # Check for psycopg2
+                try:
+                    import psycopg2
+                except ImportError:
+                    raise ImportError("psycopg2 is required for PostgreSQL support. Install it with: pip install psycopg2-binary")
+                
                 # Ensure postgresql:// is replaced with postgresql+psycopg2://
                 if self.connection_string.startswith("postgresql://"):
                     url = self.connection_string.replace("postgresql://", "postgresql+psycopg2://", 1)
@@ -96,15 +120,10 @@ class DatabaseListener:
             Session = sessionmaker(bind=self.engine)
             self.session = Session()
             
-        except ImportError as e:
-            if "sqlalchemy" in str(e).lower():
-                raise ImportError("SQLAlchemy is required for SQL database support. Install it with: pip install sqlalchemy")
-            elif "mysqlconnector" in str(e).lower() or "mysql" in str(e).lower():
-                raise ImportError("mysql-connector-python is required for MySQL support. Install it with: pip install mysql-connector-python")
-            elif "psycopg2" in str(e).lower():
-                raise ImportError("psycopg2 is required for PostgreSQL support. Install it with: pip install psycopg2-binary")
-            else:
-                raise
+        except ImportError:
+            raise
+        except Exception as e:
+            raise Exception(f"Failed to connect to SQL database: {e}") from e
     
     def _connect_mongodb(self):
         """Connect to MongoDB database."""
@@ -138,12 +157,11 @@ class DatabaseListener:
     
     def _create_sql_tables(self):
         """Create SQL tables using SQLAlchemy."""
-        from sqlalchemy import Table, Column, Integer, String, DateTime, Text, ForeignKey, MetaData
-        
-        metadata = MetaData()
+        # Create metadata instance once
+        self.metadata = MetaData()
         
         # Define test_suites table
-        self.test_suites_table = Table('test_suites', metadata,
+        self.test_suites_table = Table('test_suites', self.metadata,
             Column('id', Integer, primary_key=True, autoincrement=True),
             Column('name', String(500), nullable=False),
             Column('doc', Text),
@@ -155,7 +173,7 @@ class DatabaseListener:
         )
         
         # Define test_cases table
-        self.test_cases_table = Table('test_cases', metadata,
+        self.test_cases_table = Table('test_cases', self.metadata,
             Column('id', Integer, primary_key=True, autoincrement=True),
             Column('suite_id', Integer, ForeignKey('test_suites.id')),
             Column('name', String(500), nullable=False),
@@ -168,7 +186,7 @@ class DatabaseListener:
         )
         
         # Define keywords table
-        self.keywords_table = Table('keywords', metadata,
+        self.keywords_table = Table('keywords', self.metadata,
             Column('id', Integer, primary_key=True, autoincrement=True),
             Column('test_id', Integer, ForeignKey('test_cases.id')),
             Column('name', String(500), nullable=False),
@@ -180,7 +198,7 @@ class DatabaseListener:
         )
         
         # Create all tables
-        metadata.create_all(self.engine)
+        self.metadata.create_all(self.engine)
     
     def start_suite(self, data, result):
         """Called when a test suite starts."""
@@ -198,7 +216,7 @@ class DatabaseListener:
             # Insert using SQLAlchemy
             ins = self.test_suites_table.insert().values(**suite_info)
             result = self.session.execute(ins)
-            self.session.commit()
+            self.session.flush()  # Use flush instead of commit for better performance
             suite_info['id'] = result.inserted_primary_key[0]
         
         self.current_suite = suite_info
@@ -231,7 +249,7 @@ class DatabaseListener:
                 message=message
             )
             self.session.execute(upd)
-            self.session.commit()
+            self.session.commit()  # Commit at suite end to persist all suite data
         
         self.current_suite = None
     
@@ -255,7 +273,7 @@ class DatabaseListener:
             # Insert using SQLAlchemy
             ins = self.test_cases_table.insert().values(**test_info)
             result = self.session.execute(ins)
-            self.session.commit()
+            self.session.flush()  # Use flush instead of commit
             test_info['id'] = result.inserted_primary_key[0]
         
         self.current_test = test_info
@@ -288,7 +306,7 @@ class DatabaseListener:
                 message=message
             )
             self.session.execute(upd)
-            self.session.commit()
+            self.session.flush()  # Use flush instead of commit
         
         self.current_test = None
     
@@ -310,7 +328,7 @@ class DatabaseListener:
             # Insert using SQLAlchemy
             ins = self.keywords_table.insert().values(**keyword_info)
             self.session.execute(ins)
-            self.session.commit()
+            self.session.flush()  # Use flush instead of commit
     
     def end_keyword(self, data, result):
         """Called when a keyword ends."""
@@ -322,12 +340,23 @@ class DatabaseListener:
         """Close database connection."""
         if self.db_type == "mongodb":
             if self.connection:
-                self.connection.client.close()
+                try:
+                    self.connection.client.close()
+                except (AttributeError, Exception):
+                    # Handle case where client attribute might not exist
+                    pass
         else:
             if self.session:
-                self.session.close()
+                try:
+                    self.session.commit()  # Commit any pending changes
+                    self.session.close()
+                except Exception:
+                    pass
             if self.engine:
-                self.engine.dispose()
+                try:
+                    self.engine.dispose()
+                except Exception:
+                    pass
     
     def __del__(self):
         """Cleanup when listener is destroyed."""
