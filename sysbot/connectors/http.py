@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from sysbot.utils.engine import ConnectorInterface
 
 
-class Generic(ConnectorInterface):
+class Http(ConnectorInterface):
     """
     Generic HTTP/HTTPS connector supporting multiple authentication methods.
     

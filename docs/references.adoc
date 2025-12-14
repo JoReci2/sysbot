@@ -57,7 +57,7 @@ Open a connection session to a remote system.
 * `product` (str): Product type:
   - SSH: "bash", "powershell"
   - WinRM: "powershell"
-  - HTTP: "generic", "basicauth", "vsphere"
+  - HTTP: "http"
   - Socket: "tcp", "udp"
 * `host` (str): Target host address or IP
 * `port` (int): Connection port (optional, uses defaults from config)
@@ -327,12 +327,12 @@ bot.open_session("windows", "winrm", "powershell", "192.168.1.200",
 ==== Configuration
 
 * **Default Ports**: 80 (HTTP), 443 (HTTPS)
-* **Products**: "generic", "basicauth", "vsphere"
+* **Product**: "http"
 * **Authentication Methods**: none, basic, apikey, bearer, jwt, oauth1, oauth2, hmac, certificate, openid, saml
 
-==== Generic HTTP Connector
+==== HTTP Connector
 
-The generic HTTP connector supports multiple authentication methods and both HTTP and HTTPS protocols.
+The HTTP connector supports multiple authentication methods and both HTTP and HTTPS protocols.
 
 **Supported Authentication Methods:**
 
@@ -354,7 +354,7 @@ The generic HTTP connector supports multiple authentication methods and both HTT
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 protocol="https", auth_method="none")
 ----
 
@@ -362,7 +362,7 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 "user", "pass", protocol="https", auth_method="basic")
 
 # Or use the backward-compatible basicauth connector
@@ -374,7 +374,7 @@ bot.open_session("api", "http", "basicauth", "api.example.com",
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 login="your-api-key", protocol="https", auth_method="apikey",
                 api_key_name="X-API-Key", api_key_location="header")
 ----
@@ -383,7 +383,7 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 login="your-api-key", protocol="https", auth_method="apikey",
                 api_key_name="api_key", api_key_location="query")
 ----
@@ -392,7 +392,7 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 protocol="https", auth_method="bearer",
                 token="your-bearer-token")
 ----
@@ -401,7 +401,7 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 login="username", password="jwt-secret",
                 protocol="https", auth_method="jwt",
                 jwt_algorithm="HS256", jwt_expiry=3600,
@@ -412,7 +412,7 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 protocol="https", auth_method="oauth1",
                 oauth_consumer_key="consumer_key",
                 oauth_consumer_secret="consumer_secret",
@@ -424,7 +424,7 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 protocol="https", auth_method="oauth2",
                 oauth_client_id="client_id",
                 oauth_client_secret="client_secret",
@@ -436,7 +436,7 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 password="hmac-secret", protocol="https",
                 auth_method="hmac", hmac_algorithm="sha256")
 ----
@@ -445,7 +445,7 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 protocol="https", auth_method="certificate",
                 cert_path="/path/to/client-cert.pem",
                 key_path="/path/to/client-key.pem")
@@ -455,7 +455,7 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 protocol="https", auth_method="openid",
                 access_token="your-access-token",
                 openid_discovery_url="https://provider.example.com/.well-known/openid-configuration")
@@ -465,7 +465,7 @@ bot.open_session("api", "http", "generic", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
+bot.open_session("api", "http", "http", "api.example.com", 443,
                 protocol="https", auth_method="saml",
                 saml_assertion="base64-encoded-saml-assertion")
 ----
@@ -501,14 +501,6 @@ response = bot.execute_command("api", "/api/v1/users",
 response = bot.execute_command("api", "/api/v1/users",
                               options={"method": "GET",
                                       "headers": {"X-Custom-Header": "value"}})
-----
-
-**vSphere Connection:**
-
-[source,python]
-----
-bot.open_session("vcenter", "http", "vsphere", "vcenter.example.com",
-                443, "administrator@vsphere.local", "pass")
 ----
 
 === Socket Connector

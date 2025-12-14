@@ -22,7 +22,7 @@ The SysBot HTTP connector provides a flexible and comprehensive interface for in
 
 == Supported Authentication Methods
 
-The generic HTTP connector supports the following authentication methods:
+The HTTP connector supports the following authentication methods:
 
 === None (No Authentication)
 
@@ -43,14 +43,6 @@ HTTP Basic Authentication using username and password.
 bot.open_session("api", "http", "generic", "api.example.com", 443,
                 "username", "password",
                 protocol="https", auth_method="basic")
-----
-
-Or use the backward-compatible connector:
-
-[source,python]
-----
-bot.open_session("api", "http", "basicauth", "api.example.com", 443,
-                "username", "password")
 ----
 
 === API Key Authentication
@@ -325,7 +317,7 @@ ${API_KEY}=         your-api-key
 
 *** Test Cases ***
 Test API With API Key
-    Open Session    api    http    generic    ${API_HOST}    ${API_PORT}
+    Open Session    api    http    http    ${API_HOST}    ${API_PORT}
     ...    login=${API_KEY}
     ...    protocol=https
     ...    auth_method=apikey
@@ -346,7 +338,7 @@ Test API With API Key
 ----
 *** Test Cases ***
 Create User Via API
-    Open Session    api    http    generic    ${API_HOST}    ${API_PORT}
+    Open Session    api    http    http    ${API_HOST}    ${API_PORT}
     ...    ${USERNAME}    ${PASSWORD}
     ...    protocol=https
     ...    auth_method=basic
@@ -370,7 +362,7 @@ Suite Setup    Import API Credentials
 
 *** Test Cases ***
 API Test With Secrets
-    Open Session    api    http    generic    
+    Open Session    api    http    http    
     ...    api_config.host    443
     ...    api_config.api_key    api_config.secret
     ...    is_secret=True
@@ -478,28 +470,6 @@ except Exception as e:
 4. **Check Status Codes**: Always check `response.status_code` or `response.ok`
 5. **Enable SSL Verification**: In production, use `verify_ssl=True`
 6. **Close Sessions**: Always close sessions when done
-
-== Migration Guide
-
-=== Migrating from basicauth to generic
-
-If you're using the old `basicauth` connector:
-
-**Old code:**
-[source,python]
-----
-bot.open_session("api", "http", "basicauth", "api.example.com", 443,
-                "user", "pass")
-----
-
-**New code (equivalent):**
-[source,python]
-----
-bot.open_session("api", "http", "generic", "api.example.com", 443,
-                "user", "pass", protocol="https", auth_method="basic")
-----
-
-**Note:** The `basicauth` connector still works and has been updated to use the generic connector internally, so existing code will continue to function without changes.
 
 == Troubleshooting
 
