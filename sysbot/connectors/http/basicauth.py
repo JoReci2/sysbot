@@ -1,56 +1,52 @@
-import requests
-from requests.auth import HTTPBasicAuth
-from sysbot.utils.engine import ConnectorInterface
+from sysbot.connectors.http.generic import Generic
 
 
-class Basicauth(ConnectorInterface):
+class Basicauth(Generic):
     """
     This class provides methods for interacting with an API using basic authentication.
-    It uses the requests library to establish and manage sessions.
+    It wraps the generic HTTP connector with basic auth defaults for backward compatibility.
     """
 
-    def open_session(self, host, port, login, password):
+    def open_session(self, host, port, login, password, **kwargs):
         """
-        Opens a session to a API with basic auth.
+        Opens a session to an API with basic auth.
+        
+        Args:
+            host (str): Hostname or IP address
+            port (int): Port number
+            login (str): Username for basic authentication
+            password (str): Password for basic authentication
+            **kwargs: Additional parameters (protocol, verify_ssl, etc.)
         """
-        session_data = {
-            "host": host,
-            "port": port,
-            "login": login,
-            "password": password,
-        }
-        return session_data
+        # Set default authentication method to basic
+        kwargs['auth_method'] = 'basic'
+        
+        # Default to HTTPS if not specified
+        if 'protocol' not in kwargs:
+            kwargs['protocol'] = 'https'
+        
+        return super().open_session(host, port, login, password, **kwargs)
 
-    def execute_command(self, session, command, options):
+    def execute_command(self, session, command, options=None):
         """
-        Executes a command on a API with basic auth.
+        Executes a command on an API with basic auth.
+        
+        Args:
+            session (dict): Session data
+            command (str): URL path
+            options (dict): Request options
+            
+        Returns:
+            bytes: Response content (for backward compatibility)
         """
-        base_url = f"https://{session['host']}:{session['port']}{command}"
-        basic = HTTPBasicAuth(session["login"], session["password"])
-
-        if options:
-            try:
-                result = requests.get(
-                    base_url, params=options["params"], verify=False, auth=basic
-                )
-            except Exception as e:
-                raise Exception(f"Failed to execute command: {str(e)}")
-        else:
-            try:
-                result = requests.get(base_url, verify=False, auth=basic)
-            except Exception as e:
-                raise Exception(f"Failed to execute command: {str(e)}")
-
-        if result.status_code != 200:
-            raise Exception(f"Trellix status error: {result.status_code}")
-        else:
-            return result.content
-
-    def close_session(self, session):
-        """
-        Closes the session to the API with basic auth.
-        """
-        try:
-            pass
-        except Exception as e:
-            raise Exception(f"Failed to close session: {str(e)}")
+        # Ensure auth_method is set to basic
+        session['auth_method'] = 'basic'
+        
+        # Call parent execute_command
+        response = super().execute_command(session, command, options)
+        
+        # Check status code for backward compatibility
+        if response.status_code != 200:
+            raise Exception(f"HTTP status error: {response.status_code}")
+        
+        return response.content
