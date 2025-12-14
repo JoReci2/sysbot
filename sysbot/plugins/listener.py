@@ -113,6 +113,10 @@ class DatabaseListener:
         except ImportError:
             raise ImportError("pymongo is required for MongoDB support. Install it with: pip install pymongo")
     
+    def _get_placeholder(self):
+        """Get the SQL parameter placeholder for the current database type."""
+        return '?' if self.db_type == 'sqlite' else '%s'
+    
     def _initialize_schema(self):
         """Create database tables/collections if they don't exist."""
         if self.db_type == "mongodb":
@@ -194,13 +198,11 @@ class DatabaseListener:
             suite_info['_id'] = result_doc.inserted_id
         else:
             cursor = self.connection.cursor()
+            placeholder = self._get_placeholder()
             if self.db_type == "sqlite" or self.db_type == "mysql":
-                cursor.execute("""
+                cursor.execute(f"""
                     INSERT INTO test_suites (name, doc, start_time, metadata)
-                    VALUES (%s, %s, %s, %s)
-                """ if self.db_type == "mysql" else """
-                    INSERT INTO test_suites (name, doc, start_time, metadata)
-                    VALUES (?, ?, ?, ?)
+                    VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})
                 """, (suite_info['name'], suite_info['doc'], suite_info['start_time'], suite_info['metadata']))
                 suite_info['id'] = cursor.lastrowid
             else:  # PostgreSQL
@@ -234,14 +236,11 @@ class DatabaseListener:
             )
         else:
             cursor = self.connection.cursor()
-            cursor.execute("""
+            placeholder = self._get_placeholder()
+            cursor.execute(f"""
                 UPDATE test_suites
-                SET end_time = ?, status = ?, message = ?
-                WHERE id = ?
-            """ if self.db_type == "sqlite" else """
-                UPDATE test_suites
-                SET end_time = %s, status = %s, message = %s
-                WHERE id = %s
+                SET end_time = {placeholder}, status = {placeholder}, message = {placeholder}
+                WHERE id = {placeholder}
             """, (end_time, status, message, self.current_suite['id']))
             self.connection.commit()
         
@@ -265,13 +264,11 @@ class DatabaseListener:
             test_info['_id'] = result_doc.inserted_id
         else:
             cursor = self.connection.cursor()
+            placeholder = self._get_placeholder()
             if self.db_type == "sqlite" or self.db_type == "mysql":
-                cursor.execute("""
+                cursor.execute(f"""
                     INSERT INTO test_cases (suite_id, name, doc, tags, start_time)
-                    VALUES (%s, %s, %s, %s, %s)
-                """ if self.db_type == "mysql" else """
-                    INSERT INTO test_cases (suite_id, name, doc, tags, start_time)
-                    VALUES (?, ?, ?, ?, ?)
+                    VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                 """, (test_info['suite_id'], test_info['name'], test_info['doc'], test_info['tags'], test_info['start_time']))
                 test_info['id'] = cursor.lastrowid
             else:  # PostgreSQL
@@ -305,14 +302,11 @@ class DatabaseListener:
             )
         else:
             cursor = self.connection.cursor()
-            cursor.execute("""
+            placeholder = self._get_placeholder()
+            cursor.execute(f"""
                 UPDATE test_cases
-                SET end_time = ?, status = ?, message = ?
-                WHERE id = ?
-            """ if self.db_type == "sqlite" else """
-                UPDATE test_cases
-                SET end_time = %s, status = %s, message = %s
-                WHERE id = %s
+                SET end_time = {placeholder}, status = {placeholder}, message = {placeholder}
+                WHERE id = {placeholder}
             """, (end_time, status, message, self.current_test['id']))
             self.connection.commit()
         
@@ -334,12 +328,10 @@ class DatabaseListener:
             self.connection.keywords.insert_one(keyword_info)
         else:
             cursor = self.connection.cursor()
-            cursor.execute("""
+            placeholder = self._get_placeholder()
+            cursor.execute(f"""
                 INSERT INTO keywords (test_id, name, library, start_time)
-                VALUES (?, ?, ?, ?)
-            """ if self.db_type == "sqlite" else """
-                INSERT INTO keywords (test_id, name, library, start_time)
-                VALUES (%s, %s, %s, %s)
+                VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})
             """, (keyword_info['test_id'], keyword_info['name'], keyword_info['library'], keyword_info['start_time']))
             self.connection.commit()
     
