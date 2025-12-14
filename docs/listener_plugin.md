@@ -11,10 +11,22 @@ A Robot Framework listener plugin that stores test execution results in various 
 
 ## Installation
 
-### Core Requirements
+### Using pip with extras
 
 ```bash
-# SQLAlchemy is required for SQL databases (SQLite, MySQL, PostgreSQL)
+# Install with all database support
+pip install sysbot[all_databases]
+
+# Or install with specific database support
+pip install sysbot[mysql]
+pip install sysbot[postgresql]
+pip install sysbot[mongodb]
+```
+
+### Manual Installation
+
+```bash
+# Core requirement: SQLAlchemy for SQL databases
 pip install sqlalchemy
 
 # For MySQL support
@@ -32,64 +44,74 @@ pip install pymongo
 The listener can be used with Robot Framework's `--listener` option:
 
 ```bash
-robot --listener sysbot.plugins.listener.DatabaseListener:db_type:connection_string tests/
+robot --listener sysbot.plugins.listener.DatabaseListener:db_type:connection_string:campaign_name tests/
 ```
 
 ### SQLite Examples
 
 ```bash
-# Store results in results.db file
-robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db tests/
+# Store results in results.db file with campaign name
+robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db:MyCampaign tests/
 
 # Store results in /tmp/test_results.db
-robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:/tmp/test_results.db tests/
+robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:/tmp/test_results.db:MyProject tests/
 ```
 
 ### MySQL Examples
 
 ```bash
 # Connect to MySQL database
-robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:password@localhost/testdb tests/
+robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:password@localhost/testdb:MyCampaign tests/
 
 # With custom port
-robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:password@localhost:3307/testdb tests/
+robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:password@localhost:3307/testdb:MyCampaign tests/
 ```
 
 ### PostgreSQL Examples
 
 ```bash
 # Connect to PostgreSQL database
-robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:password@localhost/testdb tests/
+robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:password@localhost/testdb:MyCampaign tests/
 
 # With custom port
-robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:password@localhost:5433/testdb tests/
+robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:password@localhost:5433/testdb:MyCampaign tests/
 ```
 
 ### MongoDB Examples
 
 ```bash
 # Connect to MongoDB database
-robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb tests/
+robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
 
 # With authentication
-robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://user:password@localhost:27017/testdb tests/
+robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://user:password@localhost:27017/testdb:MyCampaign tests/
 ```
 
 ## Database Schema
 
 ### SQL Databases (SQLite, MySQL, PostgreSQL)
 
-The listener creates three tables:
+The listener creates a hierarchical structure with four tables:
+
+#### test_campaigns
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER/SERIAL | Primary key |
+| name | VARCHAR(500) | Campaign name |
+| start_time | TIMESTAMP | Campaign start time |
+| end_time | TIMESTAMP | Campaign end time |
+| description | TEXT | Campaign description |
 
 #### test_suites
 | Column | Type | Description |
 |--------|------|-------------|
 | id | INTEGER/SERIAL | Primary key |
-| name | TEXT | Suite name |
+| campaign_id | INTEGER | Foreign key to test_campaigns |
+| name | VARCHAR(500) | Suite name |
 | doc | TEXT | Suite documentation |
 | start_time | TIMESTAMP | Suite start time |
 | end_time | TIMESTAMP | Suite end time |
-| status | TEXT | Suite status (PASS/FAIL) |
+| status | VARCHAR(50) | Suite status (PASS/FAIL) |
 | message | TEXT | Suite message |
 | metadata | TEXT | Suite metadata (JSON) |
 

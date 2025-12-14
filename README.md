@@ -205,23 +205,27 @@ sysbot/
 
 ## Database Listener Plugin
 
-SysBot includes a Robot Framework listener plugin that can store test results in various databases using SQLAlchemy:
+SysBot includes a Robot Framework listener plugin that can store test results in various databases using SQLAlchemy. The plugin creates a hierarchical structure: Campaign → Suite → Test Case → Keyword.
 
 ```bash
-# Store results in SQLite
-robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db tests/
+# Store results in SQLite with campaign name
+robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db:MyCampaign tests/
 
 # Store results in MySQL
-robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:pass@localhost/testdb tests/
+robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
 
 # Store results in PostgreSQL
-robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:pass@localhost/testdb tests/
+robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
 
 # Store results in MongoDB
-robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb tests/
+robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
 ```
 
-**Requirements**: SQLAlchemy for SQL databases, pymongo for MongoDB
+**Installation**: 
+- `pip install sysbot[all_databases]` - Install with all database support
+- `pip install sysbot[mysql]` - MySQL support only
+- `pip install sysbot[postgresql]` - PostgreSQL support only
+- `pip install sysbot[mongodb]` - MongoDB support only
 
 For more details, see [Database Listener Documentation](docs/listener_plugin.md).
 

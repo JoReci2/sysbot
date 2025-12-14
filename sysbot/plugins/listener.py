@@ -5,20 +5,20 @@ This plugin provides a Robot Framework listener that can send test results
 to various databases (MongoDB, MySQL, SQLite, PostgreSQL).
 
 Usage:
-    robot --listener sysbot.plugins.listener.DatabaseListener:db_type:connection_string tests/
+    robot --listener sysbot.plugins.listener.DatabaseListener:db_type:connection_string:campaign_name tests/
 
 Examples:
     # SQLite
-    robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db tests/
+    robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db:MyCampaign tests/
 
     # MySQL
-    robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:pass@localhost/testdb tests/
+    robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
 
     # PostgreSQL
-    robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:pass@localhost/testdb tests/
+    robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
 
     # MongoDB
-    robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb tests/
+    robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
 """
 
 import datetime
@@ -40,35 +40,46 @@ class DatabaseListener:
     
     Supports: MongoDB, MySQL, SQLite, PostgreSQL
     
+    The listener creates a hierarchical structure:
+    - Test Campaign (top level)
+      - Test Suite
+        - Test Case
+          - Keyword
+    
     Note: Keyword tracking currently captures start time and name but not end time or status.
           This is sufficient for most use cases where test-level tracking is the primary concern.
     """
     
     ROBOT_LISTENER_API_VERSION = 3
     
-    def __init__(self, db_type: str = "sqlite", connection_string: str = "test_results.db"):
+    def __init__(self, db_type: str = "sqlite", connection_string: str = "test_results.db", campaign_name: str = "Default Campaign"):
         """
         Initialize the database listener.
         
         Args:
             db_type: Database type (sqlite, mysql, postgresql, mongodb)
             connection_string: Database connection string or path
+            campaign_name: Name of the test campaign (default: "Default Campaign")
         """
         self.db_type = db_type.lower()
         self.connection_string = connection_string
+        self.campaign_name = campaign_name
         self.session = None
         self.engine = None
         self.connection = None
         self.metadata = None
+        self.test_campaigns_table = None
         self.test_suites_table = None
         self.test_cases_table = None
         self.keywords_table = None
+        self.current_campaign = None
         self.current_suite = None
         self.current_test = None
         
         # Initialize database connection
         self._connect()
         self._initialize_schema()
+        self._create_or_get_campaign()
     
     def _connect(self):
         """Establish database connection based on type."""
@@ -160,9 +171,19 @@ class DatabaseListener:
         # Create metadata instance once
         self.metadata = MetaData()
         
+        # Define test_campaigns table (top level)
+        self.test_campaigns_table = Table('test_campaigns', self.metadata,
+            Column('id', Integer, primary_key=True, autoincrement=True),
+            Column('name', String(500), nullable=False),
+            Column('start_time', DateTime),
+            Column('end_time', DateTime),
+            Column('description', Text)
+        )
+        
         # Define test_suites table
         self.test_suites_table = Table('test_suites', self.metadata,
             Column('id', Integer, primary_key=True, autoincrement=True),
+            Column('campaign_id', Integer, ForeignKey('test_campaigns.id')),
             Column('name', String(500), nullable=False),
             Column('doc', Text),
             Column('start_time', DateTime),
@@ -200,9 +221,57 @@ class DatabaseListener:
         # Create all tables
         self.metadata.create_all(self.engine)
     
+    def _create_or_get_campaign(self):
+        """Create a new campaign or get existing one."""
+        if self.db_type == "mongodb":
+            # For MongoDB, check if campaign exists
+            existing = self.connection.test_campaigns.find_one({'name': self.campaign_name})
+            if existing:
+                self.current_campaign = existing
+            else:
+                campaign_info = {
+                    'name': self.campaign_name,
+                    'start_time': datetime.datetime.now(),
+                    'description': f'Test campaign: {self.campaign_name}'
+                }
+                result_doc = self.connection.test_campaigns.insert_one(campaign_info)
+                campaign_info['_id'] = result_doc.inserted_id
+                self.current_campaign = campaign_info
+        else:
+            # For SQL databases, create or get campaign
+            from sqlalchemy import select
+            
+            # Check if campaign exists
+            stmt = select(self.test_campaigns_table).where(
+                self.test_campaigns_table.c.name == self.campaign_name
+            )
+            result = self.session.execute(stmt).fetchone()
+            
+            if result:
+                self.current_campaign = {
+                    'id': result[0],
+                    'name': result[1],
+                    'start_time': result[2],
+                    'end_time': result[3],
+                    'description': result[4]
+                }
+            else:
+                # Create new campaign
+                campaign_info = {
+                    'name': self.campaign_name,
+                    'start_time': datetime.datetime.now(),
+                    'description': f'Test campaign: {self.campaign_name}'
+                }
+                ins = self.test_campaigns_table.insert().values(**campaign_info)
+                result = self.session.execute(ins)
+                self.session.commit()
+                campaign_info['id'] = result.inserted_primary_key[0]
+                self.current_campaign = campaign_info
+    
     def start_suite(self, data, result):
         """Called when a test suite starts."""
         suite_info = {
+            'campaign_id': self.current_campaign['id'] if self.db_type != "mongodb" else self.current_campaign['_id'],
             'name': data.name,
             'doc': data.doc or '',
             'start_time': datetime.datetime.now(),
@@ -337,7 +406,28 @@ class DatabaseListener:
         pass
     
     def close(self):
-        """Close database connection."""
+        """Close database connection and update campaign end time."""
+        # Update campaign end time
+        if self.current_campaign:
+            end_time = datetime.datetime.now()
+            if self.db_type == "mongodb":
+                try:
+                    self.connection.test_campaigns.update_one(
+                        {'_id': self.current_campaign['_id']},
+                        {'$set': {'end_time': end_time}}
+                    )
+                except Exception:
+                    pass
+            else:
+                try:
+                    upd = self.test_campaigns_table.update().where(
+                        self.test_campaigns_table.c.id == self.current_campaign['id']
+                    ).values(end_time=end_time)
+                    self.session.execute(upd)
+                except Exception:
+                    pass
+        
+        # Close connections
         if self.db_type == "mongodb":
             if self.connection:
                 try:
