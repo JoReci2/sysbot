@@ -76,7 +76,13 @@ jobs:
       - name: Generate PDF documentation
         run: |
           cd docs
-          asciidoctor-pdf -o ../documentation.pdf index.adoc
+          if [ -f "index.adoc" ]; then
+            asciidoctor-pdf -o ../documentation.pdf index.adoc
+          else
+            echo "Warning: index.adoc not found, skipping PDF generation"
+            echo "# Documentation Not Available" > ../documentation.pdf
+            echo "The documentation source file (index.adoc) was not found." >> ../documentation.pdf
+          fi
 
       - name: Get milestone issues
         id: milestone
