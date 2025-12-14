@@ -280,6 +280,8 @@ class Generic(ConnectorInterface):
         Returns:
             str: Generated JWT token
         """
+        from datetime import timezone
+        
         jwt_secret = session.get('jwt_secret') or session.get('password')
         jwt_algorithm = session.get('jwt_algorithm', 'HS256')
         jwt_expiry = session.get('jwt_expiry', 3600)
@@ -289,8 +291,8 @@ class Generic(ConnectorInterface):
         
         payload = {
             'sub': session.get('login', 'user'),
-            'iat': datetime.utcnow(),
-            'exp': datetime.utcnow() + timedelta(seconds=jwt_expiry)
+            'iat': datetime.now(timezone.utc),
+            'exp': datetime.now(timezone.utc) + timedelta(seconds=jwt_expiry)
         }
         
         # Add any additional claims from session
@@ -324,6 +326,11 @@ class Generic(ConnectorInterface):
         
         if not hmac_secret:
             raise ValueError("HMAC secret is required for HMAC authentication")
+        
+        # Validate algorithm against whitelist to prevent arbitrary attribute access
+        allowed_algorithms = ['sha1', 'sha224', 'sha256', 'sha384', 'sha512']
+        if hmac_algorithm not in allowed_algorithms:
+            raise ValueError(f"HMAC algorithm must be one of {allowed_algorithms}")
         
         # Build string to sign
         string_to_sign = f"{method}\n{path}\n"

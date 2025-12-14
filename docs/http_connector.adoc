@@ -391,7 +391,14 @@ Import API Credentials
 
 === SSL Certificate Verification
 
-By default, SSL verification is disabled (`verify_ssl=False`). To enable it:
+By default, SSL verification is disabled (`verify_ssl=False`). 
+
+[WARNING]
+====
+**Security Risk**: Disabling SSL certificate verification makes your connections vulnerable to man-in-the-middle (MITM) attacks. An attacker could intercept and modify your traffic, steal credentials, or inject malicious responses. Only disable SSL verification for testing or when connecting to trusted internal systems with self-signed certificates.
+====
+
+To enable SSL verification for production use:
 
 [source,python]
 ----
