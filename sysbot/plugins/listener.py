@@ -125,21 +125,18 @@ class DatabaseListener:
         """Create SQL tables for storing test results."""
         cursor = self.connection.cursor()
         
+        # Determine the auto-increment syntax for the database
+        if self.db_type == "sqlite":
+            id_column = "id INTEGER PRIMARY KEY AUTOINCREMENT"
+        elif self.db_type == "mysql":
+            id_column = "id INTEGER PRIMARY KEY AUTO_INCREMENT"
+        else:  # postgresql
+            id_column = "id SERIAL PRIMARY KEY"
+        
         # Suites table
-        cursor.execute("""
+        cursor.execute(f"""
             CREATE TABLE IF NOT EXISTS test_suites (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                doc TEXT,
-                start_time TIMESTAMP,
-                end_time TIMESTAMP,
-                status TEXT,
-                message TEXT,
-                metadata TEXT
-            )
-        """ if self.db_type == "sqlite" else """
-            CREATE TABLE IF NOT EXISTS test_suites (
-                id SERIAL PRIMARY KEY,
+                {id_column},
                 name TEXT NOT NULL,
                 doc TEXT,
                 start_time TIMESTAMP,
@@ -151,22 +148,9 @@ class DatabaseListener:
         """)
         
         # Tests table
-        cursor.execute("""
+        cursor.execute(f"""
             CREATE TABLE IF NOT EXISTS test_cases (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                suite_id INTEGER,
-                name TEXT NOT NULL,
-                doc TEXT,
-                tags TEXT,
-                start_time TIMESTAMP,
-                end_time TIMESTAMP,
-                status TEXT,
-                message TEXT,
-                FOREIGN KEY (suite_id) REFERENCES test_suites(id)
-            )
-        """ if self.db_type == "sqlite" else """
-            CREATE TABLE IF NOT EXISTS test_cases (
-                id SERIAL PRIMARY KEY,
+                {id_column},
                 suite_id INTEGER,
                 name TEXT NOT NULL,
                 doc TEXT,
@@ -180,21 +164,9 @@ class DatabaseListener:
         """)
         
         # Keywords table
-        cursor.execute("""
+        cursor.execute(f"""
             CREATE TABLE IF NOT EXISTS keywords (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                test_id INTEGER,
-                name TEXT NOT NULL,
-                library TEXT,
-                start_time TIMESTAMP,
-                end_time TIMESTAMP,
-                status TEXT,
-                message TEXT,
-                FOREIGN KEY (test_id) REFERENCES test_cases(id)
-            )
-        """ if self.db_type == "sqlite" else """
-            CREATE TABLE IF NOT EXISTS keywords (
-                id SERIAL PRIMARY KEY,
+                {id_column},
                 test_id INTEGER,
                 name TEXT NOT NULL,
                 library TEXT,
