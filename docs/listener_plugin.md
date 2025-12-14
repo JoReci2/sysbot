@@ -1,0 +1,221 @@
+# Database Listener Plugin
+
+A Robot Framework listener plugin that stores test execution results in various databases.
+
+## Supported Databases
+
+- **SQLite** - File-based database (no additional dependencies)
+- **MySQL** - Requires `mysql-connector-python`
+- **PostgreSQL** - Requires `psycopg2-binary`
+- **MongoDB** - Requires `pymongo`
+
+## Installation
+
+### SQLite (No additional dependencies)
+SQLite support is built-in with Python.
+
+### MySQL
+```bash
+pip install mysql-connector-python
+```
+
+### PostgreSQL
+```bash
+pip install psycopg2-binary
+```
+
+### MongoDB
+```bash
+pip install pymongo
+```
+
+## Usage
+
+The listener can be used with Robot Framework's `--listener` option:
+
+```bash
+robot --listener sysbot.plugins.listener.DatabaseListener:db_type:connection_string tests/
+```
+
+### SQLite Examples
+
+```bash
+# Store results in results.db file
+robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db tests/
+
+# Store results in /tmp/test_results.db
+robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:/tmp/test_results.db tests/
+```
+
+### MySQL Examples
+
+```bash
+# Connect to MySQL database
+robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:password@localhost/testdb tests/
+
+# With custom port
+robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:password@localhost:3307/testdb tests/
+```
+
+### PostgreSQL Examples
+
+```bash
+# Connect to PostgreSQL database
+robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:password@localhost/testdb tests/
+
+# With custom port
+robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:password@localhost:5433/testdb tests/
+```
+
+### MongoDB Examples
+
+```bash
+# Connect to MongoDB database
+robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb tests/
+
+# With authentication
+robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://user:password@localhost:27017/testdb tests/
+```
+
+## Database Schema
+
+### SQL Databases (SQLite, MySQL, PostgreSQL)
+
+The listener creates three tables:
+
+#### test_suites
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER/SERIAL | Primary key |
+| name | TEXT | Suite name |
+| doc | TEXT | Suite documentation |
+| start_time | TIMESTAMP | Suite start time |
+| end_time | TIMESTAMP | Suite end time |
+| status | TEXT | Suite status (PASS/FAIL) |
+| message | TEXT | Suite message |
+| metadata | TEXT | Suite metadata (JSON) |
+
+#### test_cases
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER/SERIAL | Primary key |
+| suite_id | INTEGER | Foreign key to test_suites |
+| name | TEXT | Test case name |
+| doc | TEXT | Test case documentation |
+| tags | TEXT | Test case tags (comma-separated) |
+| start_time | TIMESTAMP | Test start time |
+| end_time | TIMESTAMP | Test end time |
+| status | TEXT | Test status (PASS/FAIL) |
+| message | TEXT | Test message |
+
+#### keywords
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER/SERIAL | Primary key |
+| test_id | INTEGER | Foreign key to test_cases |
+| name | TEXT | Keyword name |
+| library | TEXT | Library name |
+| start_time | TIMESTAMP | Keyword start time |
+| end_time | TIMESTAMP | Keyword end time |
+| status | TEXT | Keyword status |
+| message | TEXT | Keyword message |
+
+### MongoDB
+
+The listener creates three collections with similar structure:
+- `test_suites`
+- `test_cases`
+- `keywords`
+
+## Querying Results
+
+### SQLite
+
+```bash
+# View all test suites
+sqlite3 results.db "SELECT * FROM test_suites;"
+
+# View all test cases with their status
+sqlite3 results.db "SELECT name, status, start_time, end_time FROM test_cases;"
+
+# Count tests by status
+sqlite3 results.db "SELECT status, COUNT(*) FROM test_cases GROUP BY status;"
+
+# View failed tests
+sqlite3 results.db "SELECT name, message FROM test_cases WHERE status='FAIL';"
+```
+
+### MySQL
+
+```sql
+-- Connect to database
+mysql -u user -p testdb
+
+-- View all test cases
+SELECT name, status, start_time, end_time FROM test_cases;
+
+-- Get test statistics
+SELECT status, COUNT(*) as count FROM test_cases GROUP BY status;
+```
+
+### PostgreSQL
+
+```sql
+-- Connect to database
+psql -U user -d testdb
+
+-- View all test cases
+SELECT name, status, start_time, end_time FROM test_cases;
+
+-- Get test duration
+SELECT name, (end_time - start_time) as duration FROM test_cases;
+```
+
+### MongoDB
+
+```javascript
+// Connect to MongoDB
+mongo testdb
+
+// View all test cases
+db.test_cases.find()
+
+// Get test statistics
+db.test_cases.aggregate([
+  { $group: { _id: "$status", count: { $sum: 1 } } }
+])
+
+// View failed tests
+db.test_cases.find({ status: "FAIL" })
+```
+
+## Example: Complete Workflow
+
+```bash
+# Run tests with listener
+robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db tests/
+
+# Query results
+sqlite3 results.db "SELECT name, status FROM test_cases;"
+
+# Export to CSV
+sqlite3 -header -csv results.db "SELECT * FROM test_cases;" > results.csv
+```
+
+## Notes
+
+- The database and tables/collections are created automatically if they don't exist
+- For SQL databases, the listener uses transactions to ensure data consistency
+- MongoDB doesn't require schema initialization
+- Connection errors are raised at listener initialization
+- The listener automatically closes database connections when tests complete
+
+## Error Handling
+
+If a database connection fails, the listener will raise an exception with details:
+- For missing dependencies, it will suggest the required package to install
+- For connection errors, it will provide the error message from the database driver
+
+## License
+
+This plugin is part of the SysBot project and follows the same MIT License.
