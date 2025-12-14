@@ -34,16 +34,18 @@ jobs:
         run: |
           python -m build
           
-      - name: Publish to GitHub Packages
+      - name: Publish to PyPI
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          # For GitHub Packages, use:
-          # twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
-          # Note: GitHub Packages for Python requires additional configuration
-          echo "Package built successfully. Configure PYPI_API_TOKEN secret to publish."
+          # Publish to PyPI if PYPI_API_TOKEN is configured
+          if [ -n "$TWINE_PASSWORD" ]; then
+            twine upload dist/*
+          else
+            echo "Package built successfully. Configure PYPI_API_TOKEN secret to publish to PyPI."
+          fi
+        continue-on-error: true
 
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
@@ -79,9 +81,13 @@ jobs:
           if [ -f "index.adoc" ]; then
             asciidoctor-pdf -o ../documentation.pdf index.adoc
           else
-            echo "Warning: index.adoc not found, skipping PDF generation"
-            echo "# Documentation Not Available" > ../documentation.pdf
-            echo "The documentation source file (index.adoc) was not found." >> ../documentation.pdf
+            echo "Warning: index.adoc not found, creating placeholder"
+            cat > ../documentation.txt << 'EOF'
+          Documentation Not Available
+          
+          The documentation source file (index.adoc) was not found in the docs directory.
+          Please refer to the project README for basic information.
+          EOF
           fi
 
       - name: Get milestone issues
@@ -131,7 +137,7 @@ jobs:
           - Python Package (dist/)
           - SBOM (sbom-sysbot.spdx.json)
           - Vulnerability Analysis (vulnerability-report.txt)
-          - Documentation PDF (documentation.pdf)
+          - Documentation (documentation.pdf or documentation.txt)
           
           ### Installation
           
@@ -150,5 +156,6 @@ jobs:
             vulnerability-report.json
             vulnerability-report.txt
             documentation.pdf
+            documentation.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

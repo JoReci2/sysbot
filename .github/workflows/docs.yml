@@ -55,12 +55,16 @@ jobs:
           <body>
             <h1>SysBot Documentation</h1>
             <ul>
-              <li><a href="setup.html">Setup</a></li>
-              <li><a href="quickstart.html">Quick Start</a></li>
-              <li><a href="robotframework.html">Robot Framework</a></li>
-              <li><a href="unittest.html">Unit Test</a></li>
-              <li><a href="developer.html">Developer Guide</a></li>
-              <li><a href="references.html">References</a></li>
+          EOF
+            # Dynamically add links to all generated HTML files
+            for html in ../_site/*.html; do
+              if [ -f "$html" ] && [ "$(basename "$html")" != "index.html" ]; then
+                filename=$(basename "$html")
+                title=$(echo "$filename" | sed 's/\.html$//' | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr($i,1,1)),$i)}1')
+                echo "              <li><a href=\"$filename\">$title</a></li>" >> ../_site/index.html
+              fi
+            done
+            cat >> ../_site/index.html << 'EOF'
             </ul>
           </body>
           </html>
