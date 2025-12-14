@@ -60,7 +60,7 @@ class Sysbot(metaclass=ComponentMeta):
     ) -> None:
         tunnels = []
         self._protocol = TunnelingManager.get_protocol(protocol, product)
-        self._remote_port = int(port)
+        self._remote_port = int(port) if port else None
         try:
             if tunnel_config:
                 try:
@@ -73,14 +73,14 @@ class Sysbot(metaclass=ComponentMeta):
                 if is_secret:
                     target_config = {
                         "ip": self._cache.secrets.get(host),
-                        "port": int(self._remote_port),
+                        "port": int(self._remote_port) if self._remote_port else None,
                         "username": self._cache.secrets.get(login),
                         "password": self._cache.secrets.get(password),
                     }
                 else:
                     target_config = {
                         "ip": host,
-                        "port": int(self._remote_port),
+                        "port": int(self._remote_port) if self._remote_port else None,
                         "username": login,
                         "password": password,
                     }
@@ -93,16 +93,26 @@ class Sysbot(metaclass=ComponentMeta):
                 tunnels = connection["tunnels"]
             else:
                 if is_secret:
-                    session = self._protocol.open_session(
+                    session_result = self._protocol.open_session(
                         self._cache.secrets.get(host),
-                        int(self._remote_port),
+                        int(self._remote_port) if self._remote_port else None,
                         self._cache.secrets.get(login),
                         self._cache.secrets.get(password),
                     )
                 else:
-                    session = self._protocol.open_session(
-                        host, int(self._remote_port), login, password
+                    session_result = self._protocol.open_session(
+                        host, int(self._remote_port) if self._remote_port else None, login, password
                     )
+                
+                # Handle new dict response format with StatusCode, Result, Error, Metadata
+                if isinstance(session_result, dict) and "StatusCode" in session_result:
+                    if session_result["StatusCode"] != 0:
+                        raise Exception(f"Failed to open session: {session_result.get('Error', 'Unknown error')}")
+                    session = session_result["Result"]
+                else:
+                    # Old format: direct session object
+                    session = session_result
+                
                 if not session:
                     raise Exception("Failed to open direct session")
                 connection = {"session": session, "tunnels": None}
@@ -122,7 +132,19 @@ class Sysbot(metaclass=ComponentMeta):
             result = self._protocol.execute_command(
                 connection["session"], command, **kwargs
             )
-            return result
+            
+            # Handle new dict response format with StatusCode, Result, Error, Metadata
+            if isinstance(result, dict) and "StatusCode" in result:
+                # For backward compatibility, if StatusCode is 0, return just the Result
+                # Otherwise, return the full dict so users can see error details
+                if result["StatusCode"] == 0 and result.get("Error") is None:
+                    return result["Result"]
+                else:
+                    # Return full dict when there's an error or non-zero status
+                    return result
+            else:
+                # Old format: direct result
+                return result
         except ValueError as ve:
             raise ValueError(f"Alias '{alias}' does not exist: {str(ve)}")
         except Exception as e:

@@ -154,22 +154,35 @@ class TunnelingManager:
     @staticmethod
     def get_protocol(protocol_name, product_name, cache=None):
         try:
-            module_name = (
-                f"sysbot.connectors.{protocol_name.lower()}.{product_name.lower()}"
-            )
-            connector = importlib.import_module(module_name)
-            connector_class = getattr(connector, product_name.capitalize())
-            instance = connector_class()
+            # Try new structure first: single file per protocol (e.g., sysbot.connectors.ssh)
+            try:
+                module_name = f"sysbot.connectors.{protocol_name.lower()}"
+                connector = importlib.import_module(module_name)
+                connector_class = getattr(connector, product_name.capitalize())
+                instance = connector_class()
 
-            if cache and hasattr(instance, "set_cache"):
-                instance.set_cache(cache)
+                if cache and hasattr(instance, "set_cache"):
+                    instance.set_cache(cache)
 
-            return instance
+                return instance
+            except (ImportError, AttributeError):
+                # Fall back to old structure: subdirectory per protocol (e.g., sysbot.connectors.ssh.bash)
+                module_name = (
+                    f"sysbot.connectors.{protocol_name.lower()}.{product_name.lower()}"
+                )
+                connector = importlib.import_module(module_name)
+                connector_class = getattr(connector, product_name.capitalize())
+                instance = connector_class()
+
+                if cache and hasattr(instance, "set_cache"):
+                    instance.set_cache(cache)
+
+                return instance
         except ImportError as e:
             raise ImportError(f"Failed to import module '{module_name}': {str(e)}")
         except AttributeError as e:
             raise AttributeError(
-                f"Module '{module_name}' does not have the attribute '{protocol_name.lower()}': {str(e)}"
+                f"Module '{module_name}' does not have the attribute '{product_name.capitalize()}': {str(e)}"
             )
         except Exception as e:
             raise Exception(
