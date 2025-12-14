@@ -242,7 +242,7 @@ class DatabaseListener:
                 UPDATE test_suites
                 SET end_time = %s, status = %s, message = %s
                 WHERE id = %s
-            """, (end_time, status, message, self.current_suite['id'] if self.db_type != "mongodb" else self.current_suite['_id']))
+            """, (end_time, status, message, self.current_suite['id']))
             self.connection.commit()
         
         self.current_suite = None
@@ -313,7 +313,7 @@ class DatabaseListener:
                 UPDATE test_cases
                 SET end_time = %s, status = %s, message = %s
                 WHERE id = %s
-            """, (end_time, status, message, self.current_test['id'] if self.db_type != "mongodb" else self.current_test['_id']))
+            """, (end_time, status, message, self.current_test['id']))
             self.connection.commit()
         
         self.current_test = None
@@ -361,5 +361,5 @@ class DatabaseListener:
         """Cleanup when listener is destroyed."""
         try:
             self.close()
-        except:
+        except Exception:
             pass
