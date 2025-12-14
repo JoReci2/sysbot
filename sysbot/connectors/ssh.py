@@ -229,7 +229,7 @@ class Powershell(ConnectorInterface):
                 }
             }
 
-    def execute_command(self, session, command, runas=False, password=None):
+    def execute_command(self, session, command, runas=False, username=None, password=None):
         """
         Executes a PowerShell command on a system via SSH.
 
@@ -237,6 +237,7 @@ class Powershell(ConnectorInterface):
             session: The SSH session object (from Result field of open_session)
             command (str): The PowerShell command to execute
             runas (bool): Whether to run with elevated privileges
+            username (str): Username for elevated authentication (if required)
             password (str): Password for elevated authentication (if required)
 
         Returns:
@@ -249,18 +250,18 @@ class Powershell(ConnectorInterface):
             else:
                 client = session
 
-            if runas and password is not None:
+            if runas and username and password:
                 ps_command = (
                     f"Start-Process PowerShell -Credential $credential "
                     f'-ArgumentList "-Command", "{command}" -Wait -NoNewWindow'
                 )
                 credential_command = f"""
 $securePassword = ConvertTo-SecureString '{password}' -AsPlainText -Force
-$credential = New-Object System.Management.Automation.PSCredential('{login}', $securePassword)
+$credential = New-Object System.Management.Automation.PSCredential('{username}', $securePassword)
 {ps_command}
 """
                 final_command = credential_command
-            elif runas and password is None:
+            elif runas:
                 final_command = (
                     f"Start-Process PowerShell -Verb RunAs "
                     f'-ArgumentList "-Command", "{command}" -Wait'
