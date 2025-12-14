@@ -197,11 +197,31 @@ bot.close_all_sessions()
 sysbot/
 ├── Sysbot.py           # Main SysBot class
 ├── connectors/         # Protocol-specific connectors
-├── plugins/            # Plugins utilities
+├── plugins/            # Plugins utilities (data, vault, listener)
 ├── utils/
 │   └── engine.py       # Engine class
 └── modules/            # Modules
 ```
+
+## Database Listener Plugin
+
+SysBot includes a Robot Framework listener plugin that can store test results in various databases:
+
+```bash
+# Store results in SQLite
+robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db tests/
+
+# Store results in MySQL
+robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:pass@localhost/testdb tests/
+
+# Store results in PostgreSQL
+robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:pass@localhost/testdb tests/
+
+# Store results in MongoDB
+robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb tests/
+```
+
+For more details, see [Database Listener Documentation](docs/listener_plugin.md).
 
 ## Error Handling
 
