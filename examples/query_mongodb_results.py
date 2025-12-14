@@ -61,7 +61,7 @@ def query_test_cases(db):
     count = 0
     for test in test_cases:
         count += 1
-        suite_name = test['suite'][0]['name'] if test.get('suite') else 'Unknown'
+        suite_name = test['suite'][0]['name'] if test.get('suite') and len(test['suite']) > 0 else 'Unknown'
         print(f"\nTest ID: {test['_id']}")
         print(f"  Suite: {suite_name}")
         print(f"  Name: {test['name']}")
@@ -131,7 +131,7 @@ def query_failed_tests(db):
     count = 0
     for test in failed_tests:
         count += 1
-        suite_name = test['suite'][0]['name'] if test.get('suite') else 'Unknown'
+        suite_name = test['suite'][0]['name'] if test.get('suite') and len(test['suite']) > 0 else 'Unknown'
         print(f"\nTest: {test['name']}")
         print(f"  Suite: {suite_name}")
         print(f"  Message: {test.get('message', 'No message')}")

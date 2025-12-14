@@ -117,6 +117,15 @@ class DatabaseListener:
         """Get the SQL parameter placeholder for the current database type."""
         return '?' if self.db_type == 'sqlite' else '%s'
     
+    def _get_metadata(self, data):
+        """Safely extract and convert metadata to JSON string."""
+        try:
+            if hasattr(data, 'metadata') and data.metadata:
+                return json.dumps(dict(data.metadata))
+        except (TypeError, ValueError):
+            pass
+        return '{}'
+    
     def _initialize_schema(self):
         """Create database tables/collections if they don't exist."""
         if self.db_type == "mongodb":
@@ -190,7 +199,7 @@ class DatabaseListener:
             'name': data.name,
             'doc': data.doc or '',
             'start_time': datetime.datetime.now(),
-            'metadata': json.dumps(dict(data.metadata)) if hasattr(data, 'metadata') else '{}'
+            'metadata': self._get_metadata(data)
         }
         
         if self.db_type == "mongodb":
@@ -319,8 +328,8 @@ class DatabaseListener:
         
         keyword_info = {
             'test_id': self.current_test['id'] if self.db_type != "mongodb" else self.current_test['_id'],
-            'name': data.kwname if hasattr(data, 'kwname') else data.name,
-            'library': data.libname if hasattr(data, 'libname') else '',
+            'name': getattr(data, 'kwname', None) or getattr(data, 'name', 'Unknown'),
+            'library': getattr(data, 'libname', ''),
             'start_time': datetime.datetime.now()
         }
         
