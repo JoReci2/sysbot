@@ -424,6 +424,7 @@ class DatabaseListener:
                         self.test_campaigns_table.c.id == self.current_campaign['id']
                     ).values(end_time=end_time)
                     self.session.execute(upd)
+                    self.session.commit()  # Commit campaign end time update
                 except Exception:
                     pass
         
@@ -438,7 +439,7 @@ class DatabaseListener:
         else:
             if self.session:
                 try:
-                    self.session.commit()  # Commit any pending changes
+                    self.session.commit()  # Commit any remaining pending changes
                     self.session.close()
                 except Exception:
                     pass
