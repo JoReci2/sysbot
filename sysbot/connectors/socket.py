@@ -4,6 +4,82 @@ import select
 from sysbot.utils.engine import ConnectorInterface
 
 
+class _SocketHelper:
+    """
+    Private helper class for common socket operations.
+    """
+    
+    @staticmethod
+    def validate_port(port, host):
+        """
+        Validates that a port is provided.
+        
+        Args:
+            port: Port number or None.
+            host: Hostname for error message.
+            
+        Returns:
+            dict: Error response if port is None, None otherwise.
+        """
+        if port is None:
+            return {
+                "StatusCode": 1,
+                "Session": None,
+                "Error": "Port is required for socket connections"
+            }
+        return None
+    
+    @staticmethod
+    def extract_session(session, session_key="Session"):
+        """
+        Extracts the actual session object from a response dict.
+        
+        Args:
+            session: Session object or dict from open_session.
+            session_key: Key to use when extracting from dict (default: "Session").
+            
+        Returns:
+            The extracted session object.
+        """
+        if isinstance(session, dict) and session_key in session:
+            return session[session_key]
+        return session
+    
+    @staticmethod
+    def close_socket(session, socket_key=None):
+        """
+        Closes a socket connection.
+        
+        Args:
+            session: Socket object, dict, or session info containing socket.
+            socket_key: Optional key to extract socket from session dict.
+            
+        Returns:
+            dict: Standardized response with StatusCode and Error.
+        """
+        try:
+            # Extract session if it's wrapped in a response dict
+            actual_session = _SocketHelper.extract_session(session)
+            
+            # Close the socket
+            if socket_key and isinstance(actual_session, dict) and socket_key in actual_session:
+                # For UDP - session_info contains a "socket" key
+                actual_session[socket_key].close()
+            elif actual_session:
+                # For TCP - session is the socket itself
+                actual_session.close()
+            
+            return {
+                "StatusCode": 0,
+                "Error": None
+            }
+        except Exception as e:
+            return {
+                "StatusCode": 1,
+                "Error": f"Failed to close socket: {str(e)}"
+            }
+
+
 class Tcp(ConnectorInterface):
     """
     TCP connector with optional SSL/TLS support for secure communication.
@@ -30,12 +106,10 @@ class Tcp(ConnectorInterface):
             dict: Standardized response with StatusCode and Error.
         """
         try:
-            if port is None:
-                return {
-                    "StatusCode": 1,
-                    "Session": None,
-                    "Error": "Port is required for TCP connections"
-                }
+            # Validate port
+            port_error = _SocketHelper.validate_port(port, host)
+            if port_error:
+                return port_error
 
             conn = socket.create_connection((host, port))
 
@@ -102,11 +176,8 @@ class Tcp(ConnectorInterface):
             dict: Standardized response with StatusCode, Result (dict), and Error.
         """
         try:
-            # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Session" in session:
-                sock = session["Session"]
-            else:
-                sock = session
+            # Extract session using helper
+            sock = _SocketHelper.extract_session(session)
 
             if not sock:
                 return {
@@ -154,20 +225,20 @@ class Tcp(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Session": result_data,
+                "Result": result_data,
                 "Error": None
             }
 
         except socket.error as e:
             return {
                 "StatusCode": 1,
-                "Session": None,
+                "Result": None,
                 "Error": f"Socket error during command execution: {str(e)}"
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
-                "Session": None,
+                "Result": None,
                 "Error": f"Failed to execute command: {str(e)}"
             }
 
@@ -181,27 +252,7 @@ class Tcp(ConnectorInterface):
         Returns:
             dict: Standardized response with StatusCode and Error.
         """
-        try:
-            # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Session" in session:
-                sock = session["Session"]
-            else:
-                sock = session
-
-            if sock:
-                sock.close()
-
-            return {
-                "StatusCode": 0,
-                "Session": "TCP session closed successfully",
-                "Error": None
-            }
-        except Exception as e:
-            return {
-                "StatusCode": 1,
-                "Session": None,
-                "Error": f"Failed to close TCP session: {str(e)}"
-            }
+        return _SocketHelper.close_socket(session)
 
 
 class Udp(ConnectorInterface):
@@ -229,12 +280,10 @@ class Udp(ConnectorInterface):
             dict: Standardized response with StatusCode and Error.
         """
         try:
-            if port is None:
-                return {
-                    "StatusCode": 1,
-                    "Session": None,
-                    "Error": "Port is required for UDP connections"
-                }
+            # Validate port using helper
+            port_error = _SocketHelper.validate_port(port, host)
+            if port_error:
+                return port_error
 
             # Create UDP socket
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -295,16 +344,13 @@ class Udp(ConnectorInterface):
             dict: Standardized response with StatusCode, Result (dict), and Error.
         """
         try:
-            # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Session" in session:
-                session_info = session["Session"]
-            else:
-                session_info = session
+            # Extract session info using helper
+            session_info = _SocketHelper.extract_session(session)
 
             if not session_info or "socket" not in session_info:
                 return {
                     "StatusCode": 1,
-                    "Session": None,
+                    "Result": None,
                     "Error": "Invalid session object. Session is None or missing socket."
                 }
 
@@ -359,20 +405,20 @@ class Udp(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Session": result_data,
+                "Result": result_data,
                 "Error": None
             }
 
         except socket.error as e:
             return {
                 "StatusCode": 1,
-                "Session": None,
+                "Result": None,
                 "Error": f"Socket error during command execution: {str(e)}"
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
-                "Session": None,
+                "Result": None,
                 "Error": f"Failed to execute command: {str(e)}"
             }
 
@@ -386,24 +432,4 @@ class Udp(ConnectorInterface):
         Returns:
             dict: Standardized response with StatusCode and Error.
         """
-        try:
-            # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Session" in session:
-                session_info = session["Session"]
-            else:
-                session_info = session
-
-            if session_info and "socket" in session_info:
-                session_info["socket"].close()
-
-            return {
-                "StatusCode": 0,
-                "Session": "UDP session closed successfully",
-                "Error": None
-            }
-        except Exception as e:
-            return {
-                "StatusCode": 1,
-                "Session": None,
-                "Error": f"Failed to close UDP session: {str(e)}"
-            }
+        return _SocketHelper.close_socket(session, socket_key="socket")
