@@ -3,12 +3,14 @@ import base64
 from sysbot.utils.engine import ConnectorInterface
 
 
+# SSH default port - shared by all SSH connector classes
+DEFAULT_SSH_PORT = 22
+
+
 class _SSHHelper:
     """
     Private helper class for common SSH operations.
     """
-    
-    DEFAULT_PORT = 22
     
     @staticmethod
     def open_ssh_session(host, port=None, login=None, password=None):
@@ -26,7 +28,7 @@ class _SSHHelper:
         """
         try:
             if port is None:
-                port = _SSHHelper.DEFAULT_PORT
+                port = DEFAULT_SSH_PORT
             
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -81,11 +83,9 @@ class Bash(ConnectorInterface):
     It uses the Paramiko library to establish and manage SSH connections for Bash shells.
     """
 
-    DEFAULT_PORT = 22
-
     def __init__(self):
         super().__init__()
-        self.default_port = self.DEFAULT_PORT
+        self.default_port = DEFAULT_SSH_PORT
 
     def open_session(self, host, port=None, login=None, password=None):
         """
@@ -180,11 +180,9 @@ class Powershell(ConnectorInterface):
     It uses the Paramiko library to establish and manage SSH connections for PowerShell.
     """
 
-    DEFAULT_PORT = 22
-
     def __init__(self):
         super().__init__()
-        self.default_port = self.DEFAULT_PORT
+        self.default_port = DEFAULT_SSH_PORT
 
     def open_session(self, host, port=None, login=None, password=None):
         """
