@@ -27,7 +27,7 @@ class Bash(ConnectorInterface):
             password (str, optional): Ignored for localhost.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             # Check if bash is available
@@ -40,21 +40,18 @@ class Bash(ConnectorInterface):
                     return {
                         "StatusCode": 1,
                         "Session": None,
-                "Result": None,
                         "Error": "Bash not available on this Windows system"
                     }
 
             return {
                 "StatusCode": 0,
                 "Session": {"type": "localhost", "shell": "bash"},
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to initialize localhost session: {str(e)}"
             }
 
@@ -69,7 +66,7 @@ class Bash(ConnectorInterface):
             password (str): Password for sudo authentication (if required)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             encoded_command = base64.b64encode(command.encode("utf-8")).decode("ascii")
@@ -98,7 +95,6 @@ class Bash(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": result.stdout.strip(),
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except subprocess.TimeoutExpired:
@@ -111,7 +107,6 @@ class Bash(ConnectorInterface):
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to execute command: {str(e)}"
             }
 
@@ -123,12 +118,11 @@ class Bash(ConnectorInterface):
             session: The session object (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         return {
             "StatusCode": 0,
             "Session": "Localhost session closed (no action needed)",
-                "Result": "Session opened successfully",
             "Error": None
         }
 
@@ -156,7 +150,7 @@ class Powershell(ConnectorInterface):
             password (str, optional): Ignored for localhost.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             # Check if PowerShell is available
@@ -174,21 +168,18 @@ class Powershell(ConnectorInterface):
                     return {
                         "StatusCode": 1,
                         "Session": None,
-                "Result": None,
                         "Error": "PowerShell not available on this system"
                     }
 
             return {
                 "StatusCode": 0,
                 "Session": {"type": "localhost", "shell": "powershell", "command": powershell_cmd},
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to initialize localhost PowerShell session: {str(e)}"
             }
 
@@ -204,7 +195,7 @@ class Powershell(ConnectorInterface):
             password (str): Password for elevated execution (if required)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             # Handle case where session is a dict from open_session
@@ -258,7 +249,6 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
             return {
                 "StatusCode": 0,
                 "Session": result.stdout.strip(),
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except subprocess.TimeoutExpired:
@@ -271,7 +261,6 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to execute command: {str(e)}"
             }
 
@@ -283,11 +272,10 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
             session: The session object (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         return {
             "StatusCode": 0,
             "Session": "Localhost PowerShell session closed (no action needed)",
-                "Result": "Session opened successfully",
             "Error": None
         }

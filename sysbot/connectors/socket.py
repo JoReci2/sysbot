@@ -27,14 +27,13 @@ class Tcp(ConnectorInterface):
             use_ssl (bool): Whether to use SSL/TLS encryption (default: True).
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             if port is None:
                 return {
                     "StatusCode": 1,
                     "Session": None,
-                "Result": None,
                     "Error": "Port is required for TCP connections"
                 }
 
@@ -51,7 +50,6 @@ class Tcp(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": sock,
-                "Result": "Session opened successfully",
                 "Error": None
             }
 
@@ -59,28 +57,24 @@ class Tcp(ConnectorInterface):
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Connection to {host}:{port} timed out"
             }
         except socket.gaierror as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to resolve hostname {host}: {str(e)}"
             }
         except ConnectionRefusedError:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Connection refused to {host}:{port}"
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to open TCP session to {host}:{port}: {str(e)}"
             }
 
@@ -118,7 +112,6 @@ class Tcp(ConnectorInterface):
                 return {
                     "StatusCode": 1,
                     "Session": None,
-                "Result": None,
                     "Error": "Invalid session object. Session is None or closed."
                 }
 
@@ -162,7 +155,6 @@ class Tcp(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": result_data,
-                "Result": "Session opened successfully",
                 "Error": None
             }
 
@@ -170,14 +162,12 @@ class Tcp(ConnectorInterface):
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Socket error during command execution: {str(e)}"
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to execute command: {str(e)}"
             }
 
@@ -189,7 +179,7 @@ class Tcp(ConnectorInterface):
             session: The socket object (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             # Handle case where session is a dict from open_session
@@ -204,14 +194,12 @@ class Tcp(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": "TCP session closed successfully",
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to close TCP session: {str(e)}"
             }
 
@@ -238,14 +226,13 @@ class Udp(ConnectorInterface):
             password (str): Password for authentication (not used in UDP).
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             if port is None:
                 return {
                     "StatusCode": 1,
                     "Session": None,
-                "Result": None,
                     "Error": "Port is required for UDP connections"
                 }
 
@@ -262,7 +249,6 @@ class Udp(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": session_info,
-                "Result": "Session opened successfully",
                 "Error": None
             }
 
@@ -270,21 +256,18 @@ class Udp(ConnectorInterface):
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to resolve hostname {host}: {str(e)}"
             }
         except OSError as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to create UDP socket: {str(e)}"
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to open UDP session to {host}:{port}: {str(e)}"
             }
 
@@ -322,7 +305,6 @@ class Udp(ConnectorInterface):
                 return {
                     "StatusCode": 1,
                     "Session": None,
-                "Result": None,
                     "Error": "Invalid session object. Session is None or missing socket."
                 }
 
@@ -378,7 +360,6 @@ class Udp(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": result_data,
-                "Result": "Session opened successfully",
                 "Error": None
             }
 
@@ -386,14 +367,12 @@ class Udp(ConnectorInterface):
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Socket error during command execution: {str(e)}"
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to execute command: {str(e)}"
             }
 
@@ -405,7 +384,7 @@ class Udp(ConnectorInterface):
             session: The session dictionary (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             # Handle case where session is a dict from open_session
@@ -420,13 +399,11 @@ class Udp(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": "UDP session closed successfully",
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to close UDP session: {str(e)}"
             }

@@ -3,6 +3,78 @@ import base64
 from sysbot.utils.engine import ConnectorInterface
 
 
+class _SSHHelper:
+    """
+    Private helper class for common SSH operations.
+    """
+    
+    DEFAULT_PORT = 22
+    
+    @staticmethod
+    def open_ssh_session(host, port=None, login=None, password=None):
+        """
+        Opens an SSH session to a system.
+        
+        Args:
+            host (str): Hostname or IP address of the target system.
+            port (int, optional): SSH port. Defaults to 22.
+            login (str): Username for authentication.
+            password (str): Password for authentication.
+        
+        Returns:
+            dict: Standardized response with StatusCode, Session, and Error.
+        """
+        try:
+            if port is None:
+                port = _SSHHelper.DEFAULT_PORT
+            
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect(host, port=port, username=login, password=password)
+            
+            return {
+                "StatusCode": 0,
+                "Session": client,
+                "Error": None
+            }
+        except Exception as e:
+            return {
+                "StatusCode": 1,
+                "Session": None,
+                "Error": f"Failed to open SSH session: {str(e)}"
+            }
+    
+    @staticmethod
+    def close_ssh_session(session):
+        """
+        Closes an SSH session.
+        
+        Args:
+            session: The SSH session object or dict from open_session.
+        
+        Returns:
+            dict: Standardized response with StatusCode and Error.
+        """
+        try:
+            # Handle case where session is a dict from open_session
+            if isinstance(session, dict) and "Session" in session:
+                client = session["Session"]
+            else:
+                client = session
+            
+            client.close()
+            
+            return {
+                "StatusCode": 0,
+                "Error": None
+            }
+        except Exception as e:
+            return {
+                "StatusCode": 1,
+                "Error": f"Failed to close SSH session: {str(e)}"
+            }
+
+
 class Bash(ConnectorInterface):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell).
@@ -26,29 +98,9 @@ class Bash(ConnectorInterface):
             password (str): Password for authentication.
 
         Returns:
-            dict: Standardized response with StatusCode, Session, Result, and Error.
+            dict: Standardized response with StatusCode, Session, and Error.
         """
-        try:
-            if port is None:
-                port = self.DEFAULT_PORT
-
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(host, port=port, username=login, password=password)
-
-            return {
-                "StatusCode": 0,
-                "Session": client,
-                "Result": "Session opened successfully",
-                "Error": None
-            }
-        except Exception as e:
-            return {
-                "StatusCode": 1,
-                "Session": None,
-                "Result": None,
-                "Error": f"Failed to open SSH session: {str(e)}"
-            }
+        return _SSHHelper.open_ssh_session(host, port, login, password)
 
     def execute_command(self, session, command, runas=False, password=None):
         """
@@ -117,28 +169,9 @@ class Bash(ConnectorInterface):
             session: The SSH session object (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
-        try:
-            # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Session" in session:
-                client = session["Session"]
-            else:
-                client = session
-
-            client.close()
-
-            return {
-                "StatusCode": 0,
-                "Result": "Session closed successfully",
-                "Error": None
-            }
-        except Exception as e:
-            return {
-                "StatusCode": 1,
-                "Result": None,
-                "Error": f"Failed to close SSH session: {str(e)}"
-            }
+        return _SSHHelper.close_ssh_session(session)
 
 
 class Powershell(ConnectorInterface):
@@ -164,29 +197,9 @@ class Powershell(ConnectorInterface):
             password (str): Password for authentication.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode, Session, and Error.
         """
-        try:
-            if port is None:
-                port = self.DEFAULT_PORT
-
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(host, port=port, username=login, password=password)
-
-            return {
-                "StatusCode": 0,
-                "Session": client,
-                "Result": "Session opened successfully",
-                "Error": None
-            }
-        except Exception as e:
-            return {
-                "StatusCode": 1,
-                "Session": None,
-                "Result": None,
-                "Error": f"Failed to open SSH session: {str(e)}"
-            }
+        return _SSHHelper.open_ssh_session(host, port, login, password)
 
     def execute_command(self, session, command, runas=False, username=None, password=None):
         """
@@ -273,25 +286,6 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
             session: The SSH session object (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
-        try:
-            # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Session" in session:
-                client = session["Session"]
-            else:
-                client = session
-
-            client.close()
-
-            return {
-                "StatusCode": 0,
-                "Result": "Session closed successfully",
-                "Error": None
-            }
-        except Exception as e:
-            return {
-                "StatusCode": 1,
-                "Result": None,
-                "Error": f"Failed to close SSH session: {str(e)}"
-            }
+        return _SSHHelper.close_ssh_session(session)

@@ -27,7 +27,7 @@ class Basicauth(ConnectorInterface):
             password (str): Password for authentication.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             if port is None:
@@ -43,14 +43,12 @@ class Basicauth(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": session_data,
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to create basic auth session: {str(e)}"
             }
 
@@ -64,7 +62,7 @@ class Basicauth(ConnectorInterface):
             options (dict, optional): Request options like params, headers, etc.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             # Handle case where session is a dict from open_session
@@ -93,14 +91,12 @@ class Basicauth(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": result.content,
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to execute command: {str(e)}"
             }
 
@@ -112,12 +108,11 @@ class Basicauth(ConnectorInterface):
             session: The session data (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         return {
             "StatusCode": 0,
             "Session": "Basic auth session closed (no action needed)",
-                "Result": "Session opened successfully",
             "Error": None
         }
 
@@ -145,7 +140,7 @@ class Vsphere(ConnectorInterface):
             password (str): Password for the session.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             if port is None:
@@ -162,14 +157,12 @@ class Vsphere(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": client,
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to open VMware session: {str(e)}"
             }
 
@@ -183,7 +176,7 @@ class Vsphere(ConnectorInterface):
             options (dict, optional): Additional options for the command.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             # Handle case where session is a dict from open_session
@@ -196,14 +189,12 @@ class Vsphere(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": client,
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to execute command: {str(e)}"
             }
 
@@ -215,7 +206,7 @@ class Vsphere(ConnectorInterface):
             session: The VMware client session (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             # Handle case where session is a dict from open_session
@@ -229,13 +220,11 @@ class Vsphere(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": "VMware session closed successfully",
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to close VMware session: {str(e)}"
             }

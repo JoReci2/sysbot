@@ -27,7 +27,7 @@ class Powershell(ConnectorInterface):
             password (str): Password for the session.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             if port is None:
@@ -47,14 +47,12 @@ class Powershell(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Session": session,
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to open WinRM session: {str(e)}"
             }
 
@@ -72,7 +70,7 @@ class Powershell(ConnectorInterface):
             password (str): Password for elevated execution (if required)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             # Handle case where session is a dict from open_session
@@ -125,14 +123,12 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
             return {
                 "StatusCode": 0,
                 "Session": stdout,
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to execute command: {str(e)}"
             }
 
@@ -144,7 +140,7 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
             session: The session dictionary (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, and Error.
+            dict: Standardized response with StatusCode and Error.
         """
         try:
             # Handle case where session is a dict from open_session
@@ -158,13 +154,11 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
             return {
                 "StatusCode": 0,
                 "Session": "Session closed successfully",
-                "Result": "Session opened successfully",
                 "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Session": None,
-                "Result": None,
                 "Error": f"Failed to close WinRM session: {str(e)}"
             }
