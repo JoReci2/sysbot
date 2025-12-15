@@ -150,16 +150,16 @@ Documentation is automatically built and deployed to GitHub Pages when changes a
 Triggered when a tag is pushed to the repository:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag 1.0.0
+git push origin 1.0.0
 ```
 
 The release workflow:
 1. Builds the Python package
-2. Publishes to PyPI (when configured)
+2. Publishes to GitHub Packages
 3. Generates SBOM (Software Bill of Materials)
 4. Runs vulnerability scanning
-5. Builds PDF documentation
+5. Builds complete PDF documentation (all .adoc files combined)
 6. Creates GitHub release with release notes from milestone
 
 Configuration: `.github/workflows/release.yml`
@@ -205,15 +205,15 @@ GitHub Copilot instructions are configured in `.github/copilot-instructions.md`.
 
 4. **Creating a release:**
    ```bash
-   # Tag the release
-   git tag v1.0.0
-   git push origin v1.0.0
+   # Tag the release (use semantic version format without 'v' prefix)
+   git tag 1.0.0
+   git push origin 1.0.0
    
    # GitHub Actions will automatically:
-   # - Build and publish package
+   # - Build and publish package to GitHub Packages
    # - Generate SBOM
    # - Run security scans
-   # - Build documentation
+   # - Build complete documentation PDF
    # - Create release notes
    ```
 

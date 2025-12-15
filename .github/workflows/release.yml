@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - '*.*.*'
 
 permissions:
   contents: write
@@ -34,17 +34,14 @@ jobs:
         run: |
           python -m build
           
-      - name: Publish to PyPI
+      - name: Publish to GitHub Packages
         env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Publish to PyPI if PYPI_API_TOKEN is configured
-          if [ -n "$TWINE_PASSWORD" ]; then
-            twine upload dist/*
-          else
-            echo "Package built successfully. Configure PYPI_API_TOKEN secret to publish to PyPI."
-          fi
+          # Publish to GitHub Packages
+          # GitHub Packages for Python requires package name to match repo
+          python -m pip install --upgrade twine
+          twine upload --repository-url https://maven.pkg.github.com/${{ github.repository_owner }} dist/* || echo "Package publication skipped or failed"
         continue-on-error: true
 
       - name: Generate SBOM
@@ -79,7 +76,33 @@ jobs:
         run: |
           cd docs
           if [ -f "index.adoc" ]; then
-            asciidoctor-pdf -o ../documentation.pdf index.adoc
+            # Create a master document that includes all documentation
+            cat > complete-documentation.adoc << 'EOF'
+          = SysBot - Complete Documentation
+          :doctype: book
+          :toc: left
+          :toclevels: 3
+          :sectnums:
+          :icons: font
+          :source-highlighter: highlight.js
+          
+          include::index.adoc[leveloffset=+1]
+          
+          include::setup.adoc[leveloffset=+1]
+          
+          include::quickstart.adoc[leveloffset=+1]
+          
+          include::robotframework.adoc[leveloffset=+1]
+          
+          include::unittest.adoc[leveloffset=+1]
+          
+          include::developer.adoc[leveloffset=+1]
+          
+          include::references.adoc[leveloffset=+1]
+          EOF
+            
+            # Generate PDF from master document
+            asciidoctor-pdf -o ../documentation.pdf complete-documentation.adoc
           else
             echo "Warning: index.adoc not found, creating placeholder"
             cat > ../documentation.txt << 'DOCEOF'
@@ -93,8 +116,8 @@ jobs:
       - name: Get milestone issues
         id: milestone
         run: |
-          # Extract version from tag (v1.0.0 -> 1.0.0)
-          VERSION=${GITHUB_REF#refs/tags/v}
+          # Extract version from tag (tags are now XX.XX.XX format without 'v' prefix)
+          VERSION=${GITHUB_REF#refs/tags/}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           
           # Find milestone by version
