@@ -214,7 +214,7 @@ SysBot provides comprehensive error handling:
 
 ## Contributing
 
-Contributions are welcome! Please see [DEVELOPMENT.md](DEVELOPMENT.md) for development setup, code quality tools, and guidelines.
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code quality tools, and guidelines.
 
 ### Development Tools
 
@@ -225,7 +225,7 @@ This project uses:
 - **Bandit** for security vulnerability scanning
 - **Pre-commit hooks** for automated code quality checks
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed instructions.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed instructions.
 
 ## License
 
