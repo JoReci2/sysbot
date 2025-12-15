@@ -27,7 +27,7 @@ class Powershell(ConnectorInterface):
             password (str): Password for the session.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             if port is None:
@@ -46,26 +46,16 @@ class Powershell(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Result": session,
-                "Error": None,
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "winrm",
-                    "shell": "powershell"
-                }
+                "Session": session,
+                "Result": "Session opened successfully",
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to open WinRM session: {str(e)}",
-                "Metadata": {
-                    "host": host,
-                    "port": port or self.DEFAULT_PORT,
-                    "protocol": "winrm",
-                    "shell": "powershell"
-                }
+                "Error": f"Failed to open WinRM session: {str(e)}"
             }
 
     def execute_command(
@@ -75,19 +65,19 @@ class Powershell(ConnectorInterface):
         Executes a PowerShell command on a Windows system via WinRM.
 
         Args:
-            session: The session dictionary (from Result field of open_session)
+            session: The session dictionary (from Session field of open_session)
             command (str): The PowerShell command to execute on the Windows system.
             runas (bool): Whether to run with elevated privileges
             username (str): Username for elevated execution (if different from session user)
             password (str): Password for elevated execution (if required)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                winrm_session = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                winrm_session = session["Session"]
             else:
                 winrm_session = session
 
@@ -129,34 +119,21 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
                 return {
                     "StatusCode": status_code,
                     "Result": stdout,
-                    "Error": stderr if stderr else None,
-                    "Metadata": {
-                        "command": command,
-                        "runas": runas,
-                        "shell": "powershell"
-                    }
+                    "Error": stderr if stderr else None
                 }
 
             return {
                 "StatusCode": 0,
-                "Result": stdout,
-                "Error": None,
-                "Metadata": {
-                    "command": command,
-                    "runas": runas,
-                    "shell": "powershell"
-                }
+                "Session": stdout,
+                "Result": "Session opened successfully",
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to execute command: {str(e)}",
-                "Metadata": {
-                    "command": command,
-                    "runas": runas,
-                    "shell": "powershell"
-                }
+                "Error": f"Failed to execute command: {str(e)}"
             }
 
     def close_session(self, session):
@@ -164,15 +141,15 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
         Closes the WinRM session to a Windows system.
 
         Args:
-            session: The session dictionary (from Result field of open_session)
+            session: The session dictionary (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                winrm_session = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                winrm_session = session["Session"]
             else:
                 winrm_session = session
 
@@ -180,18 +157,14 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
 
             return {
                 "StatusCode": 0,
-                "Result": "Session closed successfully",
-                "Error": None,
-                "Metadata": {
-                    "shell": "powershell"
-                }
+                "Session": "Session closed successfully",
+                "Result": "Session opened successfully",
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to close WinRM session: {str(e)}",
-                "Metadata": {
-                    "shell": "powershell"
-                }
+                "Error": f"Failed to close WinRM session: {str(e)}"
             }

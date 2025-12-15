@@ -27,19 +27,15 @@ class Tcp(ConnectorInterface):
             use_ssl (bool): Whether to use SSL/TLS encryption (default: True).
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             if port is None:
                 return {
                     "StatusCode": 1,
-                    "Result": None,
-                    "Error": "Port is required for TCP connections",
-                    "Metadata": {
-                        "host": host,
-                        "protocol": "socket",
-                        "type": "tcp"
-                    }
+                    "Session": None,
+                "Result": None,
+                    "Error": "Port is required for TCP connections"
                 }
 
             conn = socket.create_connection((host, port))
@@ -54,64 +50,38 @@ class Tcp(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Result": sock,
-                "Error": None,
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "socket",
-                    "type": "tcp",
-                    "ssl": use_ssl
-                }
+                "Session": sock,
+                "Result": "Session opened successfully",
+                "Error": None
             }
 
         except socket.timeout:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Connection to {host}:{port} timed out",
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "socket",
-                    "type": "tcp"
-                }
+                "Error": f"Connection to {host}:{port} timed out"
             }
         except socket.gaierror as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to resolve hostname {host}: {str(e)}",
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "socket",
-                    "type": "tcp"
-                }
+                "Error": f"Failed to resolve hostname {host}: {str(e)}"
             }
         except ConnectionRefusedError:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Connection refused to {host}:{port}",
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "socket",
-                    "type": "tcp"
-                }
+                "Error": f"Connection refused to {host}:{port}"
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to open TCP session to {host}:{port}: {str(e)}",
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "socket",
-                    "type": "tcp"
-                }
+                "Error": f"Failed to open TCP session to {host}:{port}: {str(e)}"
             }
 
     def execute_command(
@@ -127,7 +97,7 @@ class Tcp(ConnectorInterface):
         Send data through the TCP socket and optionally receive a response.
 
         Args:
-            session: The socket object (from Result field of open_session)
+            session: The socket object (from Session field of open_session)
             command (str or bytes): The data to send through the socket.
             expect_response (bool): Whether to wait for a response (default: True).
             timeout (int): Custom timeout for this operation (default: 30).
@@ -135,23 +105,21 @@ class Tcp(ConnectorInterface):
             encoding (str): Encoding to use for string data (default: 'utf-8').
 
         Returns:
-            dict: Standardized response with StatusCode, Result (dict), Error, and Metadata.
+            dict: Standardized response with StatusCode, Result (dict), and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                sock = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                sock = session["Session"]
             else:
                 sock = session
 
             if not sock:
                 return {
                     "StatusCode": 1,
-                    "Result": None,
-                    "Error": "Invalid session object. Session is None or closed.",
-                    "Metadata": {
-                        "type": "tcp"
-                    }
+                    "Session": None,
+                "Result": None,
+                    "Error": "Invalid session object. Session is None or closed."
                 }
 
             original_timeout = sock.gettimeout()
@@ -193,30 +161,24 @@ class Tcp(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Result": result_data,
-                "Error": None,
-                "Metadata": {
-                    "type": "tcp"
-                }
+                "Session": result_data,
+                "Result": "Session opened successfully",
+                "Error": None
             }
 
         except socket.error as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Socket error during command execution: {str(e)}",
-                "Metadata": {
-                    "type": "tcp"
-                }
+                "Error": f"Socket error during command execution: {str(e)}"
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to execute command: {str(e)}",
-                "Metadata": {
-                    "type": "tcp"
-                }
+                "Error": f"Failed to execute command: {str(e)}"
             }
 
     def close_session(self, session):
@@ -224,15 +186,15 @@ class Tcp(ConnectorInterface):
         Closes the SSL/TCP socket connection.
 
         Args:
-            session: The socket object (from Result field of open_session)
+            session: The socket object (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                sock = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                sock = session["Session"]
             else:
                 sock = session
 
@@ -241,20 +203,16 @@ class Tcp(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Result": "TCP session closed successfully",
-                "Error": None,
-                "Metadata": {
-                    "type": "tcp"
-                }
+                "Session": "TCP session closed successfully",
+                "Result": "Session opened successfully",
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to close TCP session: {str(e)}",
-                "Metadata": {
-                    "type": "tcp"
-                }
+                "Error": f"Failed to close TCP session: {str(e)}"
             }
 
 
@@ -280,19 +238,15 @@ class Udp(ConnectorInterface):
             password (str): Password for authentication (not used in UDP).
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             if port is None:
                 return {
                     "StatusCode": 1,
-                    "Result": None,
-                    "Error": "Port is required for UDP connections",
-                    "Metadata": {
-                        "host": host,
-                        "protocol": "socket",
-                        "type": "udp"
-                    }
+                    "Session": None,
+                "Result": None,
+                    "Error": "Port is required for UDP connections"
                 }
 
             # Create UDP socket
@@ -307,51 +261,31 @@ class Udp(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Result": session_info,
-                "Error": None,
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "socket",
-                    "type": "udp"
-                }
+                "Session": session_info,
+                "Result": "Session opened successfully",
+                "Error": None
             }
 
         except socket.gaierror as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to resolve hostname {host}: {str(e)}",
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "socket",
-                    "type": "udp"
-                }
+                "Error": f"Failed to resolve hostname {host}: {str(e)}"
             }
         except OSError as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to create UDP socket: {str(e)}",
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "socket",
-                    "type": "udp"
-                }
+                "Error": f"Failed to create UDP socket: {str(e)}"
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to open UDP session to {host}:{port}: {str(e)}",
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "socket",
-                    "type": "udp"
-                }
+                "Error": f"Failed to open UDP session to {host}:{port}: {str(e)}"
             }
 
     def execute_command(
@@ -367,7 +301,7 @@ class Udp(ConnectorInterface):
         Send data through the UDP socket and optionally receive a response.
 
         Args:
-            session: The session dictionary (from Result field of open_session)
+            session: The session dictionary (from Session field of open_session)
             command (str or bytes): The data to send through the socket.
             expect_response (bool): Whether to wait for a response (default: True).
             timeout (int): Custom timeout for this operation (default: 30).
@@ -375,23 +309,21 @@ class Udp(ConnectorInterface):
             encoding (str): Encoding to use for string data (default: 'utf-8').
 
         Returns:
-            dict: Standardized response with StatusCode, Result (dict), Error, and Metadata.
+            dict: Standardized response with StatusCode, Result (dict), and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                session_info = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                session_info = session["Session"]
             else:
                 session_info = session
 
             if not session_info or "socket" not in session_info:
                 return {
                     "StatusCode": 1,
-                    "Result": None,
-                    "Error": "Invalid session object. Session is None or missing socket.",
-                    "Metadata": {
-                        "type": "udp"
-                    }
+                    "Session": None,
+                "Result": None,
+                    "Error": "Invalid session object. Session is None or missing socket."
                 }
 
             sock = session_info["socket"]
@@ -445,30 +377,24 @@ class Udp(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Result": result_data,
-                "Error": None,
-                "Metadata": {
-                    "type": "udp"
-                }
+                "Session": result_data,
+                "Result": "Session opened successfully",
+                "Error": None
             }
 
         except socket.error as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Socket error during command execution: {str(e)}",
-                "Metadata": {
-                    "type": "udp"
-                }
+                "Error": f"Socket error during command execution: {str(e)}"
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to execute command: {str(e)}",
-                "Metadata": {
-                    "type": "udp"
-                }
+                "Error": f"Failed to execute command: {str(e)}"
             }
 
     def close_session(self, session):
@@ -476,15 +402,15 @@ class Udp(ConnectorInterface):
         Closes the UDP socket.
 
         Args:
-            session: The session dictionary (from Result field of open_session)
+            session: The session dictionary (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                session_info = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                session_info = session["Session"]
             else:
                 session_info = session
 
@@ -493,18 +419,14 @@ class Udp(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Result": "UDP session closed successfully",
-                "Error": None,
-                "Metadata": {
-                    "type": "udp"
-                }
+                "Session": "UDP session closed successfully",
+                "Result": "Session opened successfully",
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to close UDP session: {str(e)}",
-                "Metadata": {
-                    "type": "udp"
-                }
+                "Error": f"Failed to close UDP session: {str(e)}"
             }

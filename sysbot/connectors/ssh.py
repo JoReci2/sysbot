@@ -26,7 +26,7 @@ class Bash(ConnectorInterface):
             password (str): Password for authentication.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Session, Result, and Error.
         """
         try:
             if port is None:
@@ -38,26 +38,16 @@ class Bash(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Result": client,
-                "Error": None,
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "ssh",
-                    "shell": "bash"
-                }
+                "Session": client,
+                "Result": "Session opened successfully",
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to open SSH session: {str(e)}",
-                "Metadata": {
-                    "host": host,
-                    "port": port or self.DEFAULT_PORT,
-                    "protocol": "ssh",
-                    "shell": "bash"
-                }
+                "Error": f"Failed to open SSH session: {str(e)}"
             }
 
     def execute_command(self, session, command, runas=False, password=None):
@@ -65,18 +55,18 @@ class Bash(ConnectorInterface):
         Executes a command on a system via SSH.
 
         Args:
-            session: The SSH session object (from Result field of open_session)
+            session: The SSH session object (from Session field of open_session)
             command (str): The command to execute
             runas (bool): Whether to run with elevated privileges using sudo
             password (str): Password for sudo authentication (if required)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                client = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                client = session["Session"]
             else:
                 client = session
 
@@ -104,34 +94,19 @@ class Bash(ConnectorInterface):
                 return {
                     "StatusCode": exit_status,
                     "Result": output,
-                    "Error": error if error else None,
-                    "Metadata": {
-                        "command": command,
-                        "runas": runas,
-                        "shell": "bash"
-                    }
+                    "Error": error if error else None
                 }
 
             return {
                 "StatusCode": 0,
                 "Result": output,
-                "Error": None,
-                "Metadata": {
-                    "command": command,
-                    "runas": runas,
-                    "shell": "bash"
-                }
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Result": None,
-                "Error": f"Failed to execute command: {str(e)}",
-                "Metadata": {
-                    "command": command,
-                    "runas": runas,
-                    "shell": "bash"
-                }
+                "Error": f"Failed to execute command: {str(e)}"
             }
 
     def close_session(self, session):
@@ -139,15 +114,15 @@ class Bash(ConnectorInterface):
         Closes an open SSH session.
 
         Args:
-            session: The SSH session object (from Result field of open_session)
+            session: The SSH session object (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                client = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                client = session["Session"]
             else:
                 client = session
 
@@ -156,19 +131,13 @@ class Bash(ConnectorInterface):
             return {
                 "StatusCode": 0,
                 "Result": "Session closed successfully",
-                "Error": None,
-                "Metadata": {
-                    "shell": "bash"
-                }
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Result": None,
-                "Error": f"Failed to close SSH session: {str(e)}",
-                "Metadata": {
-                    "shell": "bash"
-                }
+                "Error": f"Failed to close SSH session: {str(e)}"
             }
 
 
@@ -195,7 +164,7 @@ class Powershell(ConnectorInterface):
             password (str): Password for authentication.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             if port is None:
@@ -207,26 +176,16 @@ class Powershell(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Result": client,
-                "Error": None,
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "ssh",
-                    "shell": "powershell"
-                }
+                "Session": client,
+                "Result": "Session opened successfully",
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to open SSH session: {str(e)}",
-                "Metadata": {
-                    "host": host,
-                    "port": port or self.DEFAULT_PORT,
-                    "protocol": "ssh",
-                    "shell": "powershell"
-                }
+                "Error": f"Failed to open SSH session: {str(e)}"
             }
 
     def execute_command(self, session, command, runas=False, username=None, password=None):
@@ -234,19 +193,19 @@ class Powershell(ConnectorInterface):
         Executes a PowerShell command on a system via SSH.
 
         Args:
-            session: The SSH session object (from Result field of open_session)
+            session: The SSH session object (from Session field of open_session)
             command (str): The PowerShell command to execute
             runas (bool): Whether to run with elevated privileges
             username (str): Username for elevated authentication (if required)
             password (str): Password for elevated authentication (if required)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                client = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                client = session["Session"]
             else:
                 client = session
 
@@ -291,34 +250,19 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
                 return {
                     "StatusCode": exit_status,
                     "Result": output,
-                    "Error": error if error else None,
-                    "Metadata": {
-                        "command": command,
-                        "runas": runas,
-                        "shell": "powershell"
-                    }
+                    "Error": error if error else None
                 }
 
             return {
                 "StatusCode": 0,
                 "Result": output,
-                "Error": None,
-                "Metadata": {
-                    "command": command,
-                    "runas": runas,
-                    "shell": "powershell"
-                }
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Result": None,
-                "Error": f"Failed to execute command: {str(e)}",
-                "Metadata": {
-                    "command": command,
-                    "runas": runas,
-                    "shell": "powershell"
-                }
+                "Error": f"Failed to execute command: {str(e)}"
             }
 
     def close_session(self, session):
@@ -326,15 +270,15 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
         Closes an open SSH session.
 
         Args:
-            session: The SSH session object (from Result field of open_session)
+            session: The SSH session object (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                client = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                client = session["Session"]
             else:
                 client = session
 
@@ -343,17 +287,11 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
             return {
                 "StatusCode": 0,
                 "Result": "Session closed successfully",
-                "Error": None,
-                "Metadata": {
-                    "shell": "powershell"
-                }
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
                 "Result": None,
-                "Error": f"Failed to close SSH session: {str(e)}",
-                "Metadata": {
-                    "shell": "powershell"
-                }
+                "Error": f"Failed to close SSH session: {str(e)}"
             }

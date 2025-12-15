@@ -27,7 +27,7 @@ class Basicauth(ConnectorInterface):
             password (str): Password for authentication.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             if port is None:
@@ -42,26 +42,16 @@ class Basicauth(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Result": session_data,
-                "Error": None,
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "http",
-                    "auth": "basicauth"
-                }
+                "Session": session_data,
+                "Result": "Session opened successfully",
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to create basic auth session: {str(e)}",
-                "Metadata": {
-                    "host": host,
-                    "port": port or self.DEFAULT_PORT,
-                    "protocol": "http",
-                    "auth": "basicauth"
-                }
+                "Error": f"Failed to create basic auth session: {str(e)}"
             }
 
     def execute_command(self, session, command, options=None):
@@ -69,17 +59,17 @@ class Basicauth(ConnectorInterface):
         Executes a command (HTTP request) on an API with basic auth.
 
         Args:
-            session: The session data (from Result field of open_session)
+            session: The session data (from Session field of open_session)
             command (str): The URL path/endpoint to request
             options (dict, optional): Request options like params, headers, etc.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                session_data = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                session_data = session["Session"]
             else:
                 session_data = session
 
@@ -97,34 +87,21 @@ class Basicauth(ConnectorInterface):
                 return {
                     "StatusCode": result.status_code,
                     "Result": result.content,
-                    "Error": f"HTTP request failed with status code: {result.status_code}",
-                    "Metadata": {
-                        "url": base_url,
-                        "method": "GET",
-                        "auth": "basicauth"
-                    }
+                    "Error": f"HTTP request failed with status code: {result.status_code}"
                 }
 
             return {
                 "StatusCode": 0,
-                "Result": result.content,
-                "Error": None,
-                "Metadata": {
-                    "url": base_url,
-                    "method": "GET",
-                    "status_code": result.status_code,
-                    "auth": "basicauth"
-                }
+                "Session": result.content,
+                "Result": "Session opened successfully",
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to execute command: {str(e)}",
-                "Metadata": {
-                    "command": command,
-                    "auth": "basicauth"
-                }
+                "Error": f"Failed to execute command: {str(e)}"
             }
 
     def close_session(self, session):
@@ -132,18 +109,16 @@ class Basicauth(ConnectorInterface):
         Closes the session to the API with basic auth.
 
         Args:
-            session: The session data (from Result field of open_session)
+            session: The session data (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         return {
             "StatusCode": 0,
-            "Result": "Basic auth session closed (no action needed)",
-            "Error": None,
-            "Metadata": {
-                "auth": "basicauth"
-            }
+            "Session": "Basic auth session closed (no action needed)",
+                "Result": "Session opened successfully",
+            "Error": None
         }
 
 
@@ -170,7 +145,7 @@ class Vsphere(ConnectorInterface):
             password (str): Password for the session.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             if port is None:
@@ -186,26 +161,16 @@ class Vsphere(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Result": client,
-                "Error": None,
-                "Metadata": {
-                    "host": host,
-                    "port": port,
-                    "protocol": "http",
-                    "product": "vsphere"
-                }
+                "Session": client,
+                "Result": "Session opened successfully",
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to open VMware session: {str(e)}",
-                "Metadata": {
-                    "host": host,
-                    "port": port or self.DEFAULT_PORT,
-                    "protocol": "http",
-                    "product": "vsphere"
-                }
+                "Error": f"Failed to open VMware session: {str(e)}"
             }
 
     def execute_command(self, session, command, options=None):
@@ -213,40 +178,33 @@ class Vsphere(ConnectorInterface):
         Placeholder for executing a command on a VMware system.
 
         Args:
-            session: The VMware client session (from Result field of open_session)
+            session: The VMware client session (from Session field of open_session)
             command (str): The command to execute (currently a placeholder).
             options (dict, optional): Additional options for the command.
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                client = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                client = session["Session"]
             else:
                 client = session
 
             # This function is a placeholder and returns the session
             return {
                 "StatusCode": 0,
-                "Result": client,
-                "Error": None,
-                "Metadata": {
-                    "command": command,
-                    "product": "vsphere",
-                    "note": "Placeholder - actual implementation needed"
-                }
+                "Session": client,
+                "Result": "Session opened successfully",
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to execute command: {str(e)}",
-                "Metadata": {
-                    "command": command,
-                    "product": "vsphere"
-                }
+                "Error": f"Failed to execute command: {str(e)}"
             }
 
     def close_session(self, session):
@@ -254,15 +212,15 @@ class Vsphere(ConnectorInterface):
         Closes an open session to a VMware system.
 
         Args:
-            session: The VMware client session (from Result field of open_session)
+            session: The VMware client session (from Session field of open_session)
 
         Returns:
-            dict: Standardized response with StatusCode, Result, Error, and Metadata.
+            dict: Standardized response with StatusCode, Result, and Error.
         """
         try:
             # Handle case where session is a dict from open_session
-            if isinstance(session, dict) and "Result" in session:
-                client = session["Result"]
+            if isinstance(session, dict) and "Session" in session:
+                client = session["Session"]
             else:
                 client = session
 
@@ -270,18 +228,14 @@ class Vsphere(ConnectorInterface):
 
             return {
                 "StatusCode": 0,
-                "Result": "VMware session closed successfully",
-                "Error": None,
-                "Metadata": {
-                    "product": "vsphere"
-                }
+                "Session": "VMware session closed successfully",
+                "Result": "Session opened successfully",
+                "Error": None
             }
         except Exception as e:
             return {
                 "StatusCode": 1,
+                "Session": None,
                 "Result": None,
-                "Error": f"Failed to close VMware session: {str(e)}",
-                "Metadata": {
-                    "product": "vsphere"
-                }
+                "Error": f"Failed to close VMware session: {str(e)}"
             }

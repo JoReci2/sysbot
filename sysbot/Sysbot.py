@@ -104,11 +104,11 @@ class Sysbot(metaclass=ComponentMeta):
                         host, int(self._remote_port) if self._remote_port else None, login, password
                     )
                 
-                # Handle new dict response format with StatusCode, Result, Error, Metadata
+                # Handle new dict response format with StatusCode, Session, Result, Error
                 if isinstance(session_result, dict) and "StatusCode" in session_result:
                     if session_result["StatusCode"] != 0:
                         raise Exception(f"Failed to open session: {session_result.get('Error', 'Unknown error')}")
-                    session = session_result["Result"]
+                    session = session_result["Session"]
                 else:
                     # Old format: direct session object
                     session = session_result
