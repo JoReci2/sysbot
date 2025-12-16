@@ -1,0 +1,28 @@
+site:
+  title: SysBot Documentation
+  url: https://joreci2.github.io/sysbot
+  start_page: sysbot::index.adoc
+  
+content:
+  sources:
+    - url: https://<authentication>@github.com/JoReci2/sysbot.git
+      branches: main
+      start_path: docs
+
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+
+asciidoc:
+  attributes:
+    # Global attributes
+    icons: font
+    source-highlighter: highlight.js
+    sectnums: ''
+    experimental: ''
+    idprefix: ''
+    idseparator: '-'
+    
+output:
+  dir: ./public

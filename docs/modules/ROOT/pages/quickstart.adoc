@@ -1,0 +1,632 @@
+= Quick Start
+
+== Introduction
+
+This guide will help you get started with SysBot quickly. You'll learn the basic concepts and see common usage patterns.
+
+== Basic Concepts
+
+=== Core Components
+
+* **Sysbot**: Main class that manages all operations
+* **Session**: A connection to a remote system
+* **Connector**: Protocol-specific connection handler (SSH, WinRM, HTTP, Socket)
+* **Module**: Pre-built functionality for specific systems (Linux, Windows)
+* **Plugin**: Utility components for data management and external integrations
+* **Secret Manager**: Secure storage for sensitive data
+
+== Your First Connection
+
+=== Simple SSH Connection
+
+[source,python]
+----
+from sysbot.Sysbot import Sysbot
+
+# Create a SysBot instance
+bot = Sysbot()
+
+# Open an SSH session to a Linux system
+bot.open_session(
+    alias="my_linux_server",
+    protocol="ssh",
+    product="bash",
+    host="192.168.1.100",
+    port=22,
+    login="username",
+    password="password"
+)
+
+# Execute a command
+result = bot.execute_command("my_linux_server", "ls -la")
+print(result)
+
+# Close the session
+bot.close_session("my_linux_server")
+----
+
+=== Windows WinRM Connection
+
+[source,python]
+----
+from sysbot.Sysbot import Sysbot
+
+bot = Sysbot()
+
+# Open a WinRM session to a Windows system
+bot.open_session(
+    alias="my_windows_server",
+    protocol="winrm",
+    product="powershell",
+    host="192.168.1.200",
+    port=5986,
+    login="Administrator",
+    password="P@ssw0rd"
+)
+
+# Execute a PowerShell command
+result = bot.execute_command("my_windows_server", "Get-Process")
+print(result)
+
+bot.close_session("my_windows_server")
+----
+
+=== HTTP/API Connection
+
+[source,python]
+----
+from sysbot.Sysbot import Sysbot
+
+bot = Sysbot()
+
+# Open an HTTP session with basic authentication
+bot.open_session(
+    alias="api_server",
+    protocol="http",
+    product="basicauth",
+    host="api.example.com",
+    port=443,
+    login="api_user",
+    password="api_key"
+)
+
+# Make API calls
+result = bot.execute_command("api_server", "/api/v1/status")
+print(result)
+
+bot.close_session("api_server")
+----
+
+== Session Management
+
+=== Opening Multiple Sessions
+
+[source,python]
+----
+from sysbot.Sysbot import Sysbot
+
+bot = Sysbot()
+
+# Open multiple sessions
+bot.open_session(
+    alias="server1",
+    protocol="ssh",
+    product="bash",
+    host="192.168.1.101",
+    port=22,
+    login="user1",
+    password="pass1"
+)
+
+bot.open_session(
+    alias="server2",
+    protocol="ssh",
+    product="bash",
+    host="192.168.1.102",
+    port=22,
+    login="user2",
+    password="pass2"
+)
+
+# Work with both sessions
+result1 = bot.execute_command("server1", "hostname")
+result2 = bot.execute_command("server2", "hostname")
+
+# Close all sessions at once
+bot.close_all_sessions()
+----
+
+=== Session Reuse
+
+Sessions are cached and reused automatically:
+
+[source,python]
+----
+bot = Sysbot()
+
+# First call opens the session
+bot.open_session(alias="server1", protocol="ssh", product="bash",
+                 host="192.168.1.100", port=22,
+                 login="user", password="pass")
+
+# Subsequent calls reuse the existing session
+bot.execute_command("server1", "ls")
+bot.execute_command("server1", "pwd")
+bot.execute_command("server1", "whoami")
+
+bot.close_all_sessions()
+----
+
+== SSH Tunneling
+
+=== Single Tunnel
+
+[source,python]
+----
+from sysbot.Sysbot import Sysbot
+
+bot = Sysbot()
+
+# Configure a single tunnel
+tunnel_config = [
+    {
+        "ip": "192.168.1.1",
+        "port": 22,
+        "username": "jumphost_user",
+        "password": "jumphost_pass"
+    }
+]
+
+# Connect through the tunnel
+bot.open_session(
+    alias="tunneled_server",
+    protocol="ssh",
+    product="bash",
+    host="10.0.0.100",
+    port=22,
+    login="target_user",
+    password="target_pass",
+    tunnel_config=tunnel_config
+)
+
+result = bot.execute_command("tunneled_server", "ls")
+bot.close_all_sessions()
+----
+
+=== Nested Tunnels
+
+[source,python]
+----
+# Configure nested SSH tunnels
+tunnel_config = [
+    {
+        "ip": "192.168.1.1",      # First jump host
+        "port": 22,
+        "username": "user1",
+        "password": "pass1"
+    },
+    {
+        "ip": "192.168.2.1",      # Second jump host
+        "port": 22,
+        "username": "user2",
+        "password": "pass2"
+    },
+    {
+        "ip": "192.168.3.1",      # Third jump host
+        "port": 22,
+        "username": "user3",
+        "password": "pass3"
+    }
+]
+
+bot.open_session(
+    alias="deep_server",
+    protocol="ssh",
+    product="bash",
+    host="10.0.0.50",
+    port=22,
+    login="final_user",
+    password="final_pass",
+    tunnel_config=tunnel_config
+)
+
+result = bot.execute_command("deep_server", "hostname")
+bot.close_all_sessions()
+----
+
+== Secret Management
+
+=== Basic Secret Operations
+
+[source,python]
+----
+from sysbot.Sysbot import Sysbot
+
+bot = Sysbot()
+
+# Add a secret
+bot.add_secret("db_password", "super_secret_password")
+
+# Retrieve a secret
+password = bot.get_secret("db_password")
+print(password)  # "super_secret_password"
+
+# Remove a secret
+bot.remove_secret("db_password")
+
+# Trying to get removed secret raises KeyError
+try:
+    bot.get_secret("db_password")
+except KeyError as e:
+    print(f"Secret not found: {e}")
+----
+
+=== Using Secrets in Connections
+
+[source,python]
+----
+bot = Sysbot()
+
+# Store credentials as secrets
+bot.add_secret("server_host", "192.168.1.100")
+bot.add_secret("server_user", "admin")
+bot.add_secret("server_pass", "P@ssw0rd")
+
+# Use secrets in session creation
+bot.open_session(
+    alias="secure_server",
+    protocol="ssh",
+    product="bash",
+    host=bot.get_secret("server_host"),
+    port=22,
+    login=bot.get_secret("server_user"),
+    password=bot.get_secret("server_pass")
+)
+
+bot.close_all_sessions()
+----
+
+== Using Plugins
+
+=== Data Plugin - CSV
+
+[source,python]
+----
+from sysbot.Sysbot import Sysbot
+
+bot = Sysbot()
+
+# Load CSV data without storing in secrets
+csv_data = bot.plugins.data.csv("/path/to/file.csv")
+print(csv_data[0]["name"])  # Access first row's name field
+
+# Load CSV data and store in secrets
+bot.plugins.data.csv("/path/to/file.csv", key="my_data")
+name = bot.get_secret("my_data.0.name")  # Access via secret manager
+----
+
+=== Data Plugin - YAML
+
+[source,python]
+----
+bot = Sysbot()
+
+# Load YAML data
+yaml_data = bot.plugins.data.yaml("/path/to/config.yml")
+print(yaml_data["database"]["host"])
+
+# Load and store as secret
+bot.plugins.data.yaml("/path/to/config.yml", key="config")
+db_host = bot.get_secret("config.database.host")
+----
+
+=== Data Plugin - JSON
+
+[source,python]
+----
+bot = Sysbot()
+
+# Load JSON data
+json_data = bot.plugins.data.json("/path/to/data.json")
+print(json_data["users"][0]["name"])
+
+# Load and store as secret
+bot.plugins.data.json("/path/to/data.json", key="app_data")
+user_name = bot.get_secret("app_data.users.0.name")
+----
+
+== Using Modules
+
+=== Loading Specific Modules
+
+[source,python]
+----
+from sysbot.Sysbot import Sysbot
+
+# Load only specific modules
+bot = Sysbot("linux.systemd", "linux.dnf")
+
+bot.open_session(
+    alias="linux_server",
+    protocol="ssh",
+    product="bash",
+    host="192.168.1.100",
+    port=22,
+    login="user",
+    password="pass"
+)
+
+# Use module functions
+services = bot.linux.systemd.list_units("linux_server")
+repos = bot.linux.dnf.repolist("linux_server")
+
+bot.close_all_sessions()
+----
+
+=== Loading All Modules
+
+[source,python]
+----
+# Load all available modules
+bot = Sysbot()
+
+bot.open_session(
+    alias="server",
+    protocol="ssh",
+    product="bash",
+    host="192.168.1.100",
+    port=22,
+    login="user",
+    password="pass"
+)
+
+# All modules are now available
+# bot.linux.systemd.*
+# bot.linux.dnf.*
+# bot.linux.file.*
+# bot.windows.* (when connected to Windows)
+# etc.
+
+bot.close_all_sessions()
+----
+
+== Working with Command Results
+
+=== Understanding Results
+
+All connectors return a standardized dictionary with the following fields:
+
+[source,python]
+----
+result = bot.execute_command("server", "ls -la")
+
+# Result structure:
+# {
+#     "StatusCode": 0,           # Exit code (0 = success)
+#     "Result": "...",           # Command output
+#     "Error": "",               # Error message (if any)
+#     "Metadata": {}             # Additional metadata
+# }
+
+if result["StatusCode"] == 0:
+    print("Success:", result["Result"])
+else:
+    print("Error:", result["Error"])
+----
+
+=== Processing Output
+
+[source,python]
+----
+# Execute command
+result = bot.execute_command("server", "cat /etc/os-release")
+
+# Parse output
+if result["StatusCode"] == 0:
+    lines = result["Result"].strip().split("\n")
+    for line in lines:
+        if "VERSION" in line:
+            print(line)
+----
+
+== Socket Connections
+
+=== TCP Socket
+
+[source,python]
+----
+bot = Sysbot()
+
+# Open TCP socket connection
+bot.open_session(
+    alias="tcp_server",
+    protocol="socket",
+    product="tcp",
+    host="192.168.1.100",
+    port=8080
+)
+
+# Send/receive data
+result = bot.execute_command("tcp_server", "GET / HTTP/1.1\r\n\r\n")
+print(result)
+
+bot.close_session("tcp_server")
+----
+
+=== UDP Socket
+
+[source,python]
+----
+bot = Sysbot()
+
+# Open UDP socket connection
+bot.open_session(
+    alias="udp_server",
+    protocol="socket",
+    product="udp",
+    host="192.168.1.100",
+    port=8080
+)
+
+# Send UDP message
+result = bot.execute_command("udp_server", "test message")
+print(result)
+
+bot.close_session("udp_server")
+----
+
+== Best Practices
+
+=== Always Close Sessions
+
+[source,python]
+----
+bot = Sysbot()
+
+try:
+    bot.open_session(...)
+    result = bot.execute_command(...)
+    # Process result
+finally:
+    bot.close_all_sessions()
+----
+
+=== Use Context Managers (if available)
+
+[source,python]
+----
+# For future versions that support context managers
+# with Sysbot() as bot:
+#     bot.open_session(...)
+#     result = bot.execute_command(...)
+#     # Sessions automatically closed
+----
+
+=== Error Handling
+
+[source,python]
+----
+bot = Sysbot()
+
+try:
+    bot.open_session(
+        alias="server",
+        protocol="ssh",
+        product="bash",
+        host="192.168.1.100",
+        port=22,
+        login="user",
+        password="wrong_password"
+    )
+except Exception as e:
+    print(f"Failed to connect: {e}")
+finally:
+    bot.close_all_sessions()
+----
+
+=== Use Secrets for Sensitive Data
+
+[source,python]
+----
+# Good: Store sensitive data in secrets
+bot.add_secret("prod_password", "sensitive_value")
+password = bot.get_secret("prod_password")
+
+# Bad: Hardcode sensitive data
+# password = "sensitive_value"
+----
+
+== Next Steps
+
+Now that you understand the basics:
+
+. Explore link:robotframework.adoc[Robot Framework Integration] for test automation
+. Learn about link:unittest.adoc[unittest Integration] for Python testing
+. Read the link:developer.adoc[Developer Guide] to extend SysBot
+. Check link:references.adoc[API References] for detailed documentation
+
+== Common Use Cases
+
+=== Testing Web Services
+
+[source,python]
+----
+bot = Sysbot()
+
+bot.open_session(
+    alias="api",
+    protocol="http",
+    product="basicauth",
+    host="api.example.com",
+    port=443,
+    login="user",
+    password="pass"
+)
+
+# Test API endpoint
+result = bot.execute_command("api", "/health")
+assert result["StatusCode"] == 0
+
+bot.close_all_sessions()
+----
+
+=== System Health Checks
+
+[source,python]
+----
+bot = Sysbot("linux.systemd")
+
+bot.open_session(
+    alias="prod_server",
+    protocol="ssh",
+    product="bash",
+    host="192.168.1.100",
+    port=22,
+    login="monitor",
+    password="pass"
+)
+
+# Check system status
+disk = bot.execute_command("prod_server", "df -h")
+memory = bot.execute_command("prod_server", "free -m")
+services = bot.linux.systemd.list_units("prod_server")
+
+# Evaluate health
+print("Disk:", disk["Result"])
+print("Memory:", memory["Result"])
+print("Services:", services)
+
+bot.close_all_sessions()
+----
+
+=== Configuration Management
+
+[source,python]
+----
+bot = Sysbot()
+
+# Load configuration from YAML
+bot.plugins.data.yaml("config.yml", key="config")
+
+# Get server list from config
+servers = bot.get_secret("config.servers")
+
+# Connect to all servers
+for i, server in enumerate(servers):
+    bot.open_session(
+        alias=f"server{i}",
+        protocol="ssh",
+        product="bash",
+        host=server["host"],
+        port=server.get("port", 22),
+        login=server["username"],
+        password=server["password"]
+    )
+
+# Execute commands on all servers
+for i in range(len(servers)):
+    result = bot.execute_command(f"server{i}", "hostname")
+    print(f"Server {i}:", result["Result"])
+
+bot.close_all_sessions()
+----

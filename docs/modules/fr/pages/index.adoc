@@ -1,0 +1,87 @@
+= Documentation SysBot
+
+== Vue d'ensemble
+
+SysBot est une bibliothèque complète d'automatisation de tests système qui fournit une interface unified pour se connecter et tester divers systèmes via différents protocoles. Conçue avec Robot Framework à l'esprit, elle offre un support robuste pour les suites de tests Robot Framework et Python unittest.
+
+=== Fonctionnalités
+
+* *Support multi-protocole* : SSH, HTTP, WinRM, Socket (TCP/UDP)
+* *Tunneling SSH* : Support des tunnels SSH imbriqués avec gestion automatique
+* *Multiplateforme* : Support des systèmes Linux et Windows
+* *Intégration Robot Framework* : Support intégré pour l'automatisation Robot Framework avec portée SUITE
+* *Architecture modulaire* : Chargement et découverte dynamiques des composants (modules et plugins)
+* *Gestion des connexions* : Cache de session robuste et gestion du cycle de vie
+* *Gestion des secrets* : Stockage et récupération sécurisés des données sensibles
+
+=== Dépôt
+
+* *GitHub* : https://github.com/JoReci2/sysbot
+* *Licence* : MIT
+
+== Sections de documentation
+
+=== xref:setup.adoc[Installation]
+
+Instructions d'installation et de configuration pour SysBot.
+
+=== xref:quickstart.adoc[Démarrage rapide]
+
+Commencez rapidement avec des exemples de base et des cas d'usage courants.
+
+=== xref:robotframework.adoc[Travailler avec Robot Framework]
+
+Guide complet pour utiliser SysBot avec les suites de tests Robot Framework.
+
+=== xref:unittest.adoc[Travailler avec unittest]
+
+Guide complet pour utiliser SysBot avec les suites de tests Python unittest.
+
+=== xref:listener_plugin.adoc[Plugin Listener de base de données]
+
+Plugin d'écoute Robot Framework pour stocker les résultats des tests dans diverses bases de données.
+
+=== xref:developer.adoc[Guide du développeur]
+
+Configuration de l'environnement de développement, architecture et lignes directrices pour contribuer.
+
+=== xref:references.adoc[Références]
+
+Documentation de référence de l'API pour tous les composants.
+
+== Exemple rapide
+
+[source,python]
+----
+from sysbot.Sysbot import Sysbot
+
+# Créer une instance SysBot
+bot = Sysbot()
+
+# Ouvrir une session SSH
+bot.open_session(
+    alias="mon_serveur",
+    protocol="ssh",
+    product="bash",
+    host="192.168.1.100",
+    port=22,
+    login="nom_utilisateur",
+    password="mot_de_passe"
+)
+
+# Exécuter une commande
+result = bot.execute_command("mon_serveur", "ls -la")
+print(result)
+
+# Fermer toutes les sessions
+bot.close_all_sessions()
+----
+
+== Support
+
+Pour les rapports de bugs et les demandes de fonctionnalités, veuillez utiliser le système de suivi des problèmes GitHub :
+https://github.com/JoReci2/sysbot/issues
+
+== Auteur
+
+Thibault SCIRE - https://github.com/thibaultscire

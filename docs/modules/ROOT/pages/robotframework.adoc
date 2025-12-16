@@ -1,0 +1,640 @@
+= Working with Robot Framework
+
+== Introduction
+
+SysBot is designed with Robot Framework integration as a primary use case. This guide shows you how to use SysBot effectively in your Robot Framework test suites.
+
+== Basic Setup
+
+=== Importing SysBot Library
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+----
+
+=== Suite Lifecycle Management
+
+SysBot uses SUITE scope by default, which means:
+
+* The library instance is shared across all tests in the suite
+* Sessions persist between test cases
+* Cleanup should be done in Suite Teardown
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+Suite Teardown    Close All Sessions
+----
+
+== Simple Test Suite
+
+=== Basic SSH Test
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+Suite Teardown    Close All Sessions
+
+*** Variables ***
+${HOST}        192.168.1.100
+${PORT}        22
+${USER}        testuser
+${PASSWORD}    testpass
+
+*** Test Cases ***
+Test SSH Connection
+    Open Session    server1    ssh    bash    ${HOST}    ${PORT}    ${USER}    ${PASSWORD}
+    ${result}=    Execute Command    server1    hostname
+    Should Contain    ${result}[Result]    expected_hostname
+    Log    ${result}[Result]
+----
+
+=== Basic WinRM Test
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+Suite Teardown    Close All Sessions
+
+*** Variables ***
+${HOST}        192.168.1.200
+${PORT}        5986
+${USER}        Administrator
+${PASSWORD}    P@ssw0rd
+
+*** Test Cases ***
+Test WinRM Connection
+    Open Session    win_server    winrm    powershell    ${HOST}    ${PORT}    ${USER}    ${PASSWORD}
+    ${result}=    Execute Command    win_server    Get-ComputerInfo | Select-Object CsName
+    Should Contain    ${result}[Result]    expected_name
+    Log    ${result}[Result]
+----
+
+== Using Secret Management
+
+=== Loading Data as Secrets
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+Suite Setup    Call Components    plugins.data.yaml    tests/config.yml    key=config
+Suite Teardown    Close All Sessions
+
+*** Test Cases ***
+Connect Using Secrets
+    Open Session    server1    ssh    bash    config.host    ${22}    config.username    config.password    is_secret=True
+    ${result}=    Execute Command    server1    whoami
+    Log    ${result}[Result]
+----
+
+=== Manual Secret Management
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+Suite Teardown    Close All Sessions
+
+*** Test Cases ***
+Add and Use Secret
+    Add Secret    db_password    super_secret_value
+    ${password}=    Get Secret    db_password
+    Should Be Equal    ${password}    super_secret_value
+    Remove Secret    db_password
+    Run Keyword And Expect Error    *    Get Secret    db_password
+----
+
+== Working with Data Files
+
+=== CSV Data
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+
+*** Test Cases ***
+Load CSV Without Secret
+    ${data}=    Call Components    plugins.data.csv    tests/data.csv
+    Should Be Equal As Integers    ${data}[0][id]    1
+    Should Be Equal    ${data}[0][name]    Alice
+
+Load CSV With Secret
+    Call Components    plugins.data.csv    tests/data.csv    key=csv_data
+    ${id}=    Get Secret    csv_data.0.id
+    Should Be Equal As Integers    ${id}    1
+    ${name}=    Get Secret    csv_data.0.name
+    Should Be Equal    ${name}    Alice
+----
+
+=== YAML Data
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+
+*** Test Cases ***
+Load YAML Without Secret
+    ${data}=    Call Components    plugins.data.yaml    tests/config.yml
+    Should Be Equal    ${data}[database][host]    localhost
+    Should Be Equal As Integers    ${data}[database][port]    5432
+
+Load YAML With Secret
+    Call Components    plugins.data.yaml    tests/config.yml    key=config
+    ${host}=    Get Secret    config.database.host
+    Should Be Equal    ${host}    localhost
+    ${port}=    Get Secret    config.database.port
+    Should Be Equal As Integers    ${port}    5432
+----
+
+=== JSON Data
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+
+*** Test Cases ***
+Load JSON Without Secret
+    ${data}=    Call Components    plugins.data.json    tests/data.json
+    Should Be Equal    ${data}[users][0][name]    John Doe
+    Should Be Equal    ${data}[users][0][email]    john@example.com
+
+Load JSON With Secret
+    Call Components    plugins.data.json    tests/data.json    key=app_data
+    ${name}=    Get Secret    app_data.users.0.name
+    Should Be Equal    ${name}    John Doe
+----
+
+== Using Modules
+
+=== Loading Specific Modules
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot    linux.systemd    linux.dnf
+Suite Teardown    Close All Sessions
+
+*** Variables ***
+${HOST}        192.168.1.100
+${PORT}        22
+${USER}        testuser
+${PASSWORD}    testpass
+
+*** Test Cases ***
+Test Linux Modules
+    Open Session    linux_server    ssh    bash    ${HOST}    ${PORT}    ${USER}    ${PASSWORD}
+    
+    # Use systemd module
+    ${units}=    Call Components    linux.systemd.list_units    linux_server
+    Log    ${units}
+    
+    # Use dnf module
+    ${repos}=    Call Components    linux.dnf.repolist    linux_server
+    Log    ${repos}
+----
+
+=== Loading All Modules
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+Suite Teardown    Close All Sessions
+
+*** Test Cases ***
+Test With All Modules
+    Open Session    server1    ssh    bash    192.168.1.100    22    user    pass
+    
+    # All modules are available
+    ${result}=    Call Components    linux.file.exists    server1    /etc/hosts
+    Should Be True    ${result}
+----
+
+== Multiple Sessions
+
+=== Managing Multiple Sessions
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+Suite Teardown    Close All Sessions
+
+*** Test Cases ***
+Test Multiple Sessions
+    # Open multiple sessions
+    Open Session    server1    ssh    bash    192.168.1.101    22    user1    pass1
+    Open Session    server2    ssh    bash    192.168.1.102    22    user2    pass2
+    Open Session    win1      winrm  powershell    192.168.1.201    5986    admin    pass3
+    
+    # Execute commands on different servers
+    ${result1}=    Execute Command    server1    hostname
+    ${result2}=    Execute Command    server2    hostname
+    ${result3}=    Execute Command    win1        hostname
+    
+    Log    Server1: ${result1}[Result]
+    Log    Server2: ${result2}[Result]
+    Log    Windows: ${result3}[Result]
+----
+
+=== Closing Specific Sessions
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+
+*** Test Cases ***
+Test Session Management
+    Open Session    server1    ssh    bash    192.168.1.100    22    user    pass
+    Open Session    server2    ssh    bash    192.168.1.101    22    user    pass
+    
+    ${result}=    Execute Command    server1    ls
+    Log    ${result}[Result]
+    
+    # Close only server1
+    Close Session    server1
+    
+    # server2 is still open
+    ${result}=    Execute Command    server2    ls
+    Log    ${result}[Result]
+    
+    Close All Sessions
+----
+
+== SSH Tunneling
+
+=== Single Tunnel
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+Library        Collections
+Suite Teardown    Close All Sessions
+
+*** Test Cases ***
+Test SSH Tunnel
+    # Create tunnel configuration
+    ${tunnel1}=    Create Dictionary
+    ...    ip=192.168.1.1
+    ...    port=${22}
+    ...    username=jumphost_user
+    ...    password=jumphost_pass
+    
+    ${tunnel_config}=    Create List    ${tunnel1}
+    
+    # Connect through tunnel
+    Open Session    tunneled    ssh    bash    10.0.0.100    ${22}    target_user    target_pass    tunnel_config=${tunnel_config}
+    
+    ${result}=    Execute Command    tunneled    hostname
+    Log    ${result}[Result]
+----
+
+=== Nested Tunnels
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+Library        Collections
+Suite Teardown    Close All Sessions
+
+*** Test Cases ***
+Test Nested SSH Tunnels
+    # First tunnel
+    ${tunnel1}=    Create Dictionary
+    ...    ip=192.168.1.1
+    ...    port=${22}
+    ...    username=user1
+    ...    password=pass1
+    
+    # Second tunnel
+    ${tunnel2}=    Create Dictionary
+    ...    ip=192.168.2.1
+    ...    port=${22}
+    ...    username=user2
+    ...    password=pass2
+    
+    # Third tunnel
+    ${tunnel3}=    Create Dictionary
+    ...    ip=192.168.3.1
+    ...    port=${22}
+    ...    username=user3
+    ...    password=pass3
+    
+    ${tunnel_config}=    Create List    ${tunnel1}    ${tunnel2}    ${tunnel3}
+    
+    # Connect through nested tunnels
+    Open Session    deep_server    ssh    bash    10.0.0.50    ${22}    final_user    final_pass    tunnel_config=${tunnel_config}
+    
+    ${result}=    Execute Command    deep_server    hostname
+    Log    ${result}[Result]
+----
+
+== Complete Test Suite Example
+
+=== Comprehensive Test Suite
+
+[source,robot]
+----
+*** Settings ***
+Name           Complete SysBot Test Suite
+
+Library        Collections
+Library        sysbot.Sysbot
+
+*** Variables ***
+${HOST}        192.168.1.112
+${PORT}        22
+${USER}        sysbot
+${PASSWORD}    P@ssw0rd
+
+*** Settings ***
+Suite Setup       Call Components    plugins.data.yaml    tests/config.yml    key=config
+Suite Teardown    Close All Sessions
+
+*** Test Cases ***
+
+Test 01 - Open Session Without Secret
+    [Documentation]    Verify session can be opened with direct credentials
+    [Tags]    connection    basic
+    Open Session    target    ssh    bash    ${HOST}    ${PORT}    ${USER}    ${PASSWORD}
+    ${result}=    Execute Command    target    whoami
+    Should Contain    ${result}[Result]    ${USER}
+    Close Session    target
+
+Test 02 - Open Session With Secret
+    [Documentation]    Verify session can be opened with credentials from secrets
+    [Tags]    connection    secret
+    Open Session    target    ssh    bash    config.host    ${PORT}    config.username    config.password    is_secret=True
+    ${result}=    Execute Command    target    whoami
+    Should Not Be Empty    ${result}[Result]
+    Close Session    target
+
+Test 03 - Open Multiple Sessions
+    [Documentation]    Verify multiple sessions can be opened simultaneously
+    [Tags]    connection    multiple
+    Open Session    target1    ssh    bash    ${HOST}    ${PORT}    ${USER}    ${PASSWORD}
+    Open Session    target2    ssh    bash    ${HOST}    ${PORT}    ${USER}    ${PASSWORD}
+    
+    ${result1}=    Execute Command    target1    hostname
+    ${result2}=    Execute Command    target2    hostname
+    
+    Should Not Be Empty    ${result1}[Result]
+    Should Not Be Empty    ${result2}[Result]
+    
+    Close All Sessions
+
+Test 04 - Secret Management
+    [Documentation]    Verify secret add/get/remove functionality
+    [Tags]    secret
+    Add Secret    my_secret    very_secret_value
+    ${secret}=    Get Secret    my_secret
+    Should Be Equal    ${secret}    very_secret_value
+    Remove Secret    my_secret
+    Run Keyword And Expect Error    KeyError*    Get Secret    my_secret
+
+Test 05 - Load CSV Data
+    [Documentation]    Verify CSV data loading functionality
+    [Tags]    data    csv
+    ${vars}=    Call Components    plugins.data.csv    tests/data.csv
+    Should Be Equal As Integers    ${vars}[0][id]    1
+    Should Be Equal    ${vars}[0][name]    Alice
+
+Test 06 - Execute Multiple Commands
+    [Documentation]    Verify multiple commands can be executed in sequence
+    [Tags]    command    execution
+    Open Session    target    ssh    bash    ${HOST}    ${PORT}    ${USER}    ${PASSWORD}
+    
+    ${result1}=    Execute Command    target    pwd
+    ${result2}=    Execute Command    target    ls -la
+    ${result3}=    Execute Command    target    date
+    
+    Should Be Equal As Integers    ${result1}[StatusCode]    0
+    Should Be Equal As Integers    ${result2}[StatusCode]    0
+    Should Be Equal As Integers    ${result3}[StatusCode]    0
+    
+    Close Session    target
+
+Test 07 - Use Linux Modules
+    [Documentation]    Verify Linux module functionality
+    [Tags]    modules    linux
+    Open Session    linux_server    ssh    bash    ${HOST}    ${PORT}    ${USER}    ${PASSWORD}
+    
+    ${file_exists}=    Call Components    linux.file.exists    linux_server    /etc/hosts
+    Should Be True    ${file_exists}
+    
+    Close Session    linux_server
+
+*** Keywords ***
+
+Verify Command Success
+    [Arguments]    ${result}
+    [Documentation]    Verify command executed successfully
+    Should Be Equal As Integers    ${result}[StatusCode]    0
+    Should Not Be Empty    ${result}[Result]
+    Should Be Empty    ${result}[Error]
+
+Connect To Server
+    [Arguments]    ${alias}    ${host}    ${port}    ${user}    ${password}
+    [Documentation]    Open SSH session to server
+    Open Session    ${alias}    ssh    bash    ${host}    ${port}    ${user}    ${password}
+
+Execute And Verify
+    [Arguments]    ${alias}    ${command}    ${expected}
+    [Documentation]    Execute command and verify output contains expected text
+    ${result}=    Execute Command    ${alias}    ${command}
+    Verify Command Success    ${result}
+    Should Contain    ${result}[Result]    ${expected}
+----
+
+== Custom Keywords
+
+=== Creating Reusable Keywords
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+
+*** Keywords ***
+
+Connect To Linux Server
+    [Arguments]    ${alias}    ${host}    ${user}    ${password}    ${port}=22
+    [Documentation]    Open SSH connection to Linux server with default port
+    Open Session    ${alias}    ssh    bash    ${host}    ${port}    ${user}    ${password}
+
+Connect To Windows Server
+    [Arguments]    ${alias}    ${host}    ${user}    ${password}    ${port}=5986
+    [Documentation]    Open WinRM connection to Windows server with default port
+    Open Session    ${alias}    winrm    powershell    ${host}    ${port}    ${user}    ${password}
+
+Execute And Log
+    [Arguments]    ${alias}    ${command}
+    [Documentation]    Execute command and log result
+    ${result}=    Execute Command    ${alias}    ${command}
+    Log    Command: ${command}
+    Log    Status: ${result}[StatusCode]
+    Log    Output: ${result}[Result]
+    [Return]    ${result}
+
+Verify File Exists
+    [Arguments]    ${alias}    ${path}
+    [Documentation]    Verify file exists on remote system
+    ${result}=    Execute Command    ${alias}    test -f ${path} && echo "exists" || echo "not found"
+    Should Contain    ${result}[Result]    exists
+
+Verify Service Running
+    [Arguments]    ${alias}    ${service}
+    [Documentation]    Verify systemd service is running
+    ${result}=    Execute Command    ${alias}    systemctl is-active ${service}
+    Should Contain    ${result}[Result]    active
+----
+
+== Error Handling
+
+=== Handling Connection Failures
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+
+*** Test Cases ***
+Test Connection Error Handling
+    Run Keyword And Expect Error    *
+    ...    Open Session    bad_server    ssh    bash    192.168.1.999    22    user    wrong_pass
+----
+
+=== Handling Command Failures
+
+[source,robot]
+----
+*** Test Cases ***
+Test Command Error Handling
+    Open Session    server1    ssh    bash    192.168.1.100    22    user    pass
+    
+    ${result}=    Execute Command    server1    invalid_command_xyz
+    Should Not Be Equal As Integers    ${result}[StatusCode]    0
+    Should Not Be Empty    ${result}[Error]
+    
+    Close All Sessions
+----
+
+== Best Practices
+
+=== Always Use Suite Teardown
+
+[source,robot]
+----
+*** Settings ***
+Library        sysbot.Sysbot
+Suite Teardown    Close All Sessions
+----
+
+=== Use Variables for Configuration
+
+[source,robot]
+----
+*** Variables ***
+${SSH_HOST}      192.168.1.100
+${SSH_PORT}      22
+${SSH_USER}      testuser
+${SSH_PASS}      testpass
+${TIMEOUT}       30
+----
+
+=== Tag Your Tests
+
+[source,robot]
+----
+*** Test Cases ***
+Test SSH Connection
+    [Tags]    ssh    connection    smoke
+    Open Session    ...
+----
+
+=== Use Meaningful Aliases
+
+[source,robot]
+----
+# Good: descriptive aliases
+Open Session    web_server    ...
+Open Session    db_server     ...
+Open Session    backup_host   ...
+
+# Bad: generic aliases
+Open Session    server1    ...
+Open Session    server2    ...
+----
+
+=== Document Your Tests
+
+[source,robot]
+----
+*** Test Cases ***
+Test Database Backup
+    [Documentation]    Verify database backup process completes successfully
+    ...                This test connects to the database server and backup server,
+    ...                initiates a backup, and verifies the backup file is created.
+    [Tags]    database    backup    critical
+    # Test implementation
+----
+
+== Running Tests
+
+=== Basic Execution
+
+[source,bash]
+----
+# Run all tests
+robot tests/
+
+# Run specific test suite
+robot tests/my_test.robot
+
+# Run tests with specific tag
+robot --include smoke tests/
+
+# Run with output directory
+robot --outputdir results/ tests/
+----
+
+=== Advanced Options
+
+[source,bash]
+----
+# Run with variables
+robot --variable HOST:192.168.1.100 --variable USER:admin tests/
+
+# Run with log level
+robot --loglevel DEBUG tests/
+
+# Run specific test case
+robot --test "Test SSH Connection" tests/
+
+# Generate only report
+robot --report report.html --log NONE tests/
+----
+
+== Next Steps
+
+. Explore link:unittest.adoc[unittest Integration] for Python unit testing
+. Read the link:developer.adoc[Developer Guide] to create custom modules
+. Check link:references.adoc[API References] for detailed documentation
+
+== Additional Resources
+
+* Robot Framework User Guide: https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html
+* Robot Framework Standard Libraries: https://robotframework.org/robotframework/#standard-libraries
+* SysBot GitHub: https://github.com/JoReci2/sysbot

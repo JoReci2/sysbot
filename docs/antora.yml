@@ -1,0 +1,7 @@
+name: sysbot
+title: SysBot
+version: main
+start_page: ROOT:index.adoc
+nav:
+  - modules/ROOT/nav.adoc
+  - modules/fr/nav.adoc

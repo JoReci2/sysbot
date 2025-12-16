@@ -1,0 +1,246 @@
+= Travailler avec Robot Framework
+
+== Introduction
+
+SysBot s'intègre parfaitement avec Robot Framework, fournissant une bibliothèque puissante pour l'automatisation des tests système. Ce guide montre comment utiliser SysBot dans vos suites de tests Robot Framework.
+
+== Configuration
+
+=== Installation
+
+Installez SysBot et Robot Framework :
+
+[source,bash]
+----
+pip install sysbot robotframework
+----
+
+=== Importer SysBot dans Robot Framework
+
+[source,robotframework]
+----
+*** Settings ***
+Library    sysbot.Sysbot    WITH NAME    Sysbot
+----
+
+== Exemples de base
+
+=== Test de connexion SSH simple
+
+[source,robotframework]
+----
+*** Settings ***
+Library    sysbot.Sysbot    WITH NAME    Sysbot
+
+*** Test Cases ***
+Test Connexion SSH
+    Open Session    alias=serveur_linux
+    ...             protocol=ssh
+    ...             product=bash
+    ...             host=192.168.1.100
+    ...             login=utilisateur
+    ...             password=mot_de_passe
+    
+    ${resultat}=    Execute Command    serveur_linux    hostname
+    Should Not Be Empty    ${resultat}
+    Log    ${resultat}
+    
+    Close Session    serveur_linux
+----
+
+=== Test de connexion WinRM
+
+[source,robotframework]
+----
+*** Test Cases ***
+Test Connexion Windows
+    Open Session    alias=serveur_windows
+    ...             protocol=winrm
+    ...             product=powershell
+    ...             host=192.168.1.200
+    ...             login=administrateur
+    ...             password=mot_de_passe
+    
+    ${resultat}=    Execute Command    serveur_windows    Get-ComputerInfo
+    Should Contain    ${resultat}    Windows
+    
+    Close All Sessions
+----
+
+=== Test API HTTP
+
+[source,robotframework]
+----
+*** Test Cases ***
+Test API REST
+    Open Session    alias=mon_api
+    ...             protocol=http
+    ...             product=basicauth
+    ...             host=api.exemple.com
+    ...             login=utilisateur_api
+    ...             password=cle_api
+    
+    ${reponse}=    Execute Command    mon_api    GET    endpoint=/utilisateurs
+    Should Be Equal As Numbers    ${reponse}[StatusCode]    0
+    
+    Close Session    mon_api
+----
+
+== Mots-clés disponibles
+
+=== Gestion des sessions
+
+* `Open Session` - Ouvre une nouvelle session
+* `Close Session` - Ferme une session spécifique
+* `Close All Sessions` - Ferme toutes les sessions actives
+
+=== Exécution de commandes
+
+* `Execute Command` - Exécute une commande sur un système distant
+
+=== Gestion des modules
+
+* `Load Module` - Charge un module SysBot
+* `Get Module` - Récupère une référence de module chargé
+
+=== Gestion des secrets
+
+* `Store Secret` - Stocke une valeur secrète
+* `Get Secret` - Récupère une valeur secrète stockée
+
+== Utilisation avancée
+
+=== Portée de la suite
+
+SysBot utilise la portée SUITE par défaut, ce qui signifie qu'une instance est partagée entre tous les tests d'une suite :
+
+[source,robotframework]
+----
+*** Settings ***
+Library    sysbot.Sysbot    WITH NAME    Sysbot
+Suite Setup       Ouvrir Sessions
+Suite Teardown    Fermer Toutes Les Sessions
+
+*** Keywords ***
+Ouvrir Sessions
+    Open Session    alias=serveur1    protocol=ssh    product=bash
+    ...             host=192.168.1.100    login=user    password=pass
+    
+Fermer Toutes Les Sessions
+    Close All Sessions
+
+*** Test Cases ***
+Test 1
+    ${resultat}=    Execute Command    serveur1    echo "Test 1"
+    Should Contain    ${resultat}    Test 1
+
+Test 2
+    ${resultat}=    Execute Command    serveur1    echo "Test 2"
+    Should Contain    ${resultat}    Test 2
+----
+
+=== Utilisation des modules
+
+[source,robotframework]
+----
+*** Settings ***
+Library    sysbot.Sysbot    WITH NAME    Sysbot
+
+*** Test Cases ***
+Test Avec Module Linux
+    Open Session    alias=serveur    protocol=ssh    product=bash
+    ...             host=192.168.1.100    login=user    password=pass
+    
+    Load Module    linux
+    
+    ${info_systeme}=    Get System Info    serveur
+    Log    Informations système : ${info_systeme}
+    
+    ${processus}=    List Processes    serveur
+    Log    Processus : ${processus}
+    
+    Close All Sessions
+----
+
+=== Plugin d'écoute de base de données
+
+Stocker les résultats des tests dans une base de données :
+
+[source,bash]
+----
+# Exécuter les tests avec le listener
+robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db:MaCampagne tests/
+----
+
+== Bonnes pratiques
+
+=== Utiliser des fichiers de ressources
+
+Créez un fichier de ressources pour les mots-clés communs :
+
+[source,robotframework]
+----
+# resources/common.robot
+*** Settings ***
+Library    sysbot.Sysbot    WITH NAME    Sysbot
+
+*** Keywords ***
+Se Connecter Au Serveur
+    [Arguments]    ${alias}    ${host}    ${login}    ${password}
+    Open Session    alias=${alias}    protocol=ssh    product=bash
+    ...             host=${host}    login=${login}    password=${password}
+
+Exécuter Et Vérifier
+    [Arguments]    ${alias}    ${commande}    ${texte_attendu}
+    ${resultat}=    Execute Command    ${alias}    ${commande}
+    Should Contain    ${resultat}    ${texte_attendu}
+    [Return]    ${resultat}
+----
+
+=== Gestion des erreurs
+
+[source,robotframework]
+----
+*** Test Cases ***
+Test Avec Gestion Des Erreurs
+    ${status}=    Run Keyword And Return Status
+    ...           Open Session    alias=serveur    protocol=ssh    product=bash
+    ...           host=192.168.1.100    login=user    password=mauvais_pass
+    
+    Run Keyword If    ${status} == ${False}
+    ...               Log    Échec de la connexion comme prévu
+    
+    Close All Sessions
+----
+
+== Dépannage
+
+=== Problèmes d'importation de bibliothèque
+
+Si Robot Framework ne trouve pas la bibliothèque SysBot :
+
+[source,bash]
+----
+# Vérifier que SysBot est installé
+pip show sysbot
+
+# Vérifier le PYTHONPATH
+python -c "import sys; print('\n'.join(sys.path))"
+----
+
+=== Problèmes de délai d'attente
+
+Ajustez les délais d'attente des tests si nécessaire :
+
+[source,robotframework]
+----
+*** Settings ***
+Library    sysbot.Sysbot    WITH NAME    Sysbot
+Test Timeout    5 minutes
+----
+
+== Prochaines étapes
+
+* Consultez le xref:unittest.adoc[guide unittest] pour les tests Python
+* Explorez le xref:references.adoc[référence de l'API] pour les capacités avancées
+* Consultez le xref:listener_plugin.adoc[plugin d'écoute] pour le stockage des résultats

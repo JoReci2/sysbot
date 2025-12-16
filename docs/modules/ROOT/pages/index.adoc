@@ -1,0 +1,87 @@
+= SysBot Documentation
+
+== Overview
+
+SysBot is a comprehensive system test automation library that provides a unified interface for connecting to and testing various systems through different protocols. Built with Robot Framework integration in mind, it offers robust support for both Robot Framework and Python unittest test suites.
+
+=== Features
+
+* **Multi-protocol Support**: SSH, HTTP, WinRM, Socket (TCP/UDP)
+* **SSH Tunneling**: Support for nested SSH tunnels with automatic management
+* **Cross-platform**: Support for Linux and Windows systems
+* **Robot Framework Integration**: Built-in support for Robot Framework automation with SUITE scope
+* **Modular Architecture**: Dynamic components loading and discovery (modules and plugins)
+* **Connection Management**: Robust session caching and lifecycle management
+* **Secret Management**: Secure storage and retrieval of sensitive data
+
+=== Repository
+
+* **GitHub**: https://github.com/JoReci2/sysbot
+* **License**: MIT
+
+== Documentation Sections
+
+=== xref:setup.adoc[Setup]
+
+Installation and configuration instructions for SysBot.
+
+=== xref:quickstart.adoc[Quick Start]
+
+Get started quickly with basic examples and common use cases.
+
+=== xref:robotframework.adoc[Working with Robot Framework]
+
+Complete guide for using SysBot with Robot Framework test suites.
+
+=== xref:unittest.adoc[Working with unittest]
+
+Complete guide for using SysBot with Python unittest test suites.
+
+=== xref:listener_plugin.adoc[Database Listener Plugin]
+
+Robot Framework listener plugin for storing test results in databases.
+
+=== xref:developer.adoc[Developer Guide]
+
+Development environment setup, architecture, and contribution guidelines.
+
+=== xref:references.adoc[References]
+
+API reference documentation for all components.
+
+== Quick Example
+
+[source,python]
+----
+from sysbot.Sysbot import Sysbot
+
+# Create a SysBot instance
+bot = Sysbot()
+
+# Open an SSH session
+bot.open_session(
+    alias="my_server",
+    protocol="ssh",
+    product="bash",
+    host="192.168.1.100",
+    port=22,
+    login="username",
+    password="password"
+)
+
+# Execute a command
+result = bot.execute_command("my_server", "ls -la")
+print(result)
+
+# Close all sessions
+bot.close_all_sessions()
+----
+
+== Support
+
+For bug reports and feature requests, please use the GitHub issue tracker:
+https://github.com/JoReci2/sysbot/issues
+
+== Author
+
+Thibault SCIRE - https://github.com/thibaultscire

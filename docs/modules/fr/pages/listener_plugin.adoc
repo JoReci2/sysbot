@@ -1,0 +1,351 @@
+= Plugin Listener de base de données
+
+Un plugin d'écoute Robot Framework qui stocke les résultats d'exécution des tests dans diverses bases de données en utilisant SQLAlchemy pour les bases de données SQL.
+
+== Bases de données supportées
+
+* *SQLite* - Base de données basée sur des fichiers
+* *MySQL* - Base de données relationnelle
+* *PostgreSQL* - Base de données relationnelle avancée
+* *MongoDB* - Base de données NoSQL orientée documents
+
+== Installation
+
+=== Utilisation de pip avec extras
+
+[source,bash]
+----
+# Installer avec le support de toutes les bases de données
+pip install sysbot[all_databases]
+
+# Ou installer avec le support d'une base de données spécifique
+pip install sysbot[mysql]
+pip install sysbot[postgresql]
+pip install sysbot[mongodb]
+----
+
+=== Installation manuelle
+
+[source,bash]
+----
+# Exigence de base : SQLAlchemy pour les bases de données SQL
+pip install sqlalchemy
+
+# Pour le support MySQL
+pip install mysql-connector-python
+
+# Pour le support PostgreSQL
+pip install psycopg2-binary
+
+# Pour le support MongoDB
+pip install pymongo
+----
+
+== Utilisation
+
+Le listener peut être utilisé avec l'option `--listener` de Robot Framework :
+
+[source,bash]
+----
+robot --listener sysbot.plugins.listener.DatabaseListener:type_bd:chaine_connexion:nom_campagne tests/
+----
+
+=== Exemples SQLite
+
+[source,bash]
+----
+# Stocker les résultats dans le fichier results.db avec le nom de campagne
+robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db:MaCampagne tests/
+
+# Stocker les résultats dans /tmp/test_results.db
+robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:/tmp/test_results.db:MonProjet tests/
+----
+
+=== Exemples MySQL
+
+[source,bash]
+----
+# Connexion à la base de données MySQL
+robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://utilisateur:motdepasse@localhost/testdb:MaCampagne tests/
+
+# Avec un port personnalisé
+robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://utilisateur:motdepasse@localhost:3307/testdb:MaCampagne tests/
+----
+
+=== Exemples PostgreSQL
+
+[source,bash]
+----
+# Connexion à la base de données PostgreSQL
+robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://utilisateur:motdepasse@localhost/testdb:MaCampagne tests/
+
+# Avec un port personnalisé
+robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://utilisateur:motdepasse@localhost:5433/testdb:MaCampagne tests/
+----
+
+=== Exemples MongoDB
+
+[source,bash]
+----
+# Connexion à la base de données MongoDB
+robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb:MaCampagne tests/
+
+# Avec authentification
+robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://utilisateur:motdepasse@localhost:27017/testdb:MaCampagne tests/
+----
+
+== Schéma de base de données
+
+=== Bases de données SQL (SQLite, MySQL, PostgreSQL)
+
+Le listener crée une structure hiérarchique avec quatre tables :
+
+==== test_campaigns
+
+[cols="1,1,3"]
+|===
+|Colonne |Type |Description
+
+|id
+|INTEGER/SERIAL
+|Clé primaire
+
+|name
+|VARCHAR(500)
+|Nom de la campagne
+
+|start_time
+|TIMESTAMP
+|Heure de début de la campagne
+
+|end_time
+|TIMESTAMP
+|Heure de fin de la campagne
+
+|description
+|TEXT
+|Description de la campagne
+|===
+
+==== test_suites
+
+[cols="1,1,3"]
+|===
+|Colonne |Type |Description
+
+|id
+|INTEGER/SERIAL
+|Clé primaire
+
+|campaign_id
+|INTEGER
+|Clé étrangère vers test_campaigns
+
+|name
+|VARCHAR(500)
+|Nom de la suite
+
+|doc
+|TEXT
+|Documentation de la suite
+
+|start_time
+|TIMESTAMP
+|Heure de début de la suite
+
+|end_time
+|TIMESTAMP
+|Heure de fin de la suite
+
+|status
+|VARCHAR(50)
+|Statut de la suite (PASS/FAIL)
+
+|message
+|TEXT
+|Message de la suite
+
+|metadata
+|TEXT
+|Métadonnées de la suite (JSON)
+|===
+
+==== test_cases
+
+[cols="1,1,3"]
+|===
+|Colonne |Type |Description
+
+|id
+|INTEGER/SERIAL
+|Clé primaire
+
+|suite_id
+|INTEGER
+|Clé étrangère vers test_suites
+
+|name
+|TEXT
+|Nom du cas de test
+
+|doc
+|TEXT
+|Documentation du cas de test
+
+|tags
+|TEXT
+|Tags du cas de test (séparés par des virgules)
+
+|start_time
+|TIMESTAMP
+|Heure de début du test
+
+|end_time
+|TIMESTAMP
+|Heure de fin du test
+
+|status
+|TEXT
+|Statut du test (PASS/FAIL)
+
+|message
+|TEXT
+|Message du test
+|===
+
+==== keywords
+
+[cols="1,1,3"]
+|===
+|Colonne |Type |Description
+
+|id
+|INTEGER/SERIAL
+|Clé primaire
+
+|test_id
+|INTEGER
+|Clé étrangère vers test_cases
+
+|name
+|TEXT
+|Nom du mot-clé
+
+|library
+|TEXT
+|Nom de la bibliothèque
+
+|start_time
+|TIMESTAMP
+|Heure de début du mot-clé
+
+|end_time
+|TIMESTAMP
+|Heure de fin du mot-clé
+
+|status
+|TEXT
+|Statut du mot-clé
+
+|message
+|TEXT
+|Message du mot-clé
+|===
+
+=== MongoDB
+
+Le listener crée trois collections avec une structure similaire :
+
+* `test_suites`
+* `test_cases`
+* `keywords`
+
+== Interrogation des résultats
+
+=== SQLite
+
+[source,bash]
+----
+# Voir toutes les suites de tests
+sqlite3 results.db "SELECT * FROM test_suites;"
+
+# Voir tous les cas de tests avec leur statut
+sqlite3 results.db "SELECT name, status, start_time, end_time FROM test_cases;"
+
+# Compter les tests par statut
+sqlite3 results.db "SELECT status, COUNT(*) FROM test_cases GROUP BY status;"
+
+# Voir les tests échoués
+sqlite3 results.db "SELECT name, message FROM test_cases WHERE status='FAIL';"
+----
+
+=== MySQL
+
+[source,sql]
+----
+-- Connexion à la base de données
+mysql -u utilisateur -p testdb
+
+-- Voir tous les cas de tests
+SELECT name, status, start_time, end_time FROM test_cases;
+
+-- Obtenir les statistiques des tests
+SELECT status, COUNT(*) as count FROM test_cases GROUP BY status;
+----
+
+=== PostgreSQL
+
+[source,sql]
+----
+-- Connexion à la base de données
+psql -U utilisateur -d testdb
+
+-- Voir tous les cas de tests
+SELECT name, status, start_time, end_time FROM test_cases;
+
+-- Obtenir la durée des tests
+SELECT name, (end_time - start_time) as duration FROM test_cases;
+----
+
+=== MongoDB
+
+[source,javascript]
+----
+// Connexion à MongoDB
+mongo testdb
+
+// Voir tous les cas de tests
+db.test_cases.find()
+
+// Obtenir les statistiques des tests
+db.test_cases.aggregate([
+  { $group: { _id: "$status", count: { $sum: 1 } } }
+])
+
+// Voir les tests échoués
+db.test_cases.find({ status: "FAIL" })
+----
+
+== Notes
+
+* La base de données et les tables/collections sont créées automatiquement si elles n'existent pas en utilisant SQLAlchemy
+* Les bases de données SQL utilisent SQLAlchemy ORM pour une meilleure maintenabilité et portabilité des bases de données
+* MongoDB ne nécessite pas d'initialisation de schéma
+* Les erreurs de connexion sont levées lors de l'initialisation du listener avec des instructions claires d'installation des dépendances
+* Le listener ferme automatiquement les connexions à la base de données lorsque les tests sont terminés
+
+== Architecture
+
+* *Bases de données SQL (SQLite, MySQL, PostgreSQL)* : Utilise SQLAlchemy pour l'abstraction de la base de données et l'ORM
+* *MongoDB* : Utilise directement le pilote pymongo pour les opérations NoSQL
+
+== Gestion des erreurs
+
+Si une connexion à la base de données échoue, le listener lèvera une exception avec des détails :
+
+* Pour les dépendances manquantes (SQLAlchemy, pilotes de base de données), il suggérera le package requis à installer
+* Pour les erreurs de connexion, il fournira le message d'erreur du pilote de base de données
+
+== Licence
+
+Ce plugin fait partie du projet SysBot et suit la même licence MIT.

@@ -1,0 +1,173 @@
+= Installation et configuration
+
+== Installation
+
+=== Prérequis
+
+* Python 3.7 ou supérieur (Python 3.8+ recommandé)
+* pip (gestionnaire de packages Python)
+
+=== Installation via pip
+
+La méthode la plus simple pour installer SysBot :
+
+[source,bash]
+----
+pip install sysbot
+----
+
+=== Installation avec support de base de données
+
+Si vous souhaitez utiliser le plugin d'écoute de base de données :
+
+[source,bash]
+----
+# Installer avec tous les supports de base de données
+pip install sysbot[all_databases]
+
+# Ou installer avec un support de base de données spécifique
+pip install sysbot[mysql]
+pip install sysbot[postgresql]
+pip install sysbot[mongodb]
+----
+
+=== Installation depuis les sources
+
+Pour la dernière version de développement :
+
+[source,bash]
+----
+# Cloner le dépôt
+git clone https://github.com/JoReci2/sysbot.git
+cd sysbot
+
+# Créer un environnement virtuel
+python -m venv venv
+
+# Activer l'environnement virtuel
+# Sur Linux/macOS :
+source venv/bin/activate
+
+# Sur Windows :
+venv\Scripts\activate
+
+# Installer en mode développement
+pip install -e .
+----
+
+== Configuration
+
+=== Configuration de base
+
+SysBot fonctionne immédiatement sans configuration, mais vous pouvez personnaliser son comportement.
+
+=== Variables d'environnement
+
+Vous pouvez configurer SysBot à l'aide de variables d'environnement :
+
+[source,bash]
+----
+# Définir le niveau de journalisation
+export SYSBOT_LOG_LEVEL=DEBUG
+
+# Définir le répertoire des journaux
+export SYSBOT_LOG_DIR=/var/log/sysbot
+----
+
+=== Fichier de configuration
+
+Créez un fichier `sysbot_config.py` dans votre répertoire de projet :
+
+[source,python]
+----
+# Configuration SysBot
+SYSBOT_CONFIG = {
+    "log_level": "INFO",
+    "cache_sessions": True,
+    "session_timeout": 300,  # secondes
+    "max_retries": 3
+}
+----
+
+== Vérification de l'installation
+
+Vérifiez que SysBot est correctement installé :
+
+[source,python]
+----
+# Vérification Python
+python -c "import sysbot; print(sysbot.__version__)"
+
+# Ou en Python interactif
+python
+>>> from sysbot.Sysbot import Sysbot
+>>> bot = Sysbot()
+>>> print("SysBot installé avec succès !")
+----
+
+== Dépendances
+
+=== Dépendances principales
+
+* `paramiko` - Support de connexion SSH
+* `pywinrm` - Support de connexion WinRM
+* `requests` - Support de connexion HTTP
+* `netmiko` - Support amélioré des appareils réseau
+
+=== Dépendances optionnelles
+
+* `sqlalchemy` - Support de base de données SQL pour le plugin d'écoute
+* `mysql-connector-python` - Support MySQL
+* `psycopg2-binary` - Support PostgreSQL
+* `pymongo` - Support MongoDB
+* `robotframework` - Pour l'intégration Robot Framework
+
+== Dépannage de l'installation
+
+=== Erreurs de dépendances manquantes
+
+Si vous rencontrez des erreurs de dépendances manquantes :
+
+[source,bash]
+----
+# Installer toutes les dépendances
+pip install -r requirements.txt
+
+# Ou installer des dépendances spécifiques
+pip install paramiko pywinrm requests netmiko
+----
+
+=== Problèmes d'autorisation
+
+Sur Linux/macOS, vous pourriez avoir besoin des privilèges d'administrateur :
+
+[source,bash]
+----
+# Utiliser pip avec sudo (non recommandé)
+sudo pip install sysbot
+
+# Meilleure approche : utiliser un environnement virtuel ou l'installation utilisateur
+pip install --user sysbot
+----
+
+=== Problèmes de compilation
+
+Si vous rencontrez des problèmes de compilation (en particulier avec psycopg2) :
+
+[source,bash]
+----
+# Sur Ubuntu/Debian
+sudo apt-get install python3-dev libpq-dev
+
+# Sur RHEL/CentOS
+sudo yum install python3-devel postgresql-devel
+
+# Sur macOS
+brew install postgresql
+----
+
+== Prochaines étapes
+
+* Consultez le xref:quickstart.adoc[Démarrage rapide] pour commencer à utiliser SysBot
+* Explorez le xref:robotframework.adoc[guide Robot Framework] pour l'intégration des tests
+* Lisez le xref:developer.adoc[guide du développeur] pour le développement et les contributions
