@@ -1,9 +1,4 @@
 = References
-:toc: left
-:toclevels: 3
-:sectnums:
-:icons: font
-:source-highlighter: highlight.js
 
 == Introduction
 

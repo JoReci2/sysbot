@@ -1,79 +1,198 @@
 = SysBot Documentation
 
-Welcome to the SysBot documentation!
+This directory contains the SysBot documentation in Antora AsciiDoc format.
 
-== Documentation Files
+== Structure
 
-* **link:index.adoc[index.adoc]** - Main documentation index and overview
-* **link:setup.adoc[setup.adoc]** - Installation and configuration guide
-* **link:quickstart.adoc[quickstart.adoc]** - Quick start guide with examples
-* **link:robotframework.adoc[robotframework.adoc]** - Working with Robot Framework test suites
-* **link:unittest.adoc[unittest.adoc]** - Working with Python unittest test suites
-* **link:developer.adoc[developer.adoc]** - Developer guide for contributors
-* **link:references.adoc[references.adoc]** - Complete API reference documentation
+The documentation follows the https://docs.antora.org/[Antora] standard structure with just 3 main files per language:
 
-== Getting Started
+----
+docs/
+├── antora.yml              # Component descriptor
+└── modules/
+    ├── ROOT/               # English documentation (default)
+    │   ├── nav.adoc       # Navigation menu
+    │   ├── pages/         # Main documentation pages
+    │   │   ├── user-manual.adoc  # Complete user guide
+    │   │   ├── developer.adoc    # Developer guide
+    │   │   └── references.adoc   # API reference
+    │   ├── partials/      # Reusable content snippets
+    │   │   ├── features.adoc
+    │   │   ├── prerequisites.adoc
+    │   │   └── install-pip.adoc
+    │   └── examples/      # Code examples
+    │       ├── basic-ssh.py
+    │       ├── basic-winrm.py
+    │       └── basic-http.py
+    └── fr/                 # French documentation
+        ├── nav.adoc       # Navigation menu (French)
+        ├── pages/         # Main documentation pages
+        │   ├── user-manual.adoc
+        │   ├── developer.adoc
+        │   └── references.adoc
+        ├── partials/      # Reusable content snippets
+        └── examples/      # Code examples (same as ROOT)
+----
 
-Start with link:index.adoc[index.adoc] for an overview, then proceed to:
+== Antora Features Used
 
-1. link:setup.adoc[Setup] - Install and configure SysBot
-2. link:quickstart.adoc[Quick Start] - Learn basic usage
-3. link:robotframework.adoc[Robot Framework] or link:unittest.adoc[unittest] - Choose your testing framework
-4. link:developer.adoc[Developer Guide] - If you want to contribute or extend SysBot
-5. link:references.adoc[References] - Detailed API documentation
+=== Partials
 
-== Viewing Documentation
+Reusable content snippets stored in `partials/` directories. Use with:
 
-=== AsciiDoc Viewers
+[source,asciidoc]
+----
+include::partial$features.adoc[]
+----
 
-These AsciiDoc files can be viewed:
+=== Examples
 
-* **On GitHub**: GitHub natively renders AsciiDoc files
-* **Using AsciiDoctor**: Install AsciiDoctor and convert to HTML
-* **Using an IDE**: Many IDEs have AsciiDoc preview plugins (VS Code, IntelliJ, etc.)
+Code examples stored in `examples/` directories. Use with:
 
-=== Converting to HTML
+[source,asciidoc]
+----
+[source,python]
+----
+include::example$basic-ssh.py[]
+----
+----
 
-To convert documentation to HTML:
+This approach:
+
+* Reduces duplication across documentation
+* Makes updates easier (change once, update everywhere)
+* Keeps code examples synchronized
+* Simplifies documentation maintenance
+
+== Building Documentation
+
+=== Prerequisites
+
+To build the documentation locally, you need:
+
+* Node.js (for Antora)
+* Antora CLI
+
+Install Antora:
 
 [source,bash]
 ----
-# Install AsciiDoctor
-gem install asciidoctor
-
-# Convert a single file
-asciidoctor docs/index.adoc
-
-# Convert all files
-asciidoctor docs/*.adoc
+npm install -g @antora/cli @antora/site-generator
 ----
 
-=== Converting to PDF
+=== Build Locally
 
-To convert documentation to PDF:
+From the repository root:
 
 [source,bash]
 ----
-# Install AsciiDoctor PDF
-gem install asciidoctor-pdf
+# Build the documentation site
+antora antora-playbook.yml
 
-# Convert to PDF
-asciidoctor-pdf docs/index.adoc
+# The generated site will be in the public/ directory
 ----
+
+=== View Documentation
+
+After building, you can view the documentation:
+
+[source,bash]
+----
+# Using Python's built-in HTTP server
+cd public
+python -m http.server 8000
+
+# Then open http://localhost:8000 in your browser
+----
+
+== Documentation Organization
+
+The documentation is organized into 3 main sections:
+
+=== User Manual
+
+Complete user guide covering:
+
+* Overview and features
+* Installation (via pip, from source, with database support)
+* Quick start guide (basic concepts, first connections, session management)
+* Robot Framework integration (setup, examples, advanced usage)
+* Python unittest integration (examples, test organization, running tests)
+* Database listener plugin (supported databases, usage, schema, querying)
+* Troubleshooting
+
+=== Developer
+
+Developer guide covering:
+
+* Development environment setup
+* Architecture overview
+* Creating custom connectors, modules, and plugins
+* Testing and code quality
+* Contribution guidelines
+
+=== Reference
+
+Complete API reference covering:
+
+* Core Sysbot class and methods
+* All connectors (SSH, WinRM, HTTP, Socket, Localhost)
+* Modules (Linux, Windows)
+* Plugins (Database listener)
+* Error handling and response formats
+
+== Languages
+
+Documentation is available in:
+
+* *English* (ROOT module) - Default language
+* *French* (fr module) - French translation
 
 == Contributing to Documentation
 
-When contributing to documentation:
+When contributing to the documentation:
 
 1. Follow AsciiDoc syntax
-2. Keep sections organized with proper headings
-3. Include code examples where appropriate
-4. Use consistent formatting
-5. Update the main index.adoc if adding new sections
+2. Use partials for reusable content (stored in `partials/`)
+3. Use examples for code snippets (stored in `examples/`)
+4. Maintain consistency between English and French versions
+5. Test your changes by building the documentation locally
+
+=== Adding Content
+
+==== To add reusable content (partial):
+
+. Create the partial file in `docs/modules/ROOT/partials/my-content.adoc`
+. Add the same content in French: `docs/modules/fr/partials/my-content.adoc`
+. Use it with: `include::partial$my-content.adoc[]`
+
+==== To add a code example:
+
+. Create the example in `docs/modules/ROOT/examples/my-example.py`
+. Copy to French module: `docs/modules/fr/examples/my-example.py`
+. Include with:
++
+[source,asciidoc]
+----
+[source,python]
+----
+include::example$my-example.py[]
+----
+----
+
+==== To update documentation:
+
+. Edit the main files: `user-manual.adoc`, `developer.adoc`, or `references.adoc`
+. Update both English (ROOT) and French (fr) versions
+. Build and test the documentation
+
+== CI/CD Integration
+
+The documentation is automatically built and deployed via GitLab CI when changes are pushed to the main branch. See `.gitlab-ci.yml` for details.
 
 == Support
 
-For documentation issues or questions:
+For documentation issues:
 
-* GitHub Issues: https://github.com/JoReci2/sysbot/issues
-* GitHub Repository: https://github.com/JoReci2/sysbot
+* https://github.com/JoReci2/sysbot/issues[GitHub Issues]
+* https://github.com/JoReci2/sysbot[GitHub Repository]
