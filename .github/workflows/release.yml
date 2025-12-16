@@ -80,15 +80,9 @@ jobs:
           # Run safety check
           safety check --json --output vulnerability-report.json || echo '{"vulnerabilities": []}' > vulnerability-report.json
 
-      - name: Install Antora and dependencies
+      - name: Install Antora
         run: |
-          sudo apt-get update
-          sudo apt-get install -y nodejs npm
           npm install -g @antora/cli@latest @antora/site-generator@latest
-
-      - name: Install Antora PDF
-        run: |
-          npm install -g @antora/pdf-extension asciidoctor-pdf
 
       - name: Build PDF documentation
         run: |
@@ -122,7 +116,8 @@ jobs:
           antora --fetch antora-playbook-pdf.yml || echo "Antora build failed, continuing..."
           
           # Manual PDF generation as fallback
-          sudo apt-get install -y asciidoctor ruby-dev
+          sudo apt-get update
+          sudo apt-get install -y asciidoctor ruby-dev wkhtmltopdf
           sudo gem install asciidoctor-pdf:2.3.9 rouge:4.2.0
           
           # Generate combined PDF from documentation
@@ -139,13 +134,7 @@ jobs:
             <p>Please refer to the online documentation at: <a href="https://joreci2.github.io/sysbot">https://joreci2.github.io/sysbot</a></p>
           </body></html>
           HTMLEOF
-            # Use wkhtmltopdf if available, otherwise skip PDF
-            if command -v wkhtmltopdf &> /dev/null; then
-              wkhtmltopdf documentation.html documentation.pdf
-            else
-              echo "PDF generation skipped - documentation available online"
-              touch documentation.pdf
-            fi
+            wkhtmltopdf documentation.html documentation.pdf || touch documentation.pdf
           fi
 
       - name: Create Release
@@ -182,13 +171,10 @@ jobs:
             vulnerability-report.json \
             documentation.pdf
 
-      - name: Publish to GitHub Packages
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      - name: Package artifacts available in release
         run: |
-          # Configure pip to use GitHub Packages
-          # Note: GitHub Packages for PyPI requires specific configuration
-          # Users will need to configure their pip to use GitHub Packages
-          echo "Package built and available in release artifacts"
-          echo "To install from GitHub Packages, configure pip with GitHub authentication"
+          echo "✓ Python package built successfully"
+          echo "✓ Artifacts will be attached to GitHub release"
+          echo ""
+          echo "Note: GitHub Packages for PyPI requires organization-level configuration."
+          echo "Package can be installed directly from the release artifacts or PyPI after manual upload."
