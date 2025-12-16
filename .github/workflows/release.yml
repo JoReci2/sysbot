@@ -56,7 +56,7 @@ jobs:
           
           if [ -z "$MILESTONE_NUMBER" ]; then
             echo "No milestone found for $MILESTONE_TITLE, creating empty release notes"
-            echo "RELEASE_NOTES=No milestone found for this release." > release_notes.md
+            echo "No milestone found for this release." > release_notes.md
           else
             echo "Found milestone: $MILESTONE_NUMBER"
             # Get all closed issues in the milestone
@@ -67,9 +67,9 @@ jobs:
       - name: Generate SBOM
         run: |
           pip install cyclonedx-bom
-          # Create requirements.txt from setup.py for SBOM generation
-          pip install -e . --dry-run 2>&1 | grep "Requirement already satisfied\|Collecting" | awk '{print $2}' | grep -v "^$" > requirements.txt || true
-          # Generate SBOM from environment
+          # Install project to capture all dependencies
+          pip install -e .
+          # Generate SBOM from environment (captures installed packages)
           cyclonedx-py environment -o sbom.json || echo '{"bomFormat": "CycloneDX", "specVersion": "1.4", "components": []}' > sbom.json
 
       - name: Run vulnerability analysis
@@ -122,17 +122,30 @@ jobs:
           antora --fetch antora-playbook-pdf.yml || echo "Antora build failed, continuing..."
           
           # Manual PDF generation as fallback
-          sudo apt-get install -y asciidoctor
-          gem install asciidoctor-pdf rouge
+          sudo apt-get install -y asciidoctor ruby-dev
+          sudo gem install asciidoctor-pdf:2.3.9 rouge:4.2.0
           
           # Generate combined PDF from documentation
           find docs/modules/ROOT/pages -name "*.adoc" -type f | head -1 | xargs -I {} asciidoctor-pdf {} -o documentation.pdf || echo "PDF generation failed, creating placeholder"
           
-          # Create placeholder if PDF generation failed
+          # Create a simple HTML placeholder if PDF generation failed
           if [ ! -f documentation.pdf ]; then
-            echo "Documentation PDF generation placeholder" > documentation.txt
-            echo "Please refer to the online documentation at https://joreci2.github.io/sysbot" >> documentation.txt
-            mv documentation.txt documentation.pdf
+            cat > documentation.html << 'HTMLEOF'
+          <!DOCTYPE html>
+          <html><head><title>SysBot Documentation</title></head>
+          <body>
+            <h1>SysBot Documentation</h1>
+            <p>PDF generation was not available during release build.</p>
+            <p>Please refer to the online documentation at: <a href="https://joreci2.github.io/sysbot">https://joreci2.github.io/sysbot</a></p>
+          </body></html>
+          HTMLEOF
+            # Use wkhtmltopdf if available, otherwise skip PDF
+            if command -v wkhtmltopdf &> /dev/null; then
+              wkhtmltopdf documentation.html documentation.pdf
+            else
+              echo "PDF generation skipped - documentation available online"
+              touch documentation.pdf
+            fi
           fi
 
       - name: Create Release
