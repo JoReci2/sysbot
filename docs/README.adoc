@@ -1,79 +1,131 @@
 = SysBot Documentation
 
-Welcome to the SysBot documentation!
+This directory contains the SysBot documentation in Antora AsciiDoc format.
 
-== Documentation Files
+== Structure
 
-* **link:index.adoc[index.adoc]** - Main documentation index and overview
-* **link:setup.adoc[setup.adoc]** - Installation and configuration guide
-* **link:quickstart.adoc[quickstart.adoc]** - Quick start guide with examples
-* **link:robotframework.adoc[robotframework.adoc]** - Working with Robot Framework test suites
-* **link:unittest.adoc[unittest.adoc]** - Working with Python unittest test suites
-* **link:developer.adoc[developer.adoc]** - Developer guide for contributors
-* **link:references.adoc[references.adoc]** - Complete API reference documentation
+The documentation follows the https://docs.antora.org/[Antora] standard structure:
 
-== Getting Started
+----
+docs/
+├── antora.yml              # Component descriptor
+└── modules/
+    ├── ROOT/               # English documentation (default)
+    │   ├── nav.adoc       # Navigation menu
+    │   └── pages/         # Documentation pages
+    │       ├── index.adoc
+    │       ├── setup.adoc
+    │       ├── quickstart.adoc
+    │       ├── robotframework.adoc
+    │       ├── unittest.adoc
+    │       ├── listener_plugin.adoc
+    │       ├── developer.adoc
+    │       └── references.adoc
+    └── fr/                 # French documentation
+        ├── nav.adoc       # Navigation menu (French)
+        └── pages/         # Documentation pages (French)
+            ├── index.adoc
+            ├── setup.adoc
+            ├── quickstart.adoc
+            ├── robotframework.adoc
+            ├── unittest.adoc
+            ├── listener_plugin.adoc
+            ├── developer.adoc
+            └── references.adoc
+----
 
-Start with link:index.adoc[index.adoc] for an overview, then proceed to:
+== Building Documentation
 
-1. link:setup.adoc[Setup] - Install and configure SysBot
-2. link:quickstart.adoc[Quick Start] - Learn basic usage
-3. link:robotframework.adoc[Robot Framework] or link:unittest.adoc[unittest] - Choose your testing framework
-4. link:developer.adoc[Developer Guide] - If you want to contribute or extend SysBot
-5. link:references.adoc[References] - Detailed API documentation
+=== Prerequisites
 
-== Viewing Documentation
+To build the documentation locally, you need:
 
-=== AsciiDoc Viewers
+* Node.js (for Antora)
+* Antora CLI
 
-These AsciiDoc files can be viewed:
-
-* **On GitHub**: GitHub natively renders AsciiDoc files
-* **Using AsciiDoctor**: Install AsciiDoctor and convert to HTML
-* **Using an IDE**: Many IDEs have AsciiDoc preview plugins (VS Code, IntelliJ, etc.)
-
-=== Converting to HTML
-
-To convert documentation to HTML:
+Install Antora:
 
 [source,bash]
 ----
-# Install AsciiDoctor
-gem install asciidoctor
-
-# Convert a single file
-asciidoctor docs/index.adoc
-
-# Convert all files
-asciidoctor docs/*.adoc
+npm install -g @antora/cli @antora/site-generator
 ----
 
-=== Converting to PDF
+=== Build Locally
 
-To convert documentation to PDF:
+From the repository root:
 
 [source,bash]
 ----
-# Install AsciiDoctor PDF
-gem install asciidoctor-pdf
+# Build the documentation site
+antora antora-playbook.yml
 
-# Convert to PDF
-asciidoctor-pdf docs/index.adoc
+# The generated site will be in the public/ directory
 ----
+
+=== View Documentation
+
+After building, you can view the documentation:
+
+[source,bash]
+----
+# Using Python's built-in HTTP server
+cd public
+python -m http.server 8000
+
+# Then open http://localhost:8000 in your browser
+----
+
+== Documentation Organization
+
+=== User Manual
+
+* *Setup* - Installation and configuration
+* *Quick Start* - Getting started guide
+* *Robot Framework* - Using SysBot with Robot Framework
+* *Unittest* - Using SysBot with Python unittest
+* *Database Listener Plugin* - Plugin for storing test results
+
+=== Developer Manual
+
+* *Developer Guide* - Contributing to SysBot
+
+=== References
+
+* *API Reference* - Complete API documentation
+
+== Languages
+
+Documentation is available in:
+
+* *English* (ROOT module) - Default language
+* *French* (fr module) - French translation
 
 == Contributing to Documentation
 
-When contributing to documentation:
+When contributing to the documentation:
 
 1. Follow AsciiDoc syntax
-2. Keep sections organized with proper headings
-3. Include code examples where appropriate
-4. Use consistent formatting
-5. Update the main index.adoc if adding new sections
+2. Add new pages to `docs/modules/ROOT/pages/` or `docs/modules/fr/pages/`
+3. Update the navigation file (`nav.adoc`) when adding new pages
+4. Maintain consistency between English and French versions
+5. Test your changes by building the documentation locally
+
+=== Adding a New Page
+
+. Create the page file in `docs/modules/ROOT/pages/newpage.adoc`
+. Add the corresponding French translation in `docs/modules/fr/pages/newpage.adoc`
+. Update both navigation files:
+  * `docs/modules/ROOT/nav.adoc`
+  * `docs/modules/fr/nav.adoc`
+. Build and test the documentation
+
+== CI/CD Integration
+
+The documentation is automatically built and deployed via GitLab CI when changes are pushed to the main branch. See `.gitlab-ci.yml` for details.
 
 == Support
 
-For documentation issues or questions:
+For documentation issues:
 
-* GitHub Issues: https://github.com/JoReci2/sysbot/issues
-* GitHub Repository: https://github.com/JoReci2/sysbot
+* https://github.com/JoReci2/sysbot/issues[GitHub Issues]
+* https://github.com/JoReci2/sysbot[GitHub Repository]
