@@ -9,3 +9,5 @@ dist/
 report.html
 log.html
 output.xml
+antora-playbook-local.yml
+public/
