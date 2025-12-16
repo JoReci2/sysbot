@@ -4,7 +4,7 @@ This directory contains the SysBot documentation in Antora AsciiDoc format.
 
 == Structure
 
-The documentation follows the https://docs.antora.org/[Antora] standard structure:
+The documentation follows the https://docs.antora.org/[Antora] standard structure with just 3 main files per language:
 
 ----
 docs/
@@ -12,27 +12,57 @@ docs/
 └── modules/
     ├── ROOT/               # English documentation (default)
     │   ├── nav.adoc       # Navigation menu
-    │   └── pages/         # Documentation pages
-    │       ├── index.adoc
-    │       ├── setup.adoc
-    │       ├── quickstart.adoc
-    │       ├── robotframework.adoc
-    │       ├── unittest.adoc
-    │       ├── listener_plugin.adoc
-    │       ├── developer.adoc
-    │       └── references.adoc
+    │   ├── pages/         # Main documentation pages
+    │   │   ├── user-manual.adoc  # Complete user guide
+    │   │   ├── developer.adoc    # Developer guide
+    │   │   └── references.adoc   # API reference
+    │   ├── partials/      # Reusable content snippets
+    │   │   ├── features.adoc
+    │   │   ├── prerequisites.adoc
+    │   │   └── install-pip.adoc
+    │   └── examples/      # Code examples
+    │       ├── basic-ssh.py
+    │       ├── basic-winrm.py
+    │       └── basic-http.py
     └── fr/                 # French documentation
         ├── nav.adoc       # Navigation menu (French)
-        └── pages/         # Documentation pages (French)
-            ├── index.adoc
-            ├── setup.adoc
-            ├── quickstart.adoc
-            ├── robotframework.adoc
-            ├── unittest.adoc
-            ├── listener_plugin.adoc
-            ├── developer.adoc
-            └── references.adoc
+        ├── pages/         # Main documentation pages
+        │   ├── user-manual.adoc
+        │   ├── developer.adoc
+        │   └── references.adoc
+        ├── partials/      # Reusable content snippets
+        └── examples/      # Code examples (same as ROOT)
 ----
+
+== Antora Features Used
+
+=== Partials
+
+Reusable content snippets stored in `partials/` directories. Use with:
+
+[source,asciidoc]
+----
+include::partial$features.adoc[]
+----
+
+=== Examples
+
+Code examples stored in `examples/` directories. Use with:
+
+[source,asciidoc]
+----
+[source,python]
+----
+include::example$basic-ssh.py[]
+----
+----
+
+This approach:
+
+* Reduces duplication across documentation
+* Makes updates easier (change once, update everywhere)
+* Keeps code examples synchronized
+* Simplifies documentation maintenance
 
 == Building Documentation
 
@@ -77,21 +107,39 @@ python -m http.server 8000
 
 == Documentation Organization
 
+The documentation is organized into 3 main sections:
+
 === User Manual
 
-* *Setup* - Installation and configuration
-* *Quick Start* - Getting started guide
-* *Robot Framework* - Using SysBot with Robot Framework
-* *Unittest* - Using SysBot with Python unittest
-* *Database Listener Plugin* - Plugin for storing test results
+Complete user guide covering:
 
-=== Developer Manual
+* Overview and features
+* Installation (via pip, from source, with database support)
+* Quick start guide (basic concepts, first connections, session management)
+* Robot Framework integration (setup, examples, advanced usage)
+* Python unittest integration (examples, test organization, running tests)
+* Database listener plugin (supported databases, usage, schema, querying)
+* Troubleshooting
 
-* *Developer Guide* - Contributing to SysBot
+=== Developer
 
-=== References
+Developer guide covering:
 
-* *API Reference* - Complete API documentation
+* Development environment setup
+* Architecture overview
+* Creating custom connectors, modules, and plugins
+* Testing and code quality
+* Contribution guidelines
+
+=== Reference
+
+Complete API reference covering:
+
+* Core Sysbot class and methods
+* All connectors (SSH, WinRM, HTTP, Socket, Localhost)
+* Modules (Linux, Windows)
+* Plugins (Database listener)
+* Error handling and response formats
 
 == Languages
 
@@ -105,18 +153,37 @@ Documentation is available in:
 When contributing to the documentation:
 
 1. Follow AsciiDoc syntax
-2. Add new pages to `docs/modules/ROOT/pages/` or `docs/modules/fr/pages/`
-3. Update the navigation file (`nav.adoc`) when adding new pages
+2. Use partials for reusable content (stored in `partials/`)
+3. Use examples for code snippets (stored in `examples/`)
 4. Maintain consistency between English and French versions
 5. Test your changes by building the documentation locally
 
-=== Adding a New Page
+=== Adding Content
 
-. Create the page file in `docs/modules/ROOT/pages/newpage.adoc`
-. Add the corresponding French translation in `docs/modules/fr/pages/newpage.adoc`
-. Update both navigation files:
-  * `docs/modules/ROOT/nav.adoc`
-  * `docs/modules/fr/nav.adoc`
+==== To add reusable content (partial):
+
+. Create the partial file in `docs/modules/ROOT/partials/my-content.adoc`
+. Add the same content in French: `docs/modules/fr/partials/my-content.adoc`
+. Use it with: `include::partial$my-content.adoc[]`
+
+==== To add a code example:
+
+. Create the example in `docs/modules/ROOT/examples/my-example.py`
+. Copy to French module: `docs/modules/fr/examples/my-example.py`
+. Include with:
++
+[source,asciidoc]
+----
+[source,python]
+----
+include::example$my-example.py[]
+----
+----
+
+==== To update documentation:
+
+. Edit the main files: `user-manual.adoc`, `developer.adoc`, or `references.adoc`
+. Update both English (ROOT) and French (fr) versions
 . Build and test the documentation
 
 == CI/CD Integration

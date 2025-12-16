@@ -1,11 +1,3 @@
-.xref:index.adoc[Vue d'ensemble]
-.Manuel utilisateur
-* xref:setup.adoc[Installation]
-* xref:quickstart.adoc[Démarrage rapide]
-* xref:robotframework.adoc[Robot Framework]
-* xref:unittest.adoc[Unittest]
-* xref:listener_plugin.adoc[Plugin Listener]
-.Manuel développeur
-* xref:developer.adoc[Guide du développeur]
-.Références
-* xref:references.adoc[Référence API]
+* xref:user-manual.adoc[Manuel utilisateur]
+* xref:developer.adoc[Développeur]
+* xref:references.adoc[Référence]

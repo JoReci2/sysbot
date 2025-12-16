@@ -1,7 +1,7 @@
 site:
   title: SysBot Documentation
   url: https://joreci2.github.io/sysbot
-  start_page: sysbot::index.adoc
+  start_page: sysbot::user-manual.adoc
   
 content:
   sources:

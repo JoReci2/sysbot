@@ -1,11 +1,3 @@
-.xref:index.adoc[Overview]
-.User Manual
-* xref:setup.adoc[Setup & Installation]
-* xref:quickstart.adoc[Quick Start]
-* xref:robotframework.adoc[Robot Framework]
-* xref:unittest.adoc[Unittest]
-* xref:listener_plugin.adoc[Database Listener Plugin]
-.Developer Manual
-* xref:developer.adoc[Developer Guide]
-.References
-* xref:references.adoc[API Reference]
+* xref:user-manual.adoc[User Manual]
+* xref:developer.adoc[Developer]
+* xref:references.adoc[Reference]
