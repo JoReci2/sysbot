@@ -67,11 +67,17 @@ jobs:
       - name: Generate SBOM
         run: |
           pip install cyclonedx-bom
-          cyclonedx-py requirements -o sbom.json || echo '{"bomFormat": "CycloneDX", "specVersion": "1.4", "components": []}' > sbom.json
+          # Create requirements.txt from setup.py for SBOM generation
+          pip install -e . --dry-run 2>&1 | grep "Requirement already satisfied\|Collecting" | awk '{print $2}' | grep -v "^$" > requirements.txt || true
+          # Generate SBOM from environment
+          cyclonedx-py environment -o sbom.json || echo '{"bomFormat": "CycloneDX", "specVersion": "1.4", "components": []}' > sbom.json
 
       - name: Run vulnerability analysis
         run: |
           pip install safety
+          # Install project dependencies for vulnerability scanning
+          pip install -e .
+          # Run safety check
           safety check --json --output vulnerability-report.json || echo '{"vulnerabilities": []}' > vulnerability-report.json
 
       - name: Install Antora and dependencies

@@ -10,4 +10,12 @@ report.html
 log.html
 output.xml
 antora-playbook-local.yml
+antora-playbook-pdf.yml
+antora-playbook-gh.yml
 public/
+build/
+sbom.json
+vulnerability-report.json
+documentation.pdf
+release_notes.md
+final_release_notes.md
