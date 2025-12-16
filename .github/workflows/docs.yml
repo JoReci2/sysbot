@@ -7,6 +7,7 @@ on:
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yml'
+      - 'antora-playbook.yml'
   workflow_dispatch:
 
 permissions:
@@ -26,49 +27,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install AsciiDoc tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y asciidoctor
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
-      - name: Build documentation
+      - name: Install Antora
         run: |
-          mkdir -p _site
-          cd docs
-          
-          # Convert all .adoc files to HTML
-          for file in *.adoc; do
-            if [ -f "$file" ]; then
-              asciidoctor -D ../_site "$file"
-            fi
-          done
-          
-          # If index.adoc was not found, create a simple index.html
-          if [ ! -f "index.adoc" ]; then
-            cat > ../_site/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>SysBot Documentation</title>
-            <meta charset="UTF-8">
-          </head>
-          <body>
-            <h1>SysBot Documentation</h1>
-            <ul>
-          EOF
-            # Dynamically add links to all generated HTML files
-            for html in ../_site/*.html; do
-              if [ -f "$html" ] && [ "$(basename "$html")" != "index.html" ]; then
-                filename=$(basename "$html")
-                title=$(echo "$filename" | sed 's/\.html$//' | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr($i,1,1)),$i)}1')
-                echo "              <li><a href=\"$filename\">$title</a></li>" >> ../_site/index.html
-              fi
-            done
-            cat >> ../_site/index.html << 'EOF'
-            </ul>
-          </body>
-          </html>
-          EOF
+          npm install -g @antora/cli@3.1 @antora/site-generator@3.1
+
+      - name: Build documentation with Antora
+        run: |
+          # Check if antora-playbook.yml exists
+          if [ -f "antora-playbook.yml" ]; then
+            antora --fetch antora-playbook.yml
+          else
+            echo "Warning: antora-playbook.yml not found, skipping Antora build"
+            mkdir -p build/site
+            echo "<h1>Documentation not configured</h1><p>antora-playbook.yml is missing</p>" > build/site/index.html
           fi
 
       - name: Setup Pages
@@ -77,7 +53,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '_site'
+          path: 'build/site'
 
   deploy:
     environment:

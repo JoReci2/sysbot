@@ -67,17 +67,29 @@ jobs:
           format: 'table'
           output: 'vulnerability-report.txt'
 
-      - name: Install AsciiDoc tools
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Antora and asciidoctor-pdf
         run: |
+          npm install -g @antora/cli@3.1 @antora/site-generator@3.1
           sudo apt-get update
-          sudo apt-get install -y asciidoctor ruby-asciidoctor-pdf
+          sudo apt-get install -y ruby-asciidoctor-pdf
 
       - name: Generate PDF documentation
         run: |
-          cd docs
-          if [ -f "index.adoc" ]; then
-            # Create a master document that includes all documentation
-            cat > complete-documentation.adoc << 'EOF'
+          # Build documentation with Antora if playbook exists
+          if [ -f "antora-playbook.yml" ]; then
+            antora --fetch antora-playbook.yml
+            
+            # Find all AsciiDoc files in the Antora build and create a combined PDF
+            if [ -d "build/site" ]; then
+              # Create a master document for PDF generation
+              cd docs
+              if [ -f "index.adoc" ]; then
+                cat > complete-documentation.adoc << 'EOF'
           = SysBot - Complete Documentation
           :doctype: book
           :toc: left
@@ -100,17 +112,65 @@ jobs:
           
           include::references.adoc[leveloffset=+1]
           EOF
-            
-            # Generate PDF from master document
-            asciidoctor-pdf -o ../documentation.pdf complete-documentation.adoc
-          else
-            echo "Warning: index.adoc not found, creating placeholder"
-            cat > ../documentation.txt << 'DOCEOF'
+                
+                # Generate PDF from master document
+                asciidoctor-pdf -o ../documentation.pdf complete-documentation.adoc
+              else
+                echo "Warning: index.adoc not found, creating placeholder"
+                cat > ../documentation.txt << 'DOCEOF'
           Documentation Not Available
           
-          The documentation source file (index.adoc) was not found in the docs directory.
+          The documentation source files were not found.
           Please refer to the project README for basic information.
           DOCEOF
+              fi
+            else
+              echo "Warning: Antora build directory not found"
+              cat > documentation.txt << 'DOCEOF'
+          Documentation Not Available
+          
+          The Antora build did not complete successfully.
+          Please refer to the project README for basic information.
+          DOCEOF
+            fi
+          else
+            # Fallback: use direct AsciiDoc if Antora playbook doesn't exist
+            cd docs
+            if [ -f "index.adoc" ]; then
+              cat > complete-documentation.adoc << 'EOF'
+          = SysBot - Complete Documentation
+          :doctype: book
+          :toc: left
+          :toclevels: 3
+          :sectnums:
+          :icons: font
+          :source-highlighter: highlight.js
+          
+          include::index.adoc[leveloffset=+1]
+          
+          include::setup.adoc[leveloffset=+1]
+          
+          include::quickstart.adoc[leveloffset=+1]
+          
+          include::robotframework.adoc[leveloffset=+1]
+          
+          include::unittest.adoc[leveloffset=+1]
+          
+          include::developer.adoc[leveloffset=+1]
+          
+          include::references.adoc[leveloffset=+1]
+          EOF
+              
+              asciidoctor-pdf -o ../documentation.pdf complete-documentation.adoc
+            else
+              echo "Warning: No documentation found"
+              cat > ../documentation.txt << 'DOCEOF'
+          Documentation Not Available
+          
+          Neither antora-playbook.yml nor docs/index.adoc were found.
+          Please refer to the project README for basic information.
+          DOCEOF
+            fi
           fi
 
       - name: Get milestone issues

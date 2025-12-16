@@ -222,25 +222,27 @@ pytest tests/
 
 ## Documentation
 
-Documentation is written in AsciiDoc format in the `docs/` directory.
+Documentation is written in AsciiDoc format and built using Antora.
 
 ### Building Documentation Locally
 
 ```bash
-# Install AsciiDoc tools
-sudo apt-get install asciidoctor ruby-asciidoctor-pdf
+# Install Node.js and npm (if not already installed)
+# Then install Antora
+npm install -g @antora/cli@3.1 @antora/site-generator@3.1
 
-# Build HTML documentation
-cd docs
-asciidoctor index.adoc
+# Build documentation with Antora
+antora --fetch antora-playbook.yml
 
-# Build PDF documentation
-asciidoctor-pdf -o documentation.pdf index.adoc
+# The generated site will be in build/site/
+
+# For PDF generation, you also need asciidoctor-pdf
+sudo apt-get install ruby-asciidoctor-pdf
 ```
 
 ### Documentation CI/CD
 
-Documentation is automatically built and deployed to GitHub Pages when changes are pushed to the `main` branch. See `.github/workflows/docs.yml`.
+Documentation is automatically built with Antora and deployed to GitHub Pages when changes are pushed to the `main` branch. See `.github/workflows/docs.yml`.
 
 ## CI/CD Workflows
 
@@ -259,14 +261,14 @@ The release workflow automatically:
 2. Publishes to GitHub Packages
 3. Generates SBOM (Software Bill of Materials)
 4. Runs vulnerability scanning
-5. Builds complete PDF documentation (all .adoc files combined)
+5. Builds complete PDF documentation using Antora
 6. Creates GitHub release with release notes from milestone
 
 Configuration: `.github/workflows/release.yml`
 
 ### Documentation Workflow
 
-Automatically builds and deploys documentation to GitHub Pages when changes are pushed to `main`.
+Automatically builds documentation with Antora and deploys to GitHub Pages when changes are pushed to `main`.
 
 Configuration: `.github/workflows/docs.yml`
 
