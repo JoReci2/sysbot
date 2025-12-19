@@ -154,7 +154,8 @@ class TunnelingManager:
     @staticmethod
     def get_protocol(protocol_name, product_name, cache=None):
         try:
-            # New structure: protocol file contains multiple product classes
+            # Refactored: Load protocol classes from consolidated files instead of subdirectories
+            # New structure uses single file per protocol (e.g., ssh.py contains Bash and Powershell)
             module_name = f"sysbot.connectors.{protocol_name.lower()}"
             connector = importlib.import_module(module_name)
             connector_class = getattr(connector, product_name.capitalize())

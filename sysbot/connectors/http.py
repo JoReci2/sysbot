@@ -78,7 +78,7 @@ class Basicauth(ConnectorInterface):
                 raise Exception(f"Failed to execute command: {str(e)}")
 
         if result.status_code != 200:
-            raise Exception(f"Trellix status error: {result.status_code}")
+            raise Exception(f"HTTP request failed with status: {result.status_code}")
         else:
             return result.content
 

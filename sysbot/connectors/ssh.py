@@ -6,7 +6,7 @@ from sysbot.utils.engine import ConnectorInterface
 class Bash(ConnectorInterface):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell).
-    It uses the Netmiko library to establish and manage SSH connections.
+    It uses the paramiko library to establish and manage SSH connections.
     """
 
     def __init__(self, port=22):
@@ -108,7 +108,7 @@ class Powershell(ConnectorInterface):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell)
     with PowerShell commands.
-    It uses the Netmiko library to establish and manage SSH connections.
+    It uses the paramiko library to establish and manage SSH connections.
     """
 
     def __init__(self, port=22):
