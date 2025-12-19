@@ -5,20 +5,20 @@ This plugin provides a Robot Framework listener that can send test results
 to various databases (MongoDB, MySQL, SQLite, PostgreSQL).
 
 Usage:
-    robot --listener sysbot.plugins.listener.DatabaseListener:db_type:connection_string:campaign_name tests/
+    robot --listener sysbot.plugins.robot.listener.bdd.Bdd:db_type:connection_string:campaign_name tests/
 
 Examples:
     # SQLite
-    robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db:MyCampaign tests/
+    robot --listener sysbot.plugins.robot.listener.bdd.Bdd:sqlite:results.db:MyCampaign tests/
 
     # MySQL
-    robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
+    robot --listener sysbot.plugins.robot.listener.bdd.Bdd:mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
 
     # PostgreSQL
-    robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
+    robot --listener sysbot.plugins.robot.listener.bdd.Bdd:postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
 
     # MongoDB
-    robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
+    robot --listener sysbot.plugins.robot.listener.bdd.Bdd:mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
 """
 
 import datetime
@@ -34,7 +34,7 @@ except ImportError:
     SQLALCHEMY_AVAILABLE = False
 
 
-class DatabaseListener:
+class Bdd:
     """
     Robot Framework listener that stores test results in a database.
     
