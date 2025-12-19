@@ -197,7 +197,7 @@ bot.close_all_sessions()
 sysbot/
 ├── Sysbot.py           # Main SysBot class
 ├── connectors/         # Protocol-specific connectors
-├── plugins/            # Plugins utilities (data, vault, listener)
+├── plugins/            # Plugins utilities (data, vault, robot/listener)
 ├── utils/
 │   └── engine.py       # Engine class
 └── modules/            # Modules
@@ -209,16 +209,16 @@ SysBot includes a Robot Framework listener plugin that can store test results in
 
 ```bash
 # Store results in SQLite with campaign name
-robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db:MyCampaign tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:sqlite:results.db:MyCampaign tests/
 
 # Store results in MySQL
-robot --listener sysbot.plugins.listener.DatabaseListener:mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
 
 # Store results in PostgreSQL
-robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
 
 # Store results in MongoDB
-robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
 ```
 
 **Installation**: 
