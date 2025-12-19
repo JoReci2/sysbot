@@ -25,5 +25,5 @@ repolist method works
     Should Not Be Empty    ${output}[0][name]
 
 repofile method works
-    ${output}=    Call Components    modules.linux.dnf.repofile    target    /etc/yum.repos.d/fedora.repo
-    Should Be Equal    ${output}[fedora][enabled]    1
+    ${output}=    Call Components    modules.linux.dnf.repofile    target    /etc/yum.repos.d/almalinux-baseos.repo
+    Should Be Equal    ${output}[baseos][enabled]    1
