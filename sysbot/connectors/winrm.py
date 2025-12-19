@@ -10,13 +10,23 @@ class Powershell(ConnectorInterface):
     It uses the pywinrm library to establish and manage sessions.
     """
 
-    def open_session(self, host, port, login, password):
+    def __init__(self, port=5986):
+        """
+        Initialize WinRM PowerShell connector with default port.
+
+        Args:
+            port (int): Default WinRM HTTPS port (default: 5986).
+        """
+        super().__init__()
+        self.default_port = port
+
+    def open_session(self, host, port=None, login=None, password=None):
         """
         Opens a WinRM session to a Windows system.
 
         Args:
             host (str): Hostname or IP address of the Windows system.
-            port (int): Port of the WinRM service.
+            port (int): Port of the WinRM service. If None, uses default_port.
             login (str): Username for the session.
             password (str): Password for the session.
 
@@ -26,6 +36,8 @@ class Powershell(ConnectorInterface):
         Raises:
             Exception: If there is an error opening the session.
         """
+        if port is None:
+            port = self.default_port
         try:
             p = Protocol(
                 endpoint=f"https://{host}:{port}/wsman",
