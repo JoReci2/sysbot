@@ -205,20 +205,31 @@ sysbot/
 
 ## Database Listener Plugin
 
-SysBot includes a Robot Framework listener plugin that can store test results in various databases using SQLAlchemy. The plugin creates a hierarchical structure: Campaign → Suite → Test Case → Keyword.
+SysBot includes Robot Framework listener plugins that can store test results in various databases. Each database type has its own independent, self-contained listener. The listeners create a hierarchical structure: Campaign → Suite → Test Case → Keyword.
+
+### Available Listeners
+
+- **SQLite**: Lightweight file-based database, perfect for local testing
+- **MySQL**: Popular relational database for team environments
+- **PostgreSQL**: Enterprise-grade relational database
+- **MongoDB**: NoSQL document database for flexible schemas
+
+### Usage
+
+Each listener is used directly with its specific class:
 
 ```bash
-# Store results in SQLite with campaign name
-robot --listener sysbot.plugins.robot.listener.bdd.Bdd:sqlite:results.db:MyCampaign tests/
+# Store results in SQLite
+robot --listener sysbot.plugins.robot.listener.sqlite.Sqlite:results.db:MyCampaign tests/
 
 # Store results in MySQL
-robot --listener sysbot.plugins.robot.listener.bdd.Bdd:mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
+robot --listener sysbot.plugins.robot.listener.mysql.Mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
 
 # Store results in PostgreSQL
-robot --listener sysbot.plugins.robot.listener.bdd.Bdd:postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
+robot --listener sysbot.plugins.robot.listener.postgresql.Postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
 
 # Store results in MongoDB
-robot --listener sysbot.plugins.robot.listener.bdd.Bdd:mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
+robot --listener sysbot.plugins.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
 ```
 
 **Installation**: 
