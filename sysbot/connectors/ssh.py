@@ -147,15 +147,16 @@ class Powershell(ConnectorInterface):
         except Exception as e:
             raise Exception(f"Failed to open SSH session: {str(e)}")
 
-    def execute_command(self, session, command, runas=False, password=None):
+    def execute_command(self, session, command, runas=False, username=None, password=None):
         """
         Executes a command on a system via SSH.
 
         Args:
             session: The SSH session object
             command (str): The command to execute
-            runas (bool): Whether to run with elevated privileges using sudo
-            password (str): Password for sudo authentication (if required)
+            runas (bool): Whether to run with elevated privileges
+            username (str): Username for elevated execution (if different from session user)
+            password (str): Password for elevated execution (if required)
 
         Returns:
             str: The output of the command execution
@@ -164,22 +165,25 @@ class Powershell(ConnectorInterface):
             Exception: If there is an error executing the command
         """
         try:
-            if runas and password is not None:
-                ps_command = (
-                    f"Start-Process PowerShell -Credential $credential "
-                    f'-ArgumentList "-Command", "{command}" -Wait -NoNewWindow'
-                )
-                credential_command = f"""
+            if runas:
+                if username and password:
+                    # Create credentials for RunAs
+                    ps_command = (
+                        f"Start-Process PowerShell -Credential $credential "
+                        f'-ArgumentList "-Command", "{command}" -Wait -NoNewWindow'
+                    )
+                    credential_command = f"""
 $securePassword = ConvertTo-SecureString '{password}' -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential('{username}', $securePassword)
 {ps_command}
 """
-                final_command = credential_command
-            elif runas and password is None:
-                final_command = (
-                    f"Start-Process PowerShell -Verb RunAs "
-                    f'-ArgumentList "-Command", "{command}" -Wait'
-                )
+                    final_command = credential_command
+                else:
+                    # Run as administrator using current session
+                    final_command = (
+                        f"Start-Process PowerShell -Verb RunAs "
+                        f'-ArgumentList "-Command", "{command}" -Wait'
+                        )
             else:
                 final_command = command
 
