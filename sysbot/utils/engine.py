@@ -154,9 +154,9 @@ class TunnelingManager:
     @staticmethod
     def get_protocol(protocol_name, product_name, cache=None):
         try:
-            module_name = (
-                f"sysbot.connectors.{protocol_name.lower()}.{product_name.lower()}"
-            )
+            # Refactored: Load protocol classes from consolidated files instead of subdirectories
+            # New structure uses single file per protocol (e.g., ssh.py contains Bash and Powershell)
+            module_name = f"sysbot.connectors.{protocol_name.lower()}"
             connector = importlib.import_module(module_name)
             connector_class = getattr(connector, product_name.capitalize())
             instance = connector_class()
@@ -169,7 +169,7 @@ class TunnelingManager:
             raise ImportError(f"Failed to import module '{module_name}': {str(e)}")
         except AttributeError as e:
             raise AttributeError(
-                f"Module '{module_name}' does not have the attribute '{protocol_name.lower()}': {str(e)}"
+                f"Module '{module_name}' does not have the class '{product_name.capitalize()}': {str(e)}"
             )
         except Exception as e:
             raise Exception(
