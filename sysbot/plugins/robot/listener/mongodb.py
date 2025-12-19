@@ -4,10 +4,10 @@ MongoDB Listener for Robot Framework BDD Database Integration
 This module provides a Robot Framework listener that stores test results in MongoDB.
 
 Usage:
-    robot --listener sysbot.plugins.robot.listener.bdd_mongodb.BddMongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
+    robot --listener sysbot.plugins.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
 
 Example:
-    robot --listener sysbot.plugins.robot.listener.bdd_mongodb.BddMongodb:mongodb://localhost:27017/test_results:Sprint42 tests/
+    robot --listener sysbot.plugins.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/test_results:Sprint42 tests/
 
 Requirements:
     - pymongo package must be installed
@@ -15,21 +15,28 @@ Requirements:
 """
 
 import datetime
+import json
 from urllib.parse import urlparse
 
-from .bdd_base import BddBaseListener
 
-
-class BddMongodb(BddBaseListener):
+class Mongodb:
     """
     Robot Framework listener that stores test results in MongoDB database.
     
     MongoDB is a NoSQL document database suitable for flexible schema requirements
     and high-volume test result storage.
     
+    The listener creates a hierarchical structure:
+    - Test Campaign (top level)
+      - Test Suite
+        - Test Case
+          - Keyword
+    
     Requires: pymongo
     Install with: pip install pymongo
     """
+    
+    ROBOT_LISTENER_API_VERSION = 3
     
     def __init__(self, connection_string: str, campaign_name: str = "Default Campaign"):
         """
@@ -42,14 +49,25 @@ class BddMongodb(BddBaseListener):
         Raises:
             ImportError: If pymongo is not installed
         """
+        self.connection_string = connection_string
+        self.campaign_name = campaign_name
         self.connection = None
-        
-        super().__init__(connection_string, campaign_name)
+        self.current_campaign = None
+        self.current_suite = None
+        self.current_test = None
         
         # Initialize database connection
         self._connect()
-        self._initialize_schema()
         self._create_or_get_campaign()
+    
+    def _get_metadata(self, data):
+        """Safely extract and convert metadata to JSON string."""
+        try:
+            if hasattr(data, 'metadata') and data.metadata:
+                return json.dumps(dict(data.metadata))
+        except (TypeError, ValueError):
+            pass
+        return '{}'
     
     def _connect(self):
         """Establish MongoDB connection."""
@@ -64,15 +82,6 @@ class BddMongodb(BddBaseListener):
             raise ImportError("pymongo is required for MongoDB support. Install it with: pip install pymongo")
         except Exception as e:
             raise Exception(f"Failed to connect to MongoDB: {e}") from e
-    
-    def _initialize_schema(self):
-        """
-        Initialize MongoDB schema.
-        
-        MongoDB doesn't require explicit schema initialization as it's schema-less,
-        but we keep this method for interface consistency.
-        """
-        pass
     
     def _create_or_get_campaign(self):
         """Create a new campaign or get existing one."""
@@ -177,6 +186,11 @@ class BddMongodb(BddBaseListener):
         
         self.connection.keywords.insert_one(keyword_info)
     
+    def end_keyword(self, data, result):
+        """Called when a keyword ends."""
+        # For simplicity, we don't track keyword end times in this implementation
+        pass
+    
     def close(self):
         """Close database connection and update campaign end time."""
         # Update campaign end time
@@ -196,3 +210,10 @@ class BddMongodb(BddBaseListener):
                 self.connection.client.close()
             except (AttributeError, Exception):
                 pass
+    
+    def __del__(self):
+        """Cleanup when listener is destroyed."""
+        try:
+            self.close()
+        except Exception:
+            pass

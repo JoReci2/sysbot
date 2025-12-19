@@ -1,14 +1,21 @@
 """
-SQL Base Listener for Robot Framework BDD Database Integration
+MySQL Listener for Robot Framework BDD Database Integration
 
-This module provides a base class for SQL database listeners (SQLite, MySQL, PostgreSQL)
-using SQLAlchemy.
+This module provides a Robot Framework listener that stores test results in MySQL.
+
+Usage:
+    robot --listener sysbot.plugins.robot.listener.mysql.Mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
+
+Example:
+    robot --listener sysbot.plugins.robot.listener.mysql.Mysql:mysql://root:password@localhost/test_results:Sprint42 tests/
+
+Requirements:
+    - mysql-connector-python package must be installed
+    - MySQL server must be running and accessible
 """
 
 import datetime
-from typing import Any, Dict, Optional
-
-from .bdd_base import BddBaseListener
+import json
 
 # SQLAlchemy imports
 try:
@@ -19,25 +26,47 @@ except ImportError:
     SQLALCHEMY_AVAILABLE = False
 
 
-class BddSqlListener(BddBaseListener):
+class Mysql:
     """
-    Base class for SQL database listeners using SQLAlchemy.
+    Robot Framework listener that stores test results in MySQL database.
     
-    This class provides common functionality for SQL databases (SQLite, MySQL, PostgreSQL).
-    Subclasses only need to implement the connection URL building logic.
+    MySQL is a popular relational database suitable for medium to large test suites
+    and team environments where centralized test result storage is needed.
+    
+    The listener creates a hierarchical structure:
+    - Test Campaign (top level)
+      - Test Suite
+        - Test Case
+          - Keyword
+    
+    Requires: mysql-connector-python
+    Install with: pip install mysql-connector-python
     """
+    
+    ROBOT_LISTENER_API_VERSION = 3
     
     def __init__(self, connection_string: str, campaign_name: str = "Default Campaign"):
         """
-        Initialize the SQL listener.
+        Initialize the MySQL listener.
         
         Args:
-            connection_string: Database connection string or path
-            campaign_name: Name of the test campaign
+            connection_string: MySQL connection string (e.g., mysql://user:pass@host/db)
+            campaign_name: Name of the test campaign (default: "Default Campaign")
+        
+        Raises:
+            ImportError: If SQLAlchemy or mysql-connector-python is not installed
         """
         if not SQLALCHEMY_AVAILABLE:
             raise ImportError("SQLAlchemy is required for SQL database support. Install it with: pip install sqlalchemy")
         
+        # Check for mysql-connector-python
+        try:
+            import mysql.connector
+        except ImportError:
+            raise ImportError("mysql-connector-python is required for MySQL support. Install it with: pip install mysql-connector-python")
+        
+        self.connection_string = connection_string
+        self.campaign_name = campaign_name
         self.session = None
         self.engine = None
         self.metadata = None
@@ -45,33 +74,38 @@ class BddSqlListener(BddBaseListener):
         self.test_suites_table = None
         self.test_cases_table = None
         self.keywords_table = None
-        
-        super().__init__(connection_string, campaign_name)
+        self.current_campaign = None
+        self.current_suite = None
+        self.current_test = None
         
         # Initialize database connection
         self._connect()
         self._initialize_schema()
         self._create_or_get_campaign()
     
-    def _build_connection_url(self) -> str:
-        """
-        Build SQLAlchemy connection URL.
-        Must be implemented by subclasses.
-        
-        Returns:
-            Connection URL string for SQLAlchemy
-        """
-        raise NotImplementedError("Subclasses must implement _build_connection_url()")
+    def _get_metadata(self, data):
+        """Safely extract and convert metadata to JSON string."""
+        try:
+            if hasattr(data, 'metadata') and data.metadata:
+                return json.dumps(dict(data.metadata))
+        except (TypeError, ValueError):
+            pass
+        return '{}'
     
     def _connect(self):
         """Establish database connection using SQLAlchemy."""
         try:
-            url = self._build_connection_url()
+            # Convert mysql:// to mysql+mysqlconnector:// for SQLAlchemy
+            if self.connection_string.startswith("mysql://"):
+                url = self.connection_string.replace("mysql://", "mysql+mysqlconnector://", 1)
+            else:
+                url = self.connection_string
+            
             self.engine = create_engine(url)
             Session = sessionmaker(bind=self.engine)
             self.session = Session()
         except Exception as e:
-            raise Exception(f"Failed to connect to SQL database: {e}") from e
+            raise Exception(f"Failed to connect to MySQL database: {e}") from e
     
     def _initialize_schema(self):
         """Create SQL database tables using SQLAlchemy."""
@@ -252,6 +286,11 @@ class BddSqlListener(BddBaseListener):
         self.session.execute(ins)
         self.session.flush()
     
+    def end_keyword(self, data, result):
+        """Called when a keyword ends."""
+        # For simplicity, we don't track keyword end times in this implementation
+        pass
+    
     def close(self):
         """Close database connection and update campaign end time."""
         # Update campaign end time
@@ -278,3 +317,10 @@ class BddSqlListener(BddBaseListener):
                 self.engine.dispose()
             except Exception:
                 pass
+    
+    def __del__(self):
+        """Cleanup when listener is destroyed."""
+        try:
+            self.close()
+        except Exception:
+            pass
