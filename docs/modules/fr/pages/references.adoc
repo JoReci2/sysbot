@@ -360,7 +360,7 @@ Consultez xref:listener_plugin.adoc[Documentation du plugin Listener] pour les d
 
 [source,bash]
 ----
-robot --listener sysbot.plugins.listener.DatabaseListener:type_bd:chaine_connexion:nom_campagne tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:type_bd:chaine_connexion:nom_campagne tests/
 ----
 
 == Format de réponse

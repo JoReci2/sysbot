@@ -372,7 +372,7 @@ Stocker les résultats des tests dans une base de données :
 [source,bash]
 ----
 # Exécuter les tests avec le listener
-robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db:MaCampagne tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:sqlite:results.db:MaCampagne tests/
 ----
 
 == Intégration Python unittest
@@ -551,7 +551,7 @@ Le listener peut être utilisé avec l'option `--listener` de Robot Framework :
 
 [source,bash]
 ----
-robot --listener sysbot.plugins.listener.DatabaseListener:type_bd:chaine_connexion:nom_campagne tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:type_bd:chaine_connexion:nom_campagne tests/
 ----
 
 ==== Exemples SQLite
@@ -559,10 +559,10 @@ robot --listener sysbot.plugins.listener.DatabaseListener:type_bd:chaine_connexi
 [source,bash]
 ----
 # Stocker les résultats dans le fichier results.db avec le nom de campagne
-robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:results.db:MaCampagne tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:sqlite:results.db:MaCampagne tests/
 
 # Stocker les résultats dans /tmp/test_results.db
-robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:/tmp/test_results.db:MonProjet tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:sqlite:/tmp/test_results.db:MonProjet tests/
 ----
 
 ==== Exemples MySQL
@@ -570,10 +570,10 @@ robot --listener sysbot.plugins.listener.DatabaseListener:sqlite:/tmp/test_resul
 [source,bash]
 ----
 # Connexion à la base de données MySQL
-robot --listener sysbot.plugins.listener.DatabaseListener:mysql:utilisateur:motdepasse@localhost/testdb:MaCampagne tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:mysql:utilisateur:motdepasse@localhost/testdb:MaCampagne tests/
 
 # Avec un port personnalisé
-robot --listener sysbot.plugins.listener.DatabaseListener:mysql:utilisateur:motdepasse@localhost:3307/testdb:MaCampagne tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:mysql:utilisateur:motdepasse@localhost:3307/testdb:MaCampagne tests/
 ----
 
 ==== Exemples PostgreSQL
@@ -581,10 +581,10 @@ robot --listener sysbot.plugins.listener.DatabaseListener:mysql:utilisateur:motd
 [source,bash]
 ----
 # Connexion à la base de données PostgreSQL
-robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:utilisateur:motdepasse@localhost/testdb:MaCampagne tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:postgresql:utilisateur:motdepasse@localhost/testdb:MaCampagne tests/
 
 # Avec un port personnalisé
-robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:utilisateur:motdepasse@localhost:5433/testdb:MaCampagne tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:postgresql:utilisateur:motdepasse@localhost:5433/testdb:MaCampagne tests/
 ----
 
 ==== Exemples MongoDB
@@ -592,10 +592,10 @@ robot --listener sysbot.plugins.listener.DatabaseListener:postgresql:utilisateur
 [source,bash]
 ----
 # Connexion à la base de données MongoDB
-robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:mongodb://localhost:27017/testdb:MaCampagne tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:mongodb:mongodb://localhost:27017/testdb:MaCampagne tests/
 
 # Avec authentification
-robot --listener sysbot.plugins.listener.DatabaseListener:mongodb:utilisateur:motdepasse@localhost:27017/testdb:MaCampagne tests/
+robot --listener sysbot.plugins.robot.listener.bdd.Bdd:mongodb:utilisateur:motdepasse@localhost:27017/testdb:MaCampagne tests/
 ----
 
 === Schéma de base de données
