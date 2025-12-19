@@ -88,12 +88,12 @@ bot = Sysbot()
 bot.open_session(
     alias="api_server",
     protocol="http",
-    product="http",
+    product="basic",
     host="api.example.com",
     port=443,
     login="api_user",
     password="api_key",
-    auth_method="basic"
+    
 )
 
 # Make API calls
@@ -562,12 +562,12 @@ bot = Sysbot()
 bot.open_session(
     alias="api",
     protocol="http",
-    product="http",
+    product="basic",
     host="api.example.com",
     port=443,
     login="user",
     password="pass",
-    auth_method="basic"
+    
 )
 
 # Test API endpoint

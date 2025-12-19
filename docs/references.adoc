@@ -57,7 +57,7 @@ Open a connection session to a remote system.
 * `product` (str): Product type:
   - SSH: "bash", "powershell"
   - WinRM: "powershell"
-  - HTTP: "http"
+  - HTTP: "none", "basic", "apikey", "bearer", "jwt", "oauth1", "oauth2", "hmac", "certificate", "openid", "saml"
   - Socket: "tcp", "udp"
 * `host` (str): Target host address or IP
 * `port` (int): Connection port (optional, uses defaults from config)
@@ -327,26 +327,34 @@ bot.open_session("windows", "winrm", "powershell", "192.168.1.200",
 ==== Configuration
 
 * **Default Ports**: 80 (HTTP), 443 (HTTPS)
-* **Product**: "http"
-* **Authentication Methods**: none, basic, apikey, bearer, jwt, oauth1, oauth2, hmac, certificate, openid, saml
+* **Products**: Each authentication method is a separate product
+  - "none": No authentication
+  - "basic": HTTP Basic Authentication
+  - "apikey": API Key authentication
+  - "bearer": Bearer token authentication
+  - "jwt": JWT token generation and authentication
+  - "oauth1": OAuth 1.0 authentication
+  - "oauth2": OAuth 2.0 authentication
+  - "hmac": HMAC signature authentication
+  - "certificate": Client certificate authentication (mutual TLS)
+  - "openid": OpenID Connect authentication
+  - "saml": SAML authentication
 
-==== HTTP Connector
+==== HTTP Connector Classes
 
-The HTTP connector supports multiple authentication methods and both HTTP and HTTPS protocols.
+Each authentication method has its own dedicated class:
 
-**Supported Authentication Methods:**
-
-* **none**: No authentication
-* **basic**: HTTP Basic Authentication (username/password)
-* **apikey**: API Key in header or query parameter
-* **bearer**: Bearer token (JWT or other)
-* **jwt**: JWT token generation and authentication
-* **oauth1**: OAuth 1.0
-* **oauth2**: OAuth 2.0
-* **hmac**: HMAC signature authentication
-* **certificate**: Client certificate authentication
-* **openid**: OpenID Connect
-* **saml**: SAML authentication (placeholder)
+* **None_**: No authentication - for public APIs
+* **Basic**: HTTP Basic Authentication with username/password
+* **Apikey**: API Key in header or query parameter
+* **Bearer**: Bearer token (pre-obtained)
+* **Jwt**: JWT with automatic token generation
+* **Oauth1**: OAuth 1.0 with consumer keys
+* **Oauth2**: OAuth 2.0 with access tokens
+* **Hmac**: HMAC signature-based authentication
+* **Certificate**: Client certificate (mutual TLS)
+* **Openid**: OpenID Connect with access token
+* **Saml**: SAML with pre-obtained assertion
 
 ==== Usage Examples
 
@@ -354,28 +362,24 @@ The HTTP connector supports multiple authentication methods and both HTTP and HT
 
 [source,python]
 ----
-bot.open_session("api", "http", "http", "api.example.com", 443,
-                protocol="https", auth_method="none")
+bot.open_session("api", "http", "none", "api.example.com", 443,
+                protocol="https")
 ----
 
 **Basic Authentication:**
 
 [source,python]
 ----
-bot.open_session("api", "http", "http", "api.example.com", 443,
-                "user", "pass", protocol="https", auth_method="basic")
-
-# Or use the backward-compatible basicauth connector
-bot.open_session("api", "http", "basicauth", "api.example.com", 
-                443, "user", "pass")
+bot.open_session("api", "http", "basic", "api.example.com", 443,
+                "user", "pass", protocol="https")
 ----
 
 **API Key Authentication (Header):**
 
 [source,python]
 ----
-bot.open_session("api", "http", "http", "api.example.com", 443,
-                login="your-api-key", protocol="https", auth_method="apikey",
+bot.open_session("api", "http", "apikey", "api.example.com", 443,
+                login="your-api-key", protocol="https",
                 api_key_name="X-API-Key", api_key_location="header")
 ----
 
@@ -383,8 +387,8 @@ bot.open_session("api", "http", "http", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "http", "api.example.com", 443,
-                login="your-api-key", protocol="https", auth_method="apikey",
+bot.open_session("api", "http", "apikey", "api.example.com", 443,
+                login="your-api-key", protocol="https",
                 api_key_name="api_key", api_key_location="query")
 ----
 
@@ -392,8 +396,8 @@ bot.open_session("api", "http", "http", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "http", "api.example.com", 443,
-                protocol="https", auth_method="bearer",
+bot.open_session("api", "http", "bearer", "api.example.com", 443,
+                protocol="https",
                 token="your-bearer-token")
 ----
 
@@ -401,9 +405,9 @@ bot.open_session("api", "http", "http", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "http", "api.example.com", 443,
+bot.open_session("api", "http", "jwt", "api.example.com", 443,
                 login="username", password="jwt-secret",
-                protocol="https", auth_method="jwt",
+                protocol="https",
                 jwt_algorithm="HS256", jwt_expiry=3600,
                 jwt_claims={"role": "admin"})
 ----
@@ -412,10 +416,10 @@ bot.open_session("api", "http", "http", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "http", "api.example.com", 443,
-                protocol="https", auth_method="oauth1",
-                oauth_consumer_key="consumer_key",
-                oauth_consumer_secret="consumer_secret",
+bot.open_session("api", "http", "oauth1", "api.example.com", 443,
+                protocol="https",
+                login="consumer_key",
+                password="consumer_secret",
                 oauth_token="access_token",
                 oauth_token_secret="token_secret")
 ----
@@ -424,8 +428,8 @@ bot.open_session("api", "http", "http", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "http", "api.example.com", 443,
-                protocol="https", auth_method="oauth2",
+bot.open_session("api", "http", "oauth2", "api.example.com", 443,
+                protocol="https",
                 oauth_client_id="client_id",
                 oauth_client_secret="client_secret",
                 oauth_token_url="https://api.example.com/oauth/token",
@@ -436,17 +440,17 @@ bot.open_session("api", "http", "http", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "http", "api.example.com", 443,
+bot.open_session("api", "http", "hmac", "api.example.com", 443,
                 password="hmac-secret", protocol="https",
-                auth_method="hmac", hmac_algorithm="sha256")
+                hmac_algorithm="sha256")
 ----
 
 **Client Certificate Authentication:**
 
 [source,python]
 ----
-bot.open_session("api", "http", "http", "api.example.com", 443,
-                protocol="https", auth_method="certificate",
+bot.open_session("api", "http", "certificate", "api.example.com", 443,
+                protocol="https",
                 cert_path="/path/to/client-cert.pem",
                 key_path="/path/to/client-key.pem")
 ----
@@ -455,8 +459,8 @@ bot.open_session("api", "http", "http", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "http", "api.example.com", 443,
-                protocol="https", auth_method="openid",
+bot.open_session("api", "http", "openid", "api.example.com", 443,
+                protocol="https",
                 access_token="your-access-token",
                 openid_discovery_url="https://provider.example.com/.well-known/openid-configuration")
 ----
@@ -465,8 +469,8 @@ bot.open_session("api", "http", "http", "api.example.com", 443,
 
 [source,python]
 ----
-bot.open_session("api", "http", "http", "api.example.com", 443,
-                protocol="https", auth_method="saml",
+bot.open_session("api", "http", "saml", "api.example.com", 443,
+                protocol="https",
                 saml_assertion="base64-encoded-saml-assertion")
 ----
 
