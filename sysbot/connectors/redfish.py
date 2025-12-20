@@ -9,6 +9,12 @@ establish and manage Redfish API connections.
 import redfish
 from sysbot.utils.engine import ConnectorInterface
 
+# Default Redfish API prefix (standard for most BMC implementations)
+DEFAULT_REDFISH_PREFIX = "/redfish/v1"
+
+# Acceptable HTTP status codes for successful Redfish operations
+REDFISH_SUCCESS_CODES = [200, 201, 202, 204]
+
 
 class Redfish(ConnectorInterface):
     """
@@ -16,15 +22,17 @@ class Redfish(ConnectorInterface):
     It uses the redfish library to establish and manage Redfish connections.
     """
 
-    def __init__(self, port=443):
+    def __init__(self, port=443, redfish_prefix=DEFAULT_REDFISH_PREFIX):
         """
-        Initialize Redfish connector with default port.
+        Initialize Redfish connector with default port and API prefix.
 
         Args:
             port (int): Default HTTPS port for Redfish API (default: 443).
+            redfish_prefix (str): Redfish API prefix (default: "/redfish/v1").
         """
         super().__init__()
         self.default_port = port
+        self.redfish_prefix = redfish_prefix
 
     def open_session(self, host, port=None, login=None, password=None):
         """
@@ -53,7 +61,7 @@ class Redfish(ConnectorInterface):
                 base_url=base_url,
                 username=login,
                 password=password,
-                default_prefix="/redfish/v1"
+                default_prefix=self.redfish_prefix
             )
             client.login(auth="session")
             
@@ -93,7 +101,7 @@ class Redfish(ConnectorInterface):
                 raise ValueError(f"Unsupported HTTP method: {method}")
             
             # Check response status
-            if response.status not in [200, 201, 202, 204]:
+            if response.status not in REDFISH_SUCCESS_CODES:
                 error_msg = f"Request failed with status {response.status}"
                 if hasattr(response, 'dict') and response.dict:
                     error_msg += f": {response.dict}"

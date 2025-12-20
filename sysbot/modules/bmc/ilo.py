@@ -64,17 +64,18 @@ class Ilo(ComponentBase):
         response = self.execute_command(alias, endpoint, method="POST", body=body)
         return response
 
-    def get_firmware_version(self, alias: str) -> dict:
+    def get_firmware_version(self, alias: str, manager_id: str = "1") -> dict:
         """
         Get iLO firmware version information.
 
         Args:
             alias (str): The session alias for the iLO connection.
+            manager_id (str): Manager identifier (default: "1").
 
         Returns:
             dict: Firmware version information.
         """
-        endpoint = "/Managers/1"
+        endpoint = f"/Managers/{manager_id}"
         response = self.execute_command(alias, endpoint, method="GET")
         firmware_info = {
             "FirmwareVersion": response.get("FirmwareVersion"),
