@@ -6,15 +6,26 @@ authentication methods. Each authentication method is implemented as a separate
 self-contained class.
 """
 
+import json
 import requests
 import hmac
 import hashlib
 import base64
 import jwt as jwt_lib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from requests.auth import HTTPBasicAuth
 from requests_oauthlib import OAuth1, OAuth2Session
 from sysbot.utils.engine import ConnectorInterface
+
+# Whitelist of allowed hash algorithms for HMAC
+ALLOWED_HASH_ALGORITHMS = {
+    "sha1": hashlib.sha1,
+    "sha224": hashlib.sha224,
+    "sha256": hashlib.sha256,
+    "sha384": hashlib.sha384,
+    "sha512": hashlib.sha512,
+    "md5": hashlib.md5
+}
 
 
 class BaseHttp(ConnectorInterface):
@@ -50,7 +61,7 @@ class BaseHttp(ConnectorInterface):
         protocol = "https" if self.use_https else "http"
         return f"{protocol}://{host}:{port}{endpoint}"
 
-    def _make_request(self, method, url, auth=None, headers=None, params=None, data=None, json=None, verify=False):
+    def _make_request(self, method, url, auth=None, headers=None, params=None, data=None, json=None, verify=True):
         """
         Make an HTTP request with error handling.
 
@@ -62,7 +73,7 @@ class BaseHttp(ConnectorInterface):
             params (dict): URL parameters.
             data: Request body data.
             json: JSON request body.
-            verify (bool): Whether to verify SSL certificates.
+            verify (bool): Whether to verify SSL certificates (default: True).
 
         Returns:
             requests.Response: The response object.
@@ -139,7 +150,13 @@ class Apikey(BaseHttp):
         Args:
             session (dict): Session configuration.
             command (str): API endpoint path.
-            options (dict): Optional request parameters (method, params, headers, data, json).
+            options (dict): Optional request parameters:
+                - method (str): HTTP method (default: GET)
+                - params (dict): URL query parameters
+                - headers (dict): HTTP headers
+                - data: Request body data
+                - json: JSON request body
+                - verify (bool): Verify SSL certificates (default: True)
 
         Returns:
             bytes: Response content.
@@ -151,6 +168,7 @@ class Apikey(BaseHttp):
         params = options.get("params", {}) if options else {}
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
+        verify = options.get("verify", True) if options else True
         
         if session.get("api_key_in_query"):
             params[session["api_key_header"]] = session["api_key"]
@@ -163,7 +181,8 @@ class Apikey(BaseHttp):
             headers=headers,
             params=params,
             data=data,
-            json=json_data
+            json=json_data,
+            verify=verify
         )
         
         return response.content
@@ -224,7 +243,13 @@ class Basicauth(BaseHttp):
         Args:
             session (dict): Session configuration.
             command (str): API endpoint path.
-            options (dict): Optional request parameters (method, params, headers, data, json).
+            options (dict): Optional request parameters:
+                - method (str): HTTP method (default: GET)
+                - params (dict): URL query parameters
+                - headers (dict): HTTP headers
+                - data: Request body data
+                - json: JSON request body
+                - verify (bool): Verify SSL certificates (default: True)
 
         Returns:
             bytes: Response content.
@@ -236,6 +261,7 @@ class Basicauth(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
+        verify = options.get("verify", True) if options else True
         
         auth = HTTPBasicAuth(session["login"], session["password"])
         
@@ -246,7 +272,8 @@ class Basicauth(BaseHttp):
             headers=headers,
             params=params,
             data=data,
-            json=json_data
+            json=json_data,
+            verify=verify
         )
         
         return response.content
@@ -315,7 +342,13 @@ class Oauth1(BaseHttp):
         Args:
             session (dict): Session configuration.
             command (str): API endpoint path.
-            options (dict): Optional request parameters (method, params, headers, data, json).
+            options (dict): Optional request parameters:
+                - method (str): HTTP method (default: GET)
+                - params (dict): URL query parameters
+                - headers (dict): HTTP headers
+                - data: Request body data
+                - json: JSON request body
+                - verify (bool): Verify SSL certificates (default: True)
 
         Returns:
             bytes: Response content.
@@ -327,6 +360,7 @@ class Oauth1(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
+        verify = options.get("verify", True) if options else True
         
         auth = OAuth1(
             session["client_key"],
@@ -342,7 +376,8 @@ class Oauth1(BaseHttp):
             headers=headers,
             params=params,
             data=data,
-            json=json_data
+            json=json_data,
+            verify=verify
         )
         
         return response.content
@@ -429,7 +464,13 @@ class Oauth2(BaseHttp):
         Args:
             session (dict): Session configuration.
             command (str): API endpoint path.
-            options (dict): Optional request parameters (method, params, headers, data, json).
+            options (dict): Optional request parameters:
+                - method (str): HTTP method (default: GET)
+                - params (dict): URL query parameters
+                - headers (dict): HTTP headers
+                - data: Request body data
+                - json: JSON request body
+                - verify (bool): Verify SSL certificates (default: True)
 
         Returns:
             bytes: Response content.
@@ -441,6 +482,7 @@ class Oauth2(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
+        verify = options.get("verify", True) if options else True
         
         # Add Bearer token to headers
         headers["Authorization"] = f"Bearer {session['access_token']}"
@@ -451,7 +493,8 @@ class Oauth2(BaseHttp):
             headers=headers,
             params=params,
             data=data,
-            json=json_data
+            json=json_data,
+            verify=verify
         )
         
         return response.content
@@ -512,8 +555,8 @@ class Jwt(BaseHttp):
             if login:
                 payload["sub"] = login
             
-            payload["exp"] = datetime.utcnow() + timedelta(minutes=expiration_minutes)
-            payload["iat"] = datetime.utcnow()
+            payload["exp"] = datetime.now(timezone.utc) + timedelta(minutes=expiration_minutes)
+            payload["iat"] = datetime.now(timezone.utc)
             
             token = jwt_lib.encode(payload, secret_key, algorithm=algorithm)
         
@@ -545,6 +588,7 @@ class Jwt(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
+        verify = options.get("verify", True) if options else True
         
         # Add JWT to headers
         headers["Authorization"] = f"Bearer {session['token']}"
@@ -555,7 +599,8 @@ class Jwt(BaseHttp):
             headers=headers,
             params=params,
             data=data,
-            json=json_data
+            json=json_data,
+            verify=verify
         )
         
         return response.content
@@ -633,6 +678,7 @@ class Saml(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
+        verify = options.get("verify", True) if options else True
         
         # Add SAML token to headers
         headers[session["saml_header"]] = session["saml_token"]
@@ -643,7 +689,8 @@ class Saml(BaseHttp):
             headers=headers,
             params=params,
             data=data,
-            json=json_data
+            json=json_data,
+            verify=verify
         )
         
         return response.content
@@ -707,11 +754,13 @@ class Hmac(BaseHttp):
             "use_https": self.use_https
         }
 
-    def _generate_signature(self, method, path, timestamp, body=""):
+    def _generate_signature(self, secret_key, algorithm, method, path, timestamp, body=""):
         """
         Generate HMAC signature for the request.
 
         Args:
+            secret_key (str): The secret key for signing.
+            algorithm (str): Hash algorithm name (must be in whitelist).
             method (str): HTTP method.
             path (str): Request path.
             timestamp (str): Request timestamp.
@@ -719,16 +768,23 @@ class Hmac(BaseHttp):
 
         Returns:
             str: Base64-encoded HMAC signature.
+        
+        Raises:
+            ValueError: If algorithm is not in the whitelist.
         """
+        # Validate algorithm against whitelist
+        if algorithm not in ALLOWED_HASH_ALGORITHMS:
+            raise ValueError(f"Hash algorithm '{algorithm}' is not allowed. Must be one of: {', '.join(ALLOWED_HASH_ALGORITHMS.keys())}")
+        
         # Create string to sign
         string_to_sign = f"{method}\n{path}\n{timestamp}\n{body}"
         
-        # Get hash function
-        hash_func = getattr(hashlib, self.session_algorithm, hashlib.sha256)
+        # Get hash function from whitelist
+        hash_func = ALLOWED_HASH_ALGORITHMS[algorithm]
         
         # Generate HMAC
         signature = hmac.new(
-            self.session_secret_key.encode(),
+            secret_key.encode(),
             string_to_sign.encode(),
             hash_func
         ).digest()
@@ -755,23 +811,26 @@ class Hmac(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
+        verify = options.get("verify", True) if options else True
         
         # Generate timestamp
-        timestamp = str(int(datetime.utcnow().timestamp()))
-        
-        # Store session data for signature generation
-        self.session_algorithm = session["algorithm"]
-        self.session_secret_key = session["secret_key"]
+        timestamp = str(int(datetime.now(timezone.utc).timestamp()))
         
         # Generate signature
         body = ""
         if data:
             body = str(data)
         elif json_data:
-            import json
             body = json.dumps(json_data)
         
-        signature = self._generate_signature(method, command, timestamp, body)
+        signature = self._generate_signature(
+            session["secret_key"],
+            session["algorithm"],
+            method,
+            command,
+            timestamp,
+            body
+        )
         
         # Add authentication headers
         if session.get("access_key"):
@@ -785,7 +844,8 @@ class Hmac(BaseHttp):
             headers=headers,
             params=params,
             data=data,
-            json=json_data
+            json=json_data,
+            verify=verify
         )
         
         return response.content
@@ -996,6 +1056,7 @@ class Openidconnect(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
+        verify = options.get("verify", True) if options else True
         
         # Add Bearer token to headers (prefer access_token)
         token = session.get("access_token") or session.get("id_token")
@@ -1008,7 +1069,8 @@ class Openidconnect(BaseHttp):
             headers=headers,
             params=params,
             data=data,
-            json=json_data
+            json=json_data,
+            verify=verify
         )
         
         return response.content
