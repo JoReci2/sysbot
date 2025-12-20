@@ -98,10 +98,11 @@ class Sysbot(metaclass=ComponentMeta):
                         int(self._remote_port),
                         self._cache.secrets.get(login),
                         self._cache.secrets.get(password),
+                        **kwargs
                     )
                 else:
                     session = self._protocol.open_session(
-                        host, int(self._remote_port), login, password
+                        host, int(self._remote_port), login, password, **kwargs
                     )
                 if not session:
                     raise Exception("Failed to open direct session")
