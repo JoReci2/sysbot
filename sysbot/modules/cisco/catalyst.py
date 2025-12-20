@@ -34,7 +34,7 @@ class Catalyst(ComponentBase):
         output = self.execute_command(alias, "show vlan brief", **kwargs)
         return output
 
-    def vlan_exists(self, alias: str, vlan_id: str, **kwargs) -> bool:
+    def vlan_exists(self, alias: str, vlan_id: int, **kwargs) -> bool:
         """Check if a VLAN exists"""
         output = self.execute_command(alias, f"show vlan id {vlan_id}", **kwargs)
         return "not found" not in output.lower()
@@ -105,9 +105,11 @@ class Catalyst(ComponentBase):
         return output
 
     def interface_is_up(self, alias: str, interface: str, **kwargs) -> bool:
-        """Check if an interface is up"""
+        """Check if an interface is up (both line protocol and interface status)"""
         output = self.execute_command(alias, f"show interface {interface} | include line protocol", **kwargs)
-        return "up" in output.lower() and "down" not in output.lower()
+        # Parse the status line which looks like: "GigabitEthernet1/0/1 is up, line protocol is up"
+        # We check for "is up" and "protocol is up" patterns
+        return " is up" in output.lower() and "protocol is up" in output.lower()
 
     def save_config(self, alias: str, **kwargs) -> str:
         """Save running configuration to startup configuration"""
