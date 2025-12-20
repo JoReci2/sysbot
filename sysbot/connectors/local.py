@@ -178,12 +178,17 @@ class Powershell(ConnectorInterface):
             shell_exe = session.get("shell", "powershell.exe")
             
             if runas:
+                # Encode the command to avoid escaping issues
+                encoded_inner_command = base64.b64encode(
+                    command.encode("utf-16-le")
+                ).decode("ascii")
+                
                 # For local execution with runas, we need to use Start-Process with elevated privileges
                 if username and password:
                     # Create credentials for RunAs with different user
                     ps_command = (
                         f"Start-Process {shell_exe} -Credential $credential "
-                        f'-ArgumentList "-Command", "{command}" -Wait -NoNewWindow'
+                        f'-ArgumentList "-EncodedCommand", "{encoded_inner_command}" -Wait -NoNewWindow'
                     )
                     credential_command = f"""
 $securePassword = ConvertTo-SecureString '{password}' -AsPlainText -Force
@@ -196,14 +201,14 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
                     # Note: This will fail on non-Windows unless running as root
                     final_command = (
                         f"Start-Process {shell_exe} -Verb RunAs "
-                        f'-ArgumentList "-Command", "{command}" -Wait'
+                        f'-ArgumentList "-EncodedCommand", "{encoded_inner_command}" -Wait'
                     )
             else:
                 final_command = command
 
             # Encode command in base64 for PowerShell
             encoded_command = base64.b64encode(
-                final_command.encode("utf_16_le")
+                final_command.encode("utf-16-le")
             ).decode("ascii")
 
             # Execute the command locally
