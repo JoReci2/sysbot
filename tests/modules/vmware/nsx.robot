@@ -4,6 +4,9 @@ Name           vmware.nsx
 Library        Collections
 Library        sysbot.Sysbot
 
+Suite Setup       Init test suite
+Suite Teardown    Close All Sessions
+
 *** Variables ***
 ${PORT}=        443
 
@@ -18,13 +21,8 @@ Init test suite
     #   username: "admin"
     #   password: "password"
     Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
-    # Open HTTP session with basicauth to NSX Manager
-    Open Session    nsx    http    basicauth    connexion.nsx.host    ${PORT}   connexion.nsx.username    connexion.nsx.password    is_secret=True
-
-*** Settings ***
-
-Suite Teardown    Close All Sessions
-Suite Setup       Init test suite
+    # Open HTTPS session with basicauth to NSX Manager
+    Open Session    nsx    https    basicauth    connexion.nsx.host    ${PORT}   connexion.nsx.username    connexion.nsx.password    is_secret=True
 
 *** Test Cases ***
 
