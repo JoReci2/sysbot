@@ -180,9 +180,144 @@ bot.close_all_sessions()
 - **Bash**: Full support for bash via SSH
 - **Powershell**: Support for powershell via SSH (requires SSH server)
 
-### HTTP
-- **BasicAuth**: Support for API connections
-- **vsphere**: Support for ESXi and vCenter
+### HTTP/HTTPS
+
+SysBot provides a generic HTTP/HTTPS connector with support for 9 authentication methods. Each authentication method is implemented as a separate, self-contained class.
+
+#### Supported Authentication Methods
+
+1. **API Key (`apikey`)** - API Key authentication via headers or query parameters
+2. **Basic Auth (`basicauth`)** - Standard HTTP Basic Authentication
+3. **OAuth 1.0 (`oauth1`)** - OAuth 1.0 authentication (RFC 5849)
+4. **OAuth 2.0 (`oauth2`)** - OAuth 2.0 Bearer token authentication
+5. **JWT (`jwt`)** - JSON Web Token authentication with automatic token generation
+6. **SAML (`saml`)** - SAML assertion/token authentication
+7. **HMAC (`hmac`)** - HMAC signature-based authentication
+8. **Certificate (`certificate`)** - Client certificate authentication (mutual TLS)
+9. **OpenID Connect (`openidconnect`)** - OpenID Connect authentication
+10. **vSphere (`vsphere`)** - VMware vSphere/ESXi connections
+
+#### Usage Examples
+
+##### Basic Authentication
+```python
+bot.open_session(
+    alias="my_api",
+    protocol="http",
+    product="basicauth",
+    host="api.example.com",
+    port=443,
+    login="username",
+    password="password"
+)
+
+result = bot.execute_command("my_api", "/users", options={"method": "GET"})
+```
+
+##### API Key Authentication
+```python
+bot.open_session(
+    alias="my_api",
+    protocol="http",
+    product="apikey",
+    host="api.example.com",
+    port=443,
+    api_key="your-api-key-here",
+    api_key_header="X-API-Key"  # Custom header name (optional)
+)
+
+result = bot.execute_command("my_api", "/data", options={"method": "GET"})
+```
+
+##### OAuth 2.0 Authentication
+```python
+bot.open_session(
+    alias="my_api",
+    protocol="http",
+    product="oauth2",
+    host="api.example.com",
+    port=443,
+    client_id="your-client-id",
+    client_secret="your-client-secret",
+    access_token="your-access-token"
+)
+
+result = bot.execute_command("my_api", "/protected", options={"method": "GET"})
+```
+
+##### JWT Authentication
+```python
+bot.open_session(
+    alias="my_api",
+    protocol="http",
+    product="jwt",
+    host="api.example.com",
+    port=443,
+    login="user@example.com",
+    secret_key="your-secret-key",
+    algorithm="HS256"
+)
+
+result = bot.execute_command("my_api", "/secure", options={"method": "GET"})
+```
+
+##### Certificate Authentication
+```python
+bot.open_session(
+    alias="my_api",
+    protocol="http",
+    product="certificate",
+    host="api.example.com",
+    port=443,
+    cert_file="/path/to/client.crt",
+    key_file="/path/to/client.key",
+    ca_bundle="/path/to/ca-bundle.crt"  # Optional
+)
+
+result = bot.execute_command("my_api", "/secure", options={"method": "GET"})
+```
+
+##### POST Request with JSON Data
+```python
+result = bot.execute_command(
+    "my_api",
+    "/users",
+    options={
+        "method": "POST",
+        "json": {"name": "John Doe", "email": "john@example.com"}
+    }
+)
+```
+
+##### VMware vSphere Connection
+```python
+bot.open_session(
+    alias="vcenter",
+    protocol="http",
+    product="vsphere",
+    host="vcenter.example.com",
+    port=443,
+    login="administrator@vsphere.local",
+    password="password"
+)
+```
+
+#### HTTP/HTTPS Configuration
+
+- **SSL Verification**: Enabled by default for security. Can be disabled per request:
+  ```python
+  result = bot.execute_command("my_api", "/endpoint", options={"verify": False})
+  ```
+
+- **HTTP vs HTTPS**: Configure via port (80 for HTTP, 443 for HTTPS) or use `use_https` parameter
+
+- **Request Options**: All authentication methods support:
+  - `method`: HTTP method (GET, POST, PUT, DELETE, etc.)
+  - `headers`: Custom HTTP headers
+  - `params`: URL query parameters
+  - `data`: Request body data
+  - `json`: JSON request body
+  - `verify`: SSL certificate verification (default: True)
 
 ### WinRM
 - **Powershell**: Native Windows Remote Management support
