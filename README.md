@@ -180,6 +180,78 @@ bot.close_all_sessions()
 - **Bash**: Full support for bash via SSH
 - **Powershell**: Support for powershell via SSH (requires SSH server)
 
+### Local Execution
+- **Bash**: Execute bash/shell commands locally without SSH
+- **Powershell**: Execute PowerShell commands locally without SSH or WinRM
+
+SysBot provides local execution connectors that allow running commands directly on the local machine without the overhead of SSH or WinRM connections. This is useful for:
+- Running commands on the local system during automation
+- Testing without remote systems
+- Avoiding connection overhead for local operations
+
+#### Usage Examples
+
+##### Local Bash Execution
+```python
+from sysbot.Sysbot import Sysbot
+
+bot = Sysbot()
+
+# Open a local bash session (no actual connection is made)
+bot.open_session(
+    alias="local_bash",
+    protocol="local",
+    product="bash",
+    host="localhost",  # Required but not used
+    port=0  # Required but not used
+)
+
+# Execute commands locally
+result = bot.execute_command("local_bash", "ls -la")
+print(result)
+
+# Execute with sudo (requires password or NOPASSWD in sudoers)
+result = bot.execute_command(
+    "local_bash", 
+    "cat /etc/shadow", 
+    runas=True, 
+    password="your_password"
+)
+
+bot.close_session("local_bash")
+```
+
+##### Local PowerShell Execution
+```python
+from sysbot.Sysbot import Sysbot
+
+bot = Sysbot()
+
+# Open a local PowerShell session (no actual connection is made)
+bot.open_session(
+    alias="local_ps",
+    protocol="local",
+    product="powershell",
+    host="localhost",  # Required but not used
+    port=0  # Required but not used
+)
+
+# Execute PowerShell commands locally
+result = bot.execute_command("local_ps", "Get-Process | Select-Object -First 5")
+print(result)
+
+# Execute with elevated privileges (Windows only)
+result = bot.execute_command(
+    "local_ps",
+    "Get-Service",
+    runas=True
+)
+
+bot.close_session("local_ps")
+```
+
+**Note**: For local execution, the `host` and `port` parameters are required by the API but are not actually used. You can pass any values like `"localhost"` and `0`.
+
 ### HTTP/HTTPS
 
 SysBot provides a generic HTTP/HTTPS connector with support for 9 authentication methods. Each authentication method is implemented as a separate, self-contained class.
