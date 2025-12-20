@@ -555,8 +555,9 @@ class Jwt(BaseHttp):
             if login:
                 payload["sub"] = login
             
-            payload["exp"] = datetime.now(timezone.utc) + timedelta(minutes=expiration_minutes)
-            payload["iat"] = datetime.now(timezone.utc)
+            now = datetime.now(timezone.utc)
+            payload["exp"] = now + timedelta(minutes=expiration_minutes)
+            payload["iat"] = now
             
             token = jwt_lib.encode(payload, secret_key, algorithm=algorithm)
         
@@ -932,7 +933,14 @@ class Certificate(BaseHttp):
             cert = session["cert_file"]
         
         # Determine verification setting
-        verify = session.get("ca_bundle", False)
+        # If ca_bundle is provided, use it; otherwise default to True for security
+        # Can be overridden via options
+        if options and "verify" in options:
+            verify = options["verify"]
+        elif session.get("ca_bundle"):
+            verify = session["ca_bundle"]
+        else:
+            verify = True
         
         try:
             response = requests.request(
