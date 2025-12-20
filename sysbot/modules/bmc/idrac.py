@@ -38,7 +38,7 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Systems/{system_id}"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_power_state(self, alias: str, system_id: str = "System.Embedded.1") -> str:
         """
@@ -70,7 +70,7 @@ class Idrac(ComponentBase):
         endpoint = f"{REDFISH_PREFIX}/Systems/{system_id}/Actions/ComputerSystem.Reset"
         body = {"ResetType": action}
         response = self.execute_command(alias, endpoint, options={"method": "POST", "json": body})
-        return json.loads(response) if response else {}
+        return json.loads(response.decode()) if response else {}
 
     def get_firmware_version(self, alias: str, manager_id: str = "iDRAC.Embedded.1") -> dict:
         """
@@ -85,7 +85,7 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        data = json.loads(response)
+        data = json.loads(response.decode())
         firmware_info = {
             "FirmwareVersion": data.get("FirmwareVersion"),
             "Model": data.get("Model"),
@@ -120,7 +120,7 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Systems/{system_id}/Processors"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_memory(self, alias: str, system_id: str = "System.Embedded.1") -> dict:
         """
@@ -135,7 +135,7 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Systems/{system_id}/Memory"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_network_adapters(self, alias: str, system_id: str = "System.Embedded.1") -> dict:
         """
@@ -150,7 +150,7 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Systems/{system_id}/NetworkAdapters"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_storage(self, alias: str, system_id: str = "System.Embedded.1") -> dict:
         """
@@ -165,7 +165,7 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Systems/{system_id}/Storage"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_thermal_info(self, alias: str, chassis_id: str = "Chassis.System.Embedded.1") -> dict:
         """
@@ -180,7 +180,7 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Chassis/{chassis_id}/Thermal"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_power_info(self, alias: str, chassis_id: str = "Chassis.System.Embedded.1") -> dict:
         """
@@ -195,7 +195,7 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Chassis/{chassis_id}/Power"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_sel_logs(self, alias: str, manager_id: str = "iDRAC.Embedded.1") -> dict:
         """
@@ -210,7 +210,7 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}/LogServices/Sel/Entries"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_lifecycle_log(self, alias: str, manager_id: str = "iDRAC.Embedded.1") -> dict:
         """
@@ -225,7 +225,7 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}/LogServices/Lclog/Entries"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def clear_sel_logs(self, alias: str, manager_id: str = "iDRAC.Embedded.1") -> dict:
         """
@@ -240,7 +240,7 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}/LogServices/Sel/Actions/LogService.ClearLog"
         response = self.execute_command(alias, endpoint, options={"method": "POST", "json": {}})
-        return json.loads(response) if response else {}
+        return json.loads(response.decode()) if response else {}
 
     def get_virtual_media(self, alias: str, manager_id: str = "iDRAC.Embedded.1") -> dict:
         """
@@ -255,7 +255,7 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}/VirtualMedia"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_jobs(self, alias: str, manager_id: str = "iDRAC.Embedded.1") -> dict:
         """
@@ -270,4 +270,4 @@ class Idrac(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}/Jobs"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())

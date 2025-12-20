@@ -38,7 +38,7 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Systems/{system_id}"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_power_state(self, alias: str, system_id: str = "1") -> str:
         """
@@ -70,7 +70,7 @@ class Ilo(ComponentBase):
         endpoint = f"{REDFISH_PREFIX}/Systems/{system_id}/Actions/ComputerSystem.Reset"
         body = {"ResetType": action}
         response = self.execute_command(alias, endpoint, options={"method": "POST", "json": body})
-        return json.loads(response) if response else {}
+        return json.loads(response.decode()) if response else {}
 
     def get_firmware_version(self, alias: str, manager_id: str = "1") -> dict:
         """
@@ -85,7 +85,7 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        data = json.loads(response)
+        data = json.loads(response.decode())
         firmware_info = {
             "FirmwareVersion": data.get("FirmwareVersion"),
             "Model": data.get("Model"),
@@ -120,7 +120,7 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Systems/{system_id}/Processors"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_memory(self, alias: str, system_id: str = "1") -> dict:
         """
@@ -135,7 +135,7 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Systems/{system_id}/Memory"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_network_adapters(self, alias: str, system_id: str = "1") -> dict:
         """
@@ -150,7 +150,7 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Systems/{system_id}/NetworkAdapters"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_storage(self, alias: str, system_id: str = "1") -> dict:
         """
@@ -165,7 +165,7 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Systems/{system_id}/Storage"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_thermal_info(self, alias: str, chassis_id: str = "1") -> dict:
         """
@@ -180,7 +180,7 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Chassis/{chassis_id}/Thermal"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_power_info(self, alias: str, chassis_id: str = "1") -> dict:
         """
@@ -195,7 +195,7 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Chassis/{chassis_id}/Power"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def get_event_log(self, alias: str, manager_id: str = "1") -> dict:
         """
@@ -210,7 +210,7 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}/LogServices/IEL/Entries"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
-        return json.loads(response)
+        return json.loads(response.decode())
 
     def clear_event_log(self, alias: str, manager_id: str = "1") -> dict:
         """
@@ -225,4 +225,4 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}/LogServices/IEL/Actions/LogService.ClearLog"
         response = self.execute_command(alias, endpoint, options={"method": "POST", "json": {}})
-        return json.loads(response) if response else {}
+        return json.loads(response.decode()) if response else {}
