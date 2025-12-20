@@ -108,7 +108,7 @@ class Redfish(ConnectorInterface):
                 raise Exception(error_msg)
             
             # Return the response data
-            return response.dict if hasattr(response, 'dict') else {}
+            return response.dict if (hasattr(response, 'dict') and response.dict) else {}
             
         except Exception as e:
             raise Exception(f"Failed to execute Redfish command: {str(e)}")
