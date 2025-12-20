@@ -4,6 +4,9 @@ Name           cisco.catalyst
 Library        Collections
 Library        sysbot.Sysbot
 
+Suite Setup       Init test suite
+Suite Teardown    Close All Sessions
+
 *** Variables ***
 ${PORT}=        22
 
@@ -12,11 +15,6 @@ ${PORT}=        22
 Init test suite
     Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
     Open Session    catalyst_switch    ssh    bash    connexion.host    ${PORT}   connexion.username    connexion.password    is_secret=True
-
-*** Settings ***
-
-Suite Teardown    Close All Sessions
-Suite Setup       Init test suite
 
 *** Test Cases ***
 version method works
