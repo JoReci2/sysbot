@@ -56,6 +56,7 @@ class Bash(ConnectorInterface):
             command (str): The command to execute
             runas (bool): Whether to run with elevated privileges using sudo
             password (str): Password for sudo authentication (if required)
+                          Note: Password is passed via echo which may be visible in process lists
 
         Returns:
             str: The output of the command execution
@@ -106,11 +107,8 @@ class Bash(ConnectorInterface):
         Raises:
             Exception: If there is an error closing the session.
         """
-        try:
-            # No actual cleanup needed for local execution
-            pass
-        except Exception as e:
-            raise Exception(f"Failed to close local bash session: {str(e)}")
+        # No actual cleanup needed for local execution
+        pass
 
 
 class Powershell(ConnectorInterface):
@@ -166,6 +164,7 @@ class Powershell(ConnectorInterface):
             runas (bool): Whether to run with elevated privileges
             username (str): Username for elevated execution (if different from current user)
             password (str): Password for elevated execution (if required)
+                          Note: Password is embedded in PowerShell script which may be visible
 
         Returns:
             str: The output of the command execution
@@ -239,8 +238,5 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
         Raises:
             Exception: If there is an error closing the session.
         """
-        try:
-            # No actual cleanup needed for local execution
-            pass
-        except Exception as e:
-            raise Exception(f"Failed to close local PowerShell session: {str(e)}")
+        # No actual cleanup needed for local execution
+        pass
