@@ -701,6 +701,74 @@ new_rule(connector, alias, rule_params) -> bool
 remove_rule(connector, alias, rule_name) -> bool
 ----
 
+=== VMware Modules
+
+==== vmware.nsx
+
+VMware NSX network virtualization and security management.
+
+**Functions:**
+
+[source,python]
+----
+# Get logical switches
+get_logical_switches(alias) -> list
+
+# Get logical routers
+get_logical_routers(alias) -> list
+
+# Get transport zones
+get_transport_zones(alias) -> list
+
+# Get edge clusters
+get_edge_clusters(alias) -> list
+
+# Get firewall sections
+get_firewall_sections(alias) -> list
+
+# Get firewall rules
+get_firewall_rules(alias, section_id=None) -> list
+
+# Get security groups
+get_security_groups(alias) -> list
+
+# Get IP pools
+get_ip_pools(alias) -> list
+
+# Get NSX controllers
+get_controllers(alias) -> list
+
+# Get NSX version information
+get_version(alias) -> dict
+----
+
+**Example:**
+
+[source,python]
+----
+# Python
+bot = Sysbot("vmware.nsx")
+bot.open_session("nsx", "http", "basicauth", "nsx-manager.example.com", 
+                443, "admin", "password")
+
+# Get logical switches
+switches = bot.modules.vmware.nsx.get_logical_switches("nsx")
+
+# Get firewall rules from a specific section
+rules = bot.modules.vmware.nsx.get_firewall_rules("nsx", section_id="1234")
+
+# Get NSX version
+version = bot.modules.vmware.nsx.get_version("nsx")
+----
+
+[source,robot]
+----
+# Robot Framework
+${switches}=    Call Components    modules.vmware.nsx.get_logical_switches    nsx
+${routers}=     Call Components    modules.vmware.nsx.get_logical_routers     nsx
+${version}=     Call Components    modules.vmware.nsx.get_version             nsx
+----
+
 == Plugins Reference
 
 === data Plugin
