@@ -195,7 +195,6 @@ SysBot provides a generic HTTP/HTTPS connector with support for 9 authentication
 7. **HMAC (`hmac`)** - HMAC signature-based authentication
 8. **Certificate (`certificate`)** - Client certificate authentication (mutual TLS)
 9. **OpenID Connect (`openidconnect`)** - OpenID Connect authentication
-10. **vSphere (`vsphere`)** - VMware vSphere/ESXi connections
 
 #### Usage Examples
 
@@ -286,19 +285,6 @@ result = bot.execute_command(
         "method": "POST",
         "json": {"name": "John Doe", "email": "john@example.com"}
     }
-)
-```
-
-##### VMware vSphere Connection
-```python
-bot.open_session(
-    alias="vcenter",
-    protocol="http",
-    product="vsphere",
-    host="vcenter.example.com",
-    port=443,
-    login="administrator@vsphere.local",
-    password="password"
 )
 ```
 
