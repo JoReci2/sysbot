@@ -7,8 +7,8 @@ without requiring an SSH or WinRM connection.
 
 from sysbot.Sysbot import Sysbot
 
-# Initialize SysBot
-bot = Sysbot()
+# Initialize SysBot (load no modules to avoid module errors)
+bot = Sysbot([])
 
 # Open a local PowerShell session
 # Note: host and port are required by the API but not used for local execution

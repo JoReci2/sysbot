@@ -7,8 +7,8 @@ sans nécessiter de connexion SSH.
 
 from sysbot.Sysbot import Sysbot
 
-# Initialiser SysBot
-bot = Sysbot()
+# Initialiser SysBot (ne charge aucun module pour éviter les erreurs de module)
+bot = Sysbot([])
 
 # Ouvrir une session bash locale
 # Note: host et port sont requis par l'API mais ne sont pas utilisés pour l'exécution locale
