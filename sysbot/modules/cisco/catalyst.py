@@ -108,8 +108,11 @@ class Catalyst(ComponentBase):
         """Check if an interface is up (both line protocol and interface status)"""
         output = self.execute_command(alias, f"show interface {interface} | include line protocol", **kwargs)
         # Parse the status line which looks like: "GigabitEthernet1/0/1 is up, line protocol is up"
-        # We check for "is up" and "protocol is up" patterns
-        return " is up" in output.lower() and "protocol is up" in output.lower()
+        # We check for specific patterns to avoid false positives
+        output_lower = output.lower()
+        return " is up, line protocol is up" in output_lower or (
+            f"{interface.lower()} is up" in output_lower and "line protocol is up" in output_lower
+        )
 
     def save_config(self, alias: str, **kwargs) -> str:
         """Save running configuration to startup configuration"""
