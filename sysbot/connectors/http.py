@@ -1091,3 +1091,124 @@ class Openidconnect(BaseHttp):
             session (dict): Session configuration.
         """
         pass
+
+
+class Vsphere(BaseHttp):
+    """
+    HTTP connector with VMware vSphere session-based authentication.
+    Authenticates with vCenter Server and maintains a session token.
+    """
+
+    def __init__(self, port=443, use_https=True):
+        """
+        Initialize vSphere connector.
+
+        Args:
+            port (int): Default port (default: 443).
+            use_https (bool): Whether to use HTTPS (default: True).
+        """
+        super().__init__(port, use_https)
+
+    def open_session(self, host, port=None, login=None, password=None):
+        """
+        Opens a session with vSphere authentication.
+
+        Args:
+            host (str): vCenter hostname or IP address.
+            port (int): Port. If None, uses default_port.
+            login (str): vSphere username (e.g., administrator@vsphere.local).
+            password (str): vSphere password.
+
+        Returns:
+            dict: Session configuration with session token.
+        """
+        if port is None:
+            port = self.default_port
+        
+        # Create session by authenticating with vCenter
+        protocol = "https" if self.use_https else "http"
+        auth_url = f"{protocol}://{host}:{port}/rest/com/vmware/cis/session"
+        
+        try:
+            response = requests.post(
+                auth_url,
+                auth=HTTPBasicAuth(login, password),
+                verify=False  # vSphere often uses self-signed certs
+            )
+            response.raise_for_status()
+            session_data = response.json()
+            session_token = session_data.get("value")
+            
+            if not session_token:
+                raise Exception("Failed to obtain vSphere session token")
+            
+            return {
+                "host": host,
+                "port": port,
+                "session_token": session_token,
+                "use_https": self.use_https,
+                "login": login,
+                "password": password
+            }
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"vSphere authentication failed: {str(e)}")
+
+    def execute_command(self, session, command, options=None):
+        """
+        Execute an HTTP request with vSphere session authentication.
+
+        Args:
+            session (dict): Session configuration.
+            command (str): API endpoint path.
+            options (dict): Optional request parameters:
+                - method (str): HTTP method (default: GET)
+                - params (dict): URL query parameters
+                - headers (dict): HTTP headers
+                - data: Request body data
+                - json: JSON request body
+                - verify (bool): Verify SSL certificates (default: False for vSphere)
+
+        Returns:
+            bytes: Response content.
+        """
+        url = self._build_url(session["host"], session["port"], command)
+        
+        method = options.get("method", "GET") if options else "GET"
+        headers = options.get("headers", {}) if options else {}
+        params = options.get("params") if options else None
+        data = options.get("data") if options else None
+        json_data = options.get("json") if options else None
+        verify = options.get("verify", False) if options else False
+        
+        # Add vSphere session token to headers
+        headers["vmware-api-session-id"] = session["session_token"]
+        
+        response = self._make_request(
+            method=method,
+            url=url,
+            headers=headers,
+            params=params,
+            data=data,
+            json=json_data,
+            verify=verify
+        )
+        
+        return response.content
+
+    def close_session(self, session):
+        """
+        Close the vSphere session by deleting the session token.
+
+        Args:
+            session (dict): Session configuration.
+        """
+        try:
+            protocol = "https" if session.get("use_https", True) else "http"
+            url = f"{protocol}://{session['host']}:{session['port']}/rest/com/vmware/cis/session"
+            
+            headers = {"vmware-api-session-id": session["session_token"]}
+            
+            requests.delete(url, headers=headers, verify=False)
+        except Exception:
+            # Ignore errors during session cleanup
+            pass
