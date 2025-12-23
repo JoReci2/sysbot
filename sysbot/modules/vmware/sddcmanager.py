@@ -3,22 +3,31 @@ import json
 
 
 class Sddcmanager(ComponentBase):
+    """
+    SDDC Manager module for VMware Cloud Foundation.
+    
+    This module uses the SDDC Manager REST API directly.
+    Requires an HTTP session with Basic Auth or other authentication method.
+    """
+    
     def get_hosts(self, alias: str, **kwargs) -> list:
         """Get all hosts managed by SDDC Manager."""
-        command = "Get-VCFHost | Select-Object id, fqdn, esxiVersion, status, hardwareVendor, hardwareModel | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/hosts", options=options)
         if not output or output.strip() == "":
             return []
         result = json.loads(output)
-        # Wrap single objects in a list
-        if isinstance(result, dict):
-            return [result]
-        return result
+        # API returns {"elements": [...]}
+        if isinstance(result, dict) and "elements" in result:
+            return result["elements"]
+        return result if isinstance(result, list) else [result]
 
     def get_host(self, alias: str, host_id: str, **kwargs) -> dict:
         """Get a specific host by ID."""
-        command = f"Get-VCFHost -id '{host_id}' | Select-Object id, fqdn, esxiVersion, status, hardwareVendor, hardwareModel, ipAddresses, cpu, memory | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, f"/v1/hosts/{host_id}", options=options)
         if not output or output.strip() == "":
             return {}
         result = json.loads(output)
@@ -26,20 +35,22 @@ class Sddcmanager(ComponentBase):
 
     def get_domains(self, alias: str, **kwargs) -> list:
         """Get all workload domains."""
-        command = "Get-VCFWorkloadDomain | Select-Object id, name, type, ssoId, isManagementDomain, status | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/domains", options=options)
         if not output or output.strip() == "":
             return []
         result = json.loads(output)
-        # Wrap single objects in a list
-        if isinstance(result, dict):
-            return [result]
-        return result
+        # API returns {"elements": [...]}
+        if isinstance(result, dict) and "elements" in result:
+            return result["elements"]
+        return result if isinstance(result, list) else [result]
 
-    def get_domain(self, alias: str, domain_name: str, **kwargs) -> dict:
-        """Get a specific workload domain by name."""
-        command = f"Get-VCFWorkloadDomain -name '{domain_name}' | Select-Object id, name, type, ssoId, isManagementDomain, status, capacity | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+    def get_domain(self, alias: str, domain_id: str, **kwargs) -> dict:
+        """Get a specific workload domain by ID."""
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, f"/v1/domains/{domain_id}", options=options)
         if not output or output.strip() == "":
             return {}
         result = json.loads(output)
@@ -47,20 +58,22 @@ class Sddcmanager(ComponentBase):
 
     def get_clusters(self, alias: str, **kwargs) -> list:
         """Get all clusters."""
-        command = "Get-VCFCluster | Select-Object id, name, primaryDatastoreName, primaryDatastoreType, isDefault, isStretched | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/clusters", options=options)
         if not output or output.strip() == "":
             return []
         result = json.loads(output)
-        # Wrap single objects in a list
-        if isinstance(result, dict):
-            return [result]
-        return result
+        # API returns {"elements": [...]}
+        if isinstance(result, dict) and "elements" in result:
+            return result["elements"]
+        return result if isinstance(result, list) else [result]
 
     def get_cluster(self, alias: str, cluster_id: str, **kwargs) -> dict:
         """Get a specific cluster by ID."""
-        command = f"Get-VCFCluster -id '{cluster_id}' | Select-Object id, name, primaryDatastoreName, primaryDatastoreType, isDefault, isStretched, hosts | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, f"/v1/clusters/{cluster_id}", options=options)
         if not output or output.strip() == "":
             return {}
         result = json.loads(output)
@@ -68,20 +81,22 @@ class Sddcmanager(ComponentBase):
 
     def get_vcenters(self, alias: str, **kwargs) -> list:
         """Get all vCenter Server instances."""
-        command = "Get-VCFvCenter | Select-Object id, fqdn, version, build | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/vcenters", options=options)
         if not output or output.strip() == "":
             return []
         result = json.loads(output)
-        # Wrap single objects in a list
-        if isinstance(result, dict):
-            return [result]
-        return result
+        # API returns {"elements": [...]}
+        if isinstance(result, dict) and "elements" in result:
+            return result["elements"]
+        return result if isinstance(result, list) else [result]
 
     def get_vcenter(self, alias: str, vcenter_id: str, **kwargs) -> dict:
         """Get a specific vCenter Server by ID."""
-        command = f"Get-VCFvCenter -id '{vcenter_id}' | Select-Object id, fqdn, version, build, domain | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, f"/v1/vcenters/{vcenter_id}", options=options)
         if not output or output.strip() == "":
             return {}
         result = json.loads(output)
@@ -89,20 +104,22 @@ class Sddcmanager(ComponentBase):
 
     def get_nsxt_clusters(self, alias: str, **kwargs) -> list:
         """Get all NSX-T clusters."""
-        command = "Get-VCFNsxtCluster | Select-Object id, vipFqdn, vip, nodes | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/nsxt-clusters", options=options)
         if not output or output.strip() == "":
             return []
         result = json.loads(output)
-        # Wrap single objects in a list
-        if isinstance(result, dict):
-            return [result]
-        return result
+        # API returns {"elements": [...]}
+        if isinstance(result, dict) and "elements" in result:
+            return result["elements"]
+        return result if isinstance(result, list) else [result]
 
     def get_nsxt_cluster(self, alias: str, cluster_id: str, **kwargs) -> dict:
         """Get a specific NSX-T cluster by ID."""
-        command = f"Get-VCFNsxtCluster -id '{cluster_id}' | Select-Object id, vipFqdn, vip, nodes, domains | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, f"/v1/nsxt-clusters/{cluster_id}", options=options)
         if not output or output.strip() == "":
             return {}
         result = json.loads(output)
@@ -110,41 +127,49 @@ class Sddcmanager(ComponentBase):
 
     def get_credentials(self, alias: str, **kwargs) -> list:
         """Get all credentials."""
-        command = "Get-VCFCredential | Select-Object id, resource, resourceType, username, credentialType | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/credentials", options=options)
         if not output or output.strip() == "":
             return []
         result = json.loads(output)
-        # Wrap single objects in a list
-        if isinstance(result, dict):
-            return [result]
-        return result
+        # API returns {"elements": [...]}
+        if isinstance(result, dict) and "elements" in result:
+            return result["elements"]
+        return result if isinstance(result, list) else [result]
 
     def get_sddc_manager(self, alias: str, **kwargs) -> dict:
         """Get SDDC Manager details."""
-        command = "Get-VCFManager | Select-Object id, version, fqdn, status | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/sddc-managers", options=options)
         if not output or output.strip() == "":
             return {}
         result = json.loads(output)
+        # If result has elements, return the first one
+        if isinstance(result, dict) and "elements" in result:
+            elements = result["elements"]
+            return elements[0] if elements else {}
         return result
 
     def get_tasks(self, alias: str, **kwargs) -> list:
         """Get all tasks."""
-        command = "Get-VCFTask | Select-Object id, name, status, type, creationTimestamp | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/tasks", options=options)
         if not output or output.strip() == "":
             return []
         result = json.loads(output)
-        # Wrap single objects in a list
-        if isinstance(result, dict):
-            return [result]
-        return result
+        # API returns {"elements": [...]}
+        if isinstance(result, dict) and "elements" in result:
+            return result["elements"]
+        return result if isinstance(result, list) else [result]
 
     def get_task(self, alias: str, task_id: str, **kwargs) -> dict:
         """Get a specific task by ID."""
-        command = f"Get-VCFTask -id '{task_id}' | Select-Object id, name, status, type, creationTimestamp, completionTimestamp, errors | ConvertTo-Json"
-        output = self.execute_command(alias, command, **kwargs)
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, f"/v1/tasks/{task_id}", options=options)
         if not output or output.strip() == "":
             return {}
         result = json.loads(output)

@@ -8,13 +8,13 @@ Suite Teardown    Close All Sessions
 Suite Setup       Init test suite
 
 *** Variables ***
-${PORT}=        5986
+${PORT}=        443
 
 *** Keywords ***
 
 Init test suite
     Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
-    Open Session    target    winrm    powershell    connexion.host    ${PORT}    connexion.username    connexion.password    is_secret=True
+    Open Session    target    http    basicauth    connexion.host    ${PORT}    connexion.username    connexion.password    is_secret=True
 
 *** Test Cases ***
 get_hosts method works
