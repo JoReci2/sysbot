@@ -109,3 +109,22 @@ get_datacenter method works with existing datacenter
     ${output}=    Call Components    modules.vmware.vsphere.get_datacenter    vcenter    ${dc_id}
     Should Not Be Empty    ${output}
     Dictionary Should Contain Key    ${output}    name
+
+get_version method works
+    ${output}=    Call Components    modules.vmware.vsphere.get_version    vcenter
+    Should Not Be Empty    ${output}
+    ${type}=    Evaluate    type($output).__name__
+    Should Be Equal    ${type}    dict
+    Dictionary Should Contain Key    ${output}    version
+
+get_utc_datetime method works
+    ${output}=    Call Components    modules.vmware.vsphere.get_utc_datetime    vcenter
+    Should Not Be Empty    ${output}
+    ${type}=    Evaluate    type($output).__name__
+    Should Be Equal    ${type}    str
+
+get_timezone method works
+    ${output}=    Call Components    modules.vmware.vsphere.get_timezone    vcenter
+    Should Not Be Empty    ${output}
+    ${type}=    Evaluate    type($output).__name__
+    Should Be Equal    ${type}    str

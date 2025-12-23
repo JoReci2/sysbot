@@ -321,3 +321,54 @@ class Vsphere(ComponentBase):
         )
         result = json.loads(output)
         return result.get("value", {})
+
+    def get_version(self, alias: str, **kwargs) -> dict:
+        """
+        Get vCenter Server version information.
+
+        Args:
+            alias (str): Session alias.
+
+        Returns:
+            dict: Version information including product, type, version, build, and release date.
+        """
+        output = self.execute_command(
+            alias, "/rest/appliance/system/version", options={"method": "GET"}, **kwargs
+        )
+        result = json.loads(output)
+        return result.get("value", {})
+
+    def get_utc_datetime(self, alias: str, **kwargs) -> str:
+        """
+        Get the current UTC date and time from vCenter Server.
+
+        Args:
+            alias (str): Session alias.
+
+        Returns:
+            str: Current UTC date and time in ISO 8601 format.
+        """
+        output = self.execute_command(
+            alias, "/rest/appliance/system/time", options={"method": "GET"}, **kwargs
+        )
+        result = json.loads(output)
+        return result.get("value", {}).get("date", "")
+
+    def get_timezone(self, alias: str, **kwargs) -> str:
+        """
+        Get the configured timezone of vCenter Server.
+
+        Args:
+            alias (str): Session alias.
+
+        Returns:
+            str: Timezone identifier (e.g., "UTC", "America/Los_Angeles").
+        """
+        output = self.execute_command(
+            alias,
+            "/rest/appliance/system/time/timezone",
+            options={"method": "GET"},
+            **kwargs,
+        )
+        result = json.loads(output)
+        return result.get("value", "")
