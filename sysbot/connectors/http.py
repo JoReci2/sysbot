@@ -114,7 +114,7 @@ class Apikey(BaseHttp):
         """
         super().__init__(port, use_https)
 
-    def open_session(self, host, port=None, login=None, password=None, api_key=None,
+    def open_session(self, host, port=None, login=None, password=None, api_key=None, 
                      api_key_header="X-API-Key", api_key_in_query=False):
         """
         Opens a session with API key authentication.
@@ -133,7 +133,7 @@ class Apikey(BaseHttp):
         """
         if port is None:
             port = self.default_port
-
+        
         return {
             "host": host,
             "port": port,
@@ -162,19 +162,19 @@ class Apikey(BaseHttp):
             bytes: Response content.
         """
         url = self._build_url(session["host"], session["port"], command)
-
+        
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers", {}) if options else {}
         params = options.get("params", {}) if options else {}
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
         verify = options.get("verify", True) if options else True
-
+        
         if session.get("api_key_in_query"):
             params[session["api_key_header"]] = session["api_key"]
         else:
             headers[session["api_key_header"]] = session["api_key"]
-
+        
         response = self._make_request(
             method=method,
             url=url,
@@ -184,7 +184,7 @@ class Apikey(BaseHttp):
             json=json_data,
             verify=verify
         )
-
+        
         return response.content
 
     def close_session(self, session):
@@ -227,7 +227,7 @@ class Basicauth(BaseHttp):
         """
         if port is None:
             port = self.default_port
-
+        
         return {
             "host": host,
             "port": port,
@@ -255,16 +255,16 @@ class Basicauth(BaseHttp):
             bytes: Response content.
         """
         url = self._build_url(session["host"], session["port"], command)
-
+        
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers") if options else None
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
         verify = options.get("verify", True) if options else True
-
+        
         auth = HTTPBasicAuth(session["login"], session["password"])
-
+        
         response = self._make_request(
             method=method,
             url=url,
@@ -275,7 +275,7 @@ class Basicauth(BaseHttp):
             json=json_data,
             verify=verify
         )
-
+        
         return response.content
 
     def close_session(self, session):
@@ -303,8 +303,8 @@ class Oauth1(BaseHttp):
         """
         super().__init__(port, use_https)
 
-    def open_session(self, host, port=None, login=None, password=None,
-                     client_key=None, client_secret=None,
+    def open_session(self, host, port=None, login=None, password=None, 
+                     client_key=None, client_secret=None, 
                      resource_owner_key=None, resource_owner_secret=None):
         """
         Opens a session with OAuth 1.0 authentication.
@@ -324,7 +324,7 @@ class Oauth1(BaseHttp):
         """
         if port is None:
             port = self.default_port
-
+        
         return {
             "host": host,
             "port": port,
@@ -354,21 +354,21 @@ class Oauth1(BaseHttp):
             bytes: Response content.
         """
         url = self._build_url(session["host"], session["port"], command)
-
+        
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers") if options else None
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
         verify = options.get("verify", True) if options else True
-
+        
         auth = OAuth1(
             session["client_key"],
             session["client_secret"],
             session["resource_owner_key"],
             session["resource_owner_secret"]
         )
-
+        
         response = self._make_request(
             method=method,
             url=url,
@@ -379,7 +379,7 @@ class Oauth1(BaseHttp):
             json=json_data,
             verify=verify
         )
-
+        
         return response.content
 
     def close_session(self, session):
@@ -429,7 +429,7 @@ class Oauth2(BaseHttp):
         """
         if port is None:
             port = self.default_port
-
+        
         session_data = {
             "host": host,
             "port": port,
@@ -440,7 +440,7 @@ class Oauth2(BaseHttp):
             "refresh_token": refresh_token,
             "use_https": self.use_https
         }
-
+        
         # If access_token is not provided, try to get one
         if not access_token and token_url and client_id and client_secret:
             try:
@@ -454,7 +454,7 @@ class Oauth2(BaseHttp):
                 session_data["refresh_token"] = token.get("refresh_token")
             except Exception as e:
                 raise Exception(f"Failed to obtain OAuth 2.0 token: {str(e)}")
-
+        
         return session_data
 
     def execute_command(self, session, command, options=None):
@@ -476,17 +476,17 @@ class Oauth2(BaseHttp):
             bytes: Response content.
         """
         url = self._build_url(session["host"], session["port"], command)
-
+        
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers", {}) if options else {}
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
         verify = options.get("verify", True) if options else True
-
+        
         # Add Bearer token to headers
         headers["Authorization"] = f"Bearer {session['access_token']}"
-
+        
         response = self._make_request(
             method=method,
             url=url,
@@ -496,7 +496,7 @@ class Oauth2(BaseHttp):
             json=json_data,
             verify=verify
         )
-
+        
         return response.content
 
     def close_session(self, session):
@@ -546,21 +546,21 @@ class Jwt(BaseHttp):
         """
         if port is None:
             port = self.default_port
-
+        
         # Generate token if not provided
         if not token and secret_key:
             if payload is None:
                 payload = {}
-
+            
             if login:
                 payload["sub"] = login
-
+            
             now = datetime.now(timezone.utc)
             payload["exp"] = now + timedelta(minutes=expiration_minutes)
             payload["iat"] = now
-
+            
             token = jwt_lib.encode(payload, secret_key, algorithm=algorithm)
-
+        
         return {
             "host": host,
             "port": port,
@@ -583,17 +583,17 @@ class Jwt(BaseHttp):
             bytes: Response content.
         """
         url = self._build_url(session["host"], session["port"], command)
-
+        
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers", {}) if options else {}
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
         verify = options.get("verify", True) if options else True
-
+        
         # Add JWT to headers
         headers["Authorization"] = f"Bearer {session['token']}"
-
+        
         response = self._make_request(
             method=method,
             url=url,
@@ -603,7 +603,7 @@ class Jwt(BaseHttp):
             json=json_data,
             verify=verify
         )
-
+        
         return response.content
 
     def close_session(self, session):
@@ -651,7 +651,7 @@ class Saml(BaseHttp):
         """
         if port is None:
             port = self.default_port
-
+        
         return {
             "host": host,
             "port": port,
@@ -673,17 +673,17 @@ class Saml(BaseHttp):
             bytes: Response content.
         """
         url = self._build_url(session["host"], session["port"], command)
-
+        
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers", {}) if options else {}
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
         verify = options.get("verify", True) if options else True
-
+        
         # Add SAML token to headers
         headers[session["saml_header"]] = session["saml_token"]
-
+        
         response = self._make_request(
             method=method,
             url=url,
@@ -693,7 +693,7 @@ class Saml(BaseHttp):
             json=json_data,
             verify=verify
         )
-
+        
         return response.content
 
     def close_session(self, session):
@@ -722,8 +722,8 @@ class Hmac(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None,
-                     secret_key=None, algorithm="sha256",
-                     signature_header="X-Signature",
+                     secret_key=None, algorithm="sha256", 
+                     signature_header="X-Signature", 
                      timestamp_header="X-Timestamp"):
         """
         Opens a session with HMAC authentication.
@@ -743,7 +743,7 @@ class Hmac(BaseHttp):
         """
         if port is None:
             port = self.default_port
-
+        
         return {
             "host": host,
             "port": port,
@@ -769,27 +769,27 @@ class Hmac(BaseHttp):
 
         Returns:
             str: Base64-encoded HMAC signature.
-
+        
         Raises:
             ValueError: If algorithm is not in the whitelist.
         """
         # Validate algorithm against whitelist
         if algorithm not in ALLOWED_HASH_ALGORITHMS:
             raise ValueError(f"Hash algorithm '{algorithm}' is not allowed. Must be one of: {', '.join(ALLOWED_HASH_ALGORITHMS.keys())}")
-
+        
         # Create string to sign
         string_to_sign = f"{method}\n{path}\n{timestamp}\n{body}"
-
+        
         # Get hash function from whitelist
         hash_func = ALLOWED_HASH_ALGORITHMS[algorithm]
-
+        
         # Generate HMAC
         signature = hmac.new(
             secret_key.encode(),
             string_to_sign.encode(),
             hash_func
         ).digest()
-
+        
         # Return base64-encoded signature
         return base64.b64encode(signature).decode()
 
@@ -806,24 +806,24 @@ class Hmac(BaseHttp):
             bytes: Response content.
         """
         url = self._build_url(session["host"], session["port"], command)
-
+        
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers", {}) if options else {}
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
         verify = options.get("verify", True) if options else True
-
+        
         # Generate timestamp
         timestamp = str(int(datetime.now(timezone.utc).timestamp()))
-
+        
         # Generate signature
         body = ""
         if data:
             body = str(data)
         elif json_data:
             body = json.dumps(json_data)
-
+        
         signature = self._generate_signature(
             session["secret_key"],
             session["algorithm"],
@@ -832,13 +832,13 @@ class Hmac(BaseHttp):
             timestamp,
             body
         )
-
+        
         # Add authentication headers
         if session.get("access_key"):
             headers["X-Access-Key"] = session["access_key"]
         headers[session["timestamp_header"]] = timestamp
         headers[session["signature_header"]] = signature
-
+        
         response = self._make_request(
             method=method,
             url=url,
@@ -848,7 +848,7 @@ class Hmac(BaseHttp):
             json=json_data,
             verify=verify
         )
-
+        
         return response.content
 
     def close_session(self, session):
@@ -895,7 +895,7 @@ class Certificate(BaseHttp):
         """
         if port is None:
             port = self.default_port
-
+        
         return {
             "host": host,
             "port": port,
@@ -919,19 +919,19 @@ class Certificate(BaseHttp):
             bytes: Response content.
         """
         url = self._build_url(session["host"], session["port"], command)
-
+        
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers") if options else None
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
-
+        
         # Prepare certificate tuple
         if session.get("key_file"):
             cert = (session["cert_file"], session["key_file"])
         else:
             cert = session["cert_file"]
-
+        
         # Determine verification setting
         # If ca_bundle is provided, use it; otherwise default to True for security
         # Can be overridden via options
@@ -941,7 +941,7 @@ class Certificate(BaseHttp):
             verify = session["ca_bundle"]
         else:
             verify = True
-
+        
         try:
             response = requests.request(
                 method=method.upper(),
@@ -984,7 +984,7 @@ class Openidconnect(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None,
-                     client_id=None, client_secret=None,
+                     client_id=None, client_secret=None, 
                      discovery_url=None, token_endpoint=None,
                      id_token=None, access_token=None):
         """
@@ -1007,7 +1007,7 @@ class Openidconnect(BaseHttp):
         """
         if port is None:
             port = self.default_port
-
+        
         session_data = {
             "host": host,
             "port": port,
@@ -1019,7 +1019,7 @@ class Openidconnect(BaseHttp):
             "access_token": access_token,
             "use_https": self.use_https
         }
-
+        
         # If tokens not provided, try to get them
         if not access_token and token_endpoint and client_id and client_secret:
             try:
@@ -1028,21 +1028,21 @@ class Openidconnect(BaseHttp):
                     "client_id": client_id,
                     "client_secret": client_secret
                 }
-
+                
                 if login and password:
                     token_data["grant_type"] = "password"
                     token_data["username"] = login
                     token_data["password"] = password
-
+                
                 response = requests.post(token_endpoint, data=token_data)
                 response.raise_for_status()
                 tokens = response.json()
-
+                
                 session_data["access_token"] = tokens.get("access_token")
                 session_data["id_token"] = tokens.get("id_token")
             except Exception as e:
                 raise Exception(f"Failed to obtain OpenID Connect tokens: {str(e)}")
-
+        
         return session_data
 
     def execute_command(self, session, command, options=None):
@@ -1058,19 +1058,19 @@ class Openidconnect(BaseHttp):
             bytes: Response content.
         """
         url = self._build_url(session["host"], session["port"], command)
-
+        
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers", {}) if options else {}
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
         verify = options.get("verify", True) if options else True
-
+        
         # Add Bearer token to headers (prefer access_token)
         token = session.get("access_token") or session.get("id_token")
         if token:
             headers["Authorization"] = f"Bearer {token}"
-
+        
         response = self._make_request(
             method=method,
             url=url,
@@ -1080,7 +1080,7 @@ class Openidconnect(BaseHttp):
             json=json_data,
             verify=verify
         )
-
+        
         return response.content
 
     def close_session(self, session):
@@ -1091,124 +1091,3 @@ class Openidconnect(BaseHttp):
             session (dict): Session configuration.
         """
         pass
-
-
-class Vsphere(BaseHttp):
-    """
-    HTTP connector with VMware vSphere session-based authentication.
-    Authenticates with vCenter Server and maintains a session token.
-    """
-
-    def __init__(self, port=443, use_https=True):
-        """
-        Initialize vSphere connector.
-
-        Args:
-            port (int): Default port (default: 443).
-            use_https (bool): Whether to use HTTPS (default: True).
-        """
-        super().__init__(port, use_https)
-
-    def open_session(self, host, port=None, login=None, password=None):
-        """
-        Opens a session with vSphere authentication.
-
-        Args:
-            host (str): vCenter hostname or IP address.
-            port (int): Port. If None, uses default_port.
-            login (str): vSphere username (e.g., administrator@vsphere.local).
-            password (str): vSphere password.
-
-        Returns:
-            dict: Session configuration with session token.
-        """
-        if port is None:
-            port = self.default_port
-
-        # Create session by authenticating with vCenter
-        protocol = "https" if self.use_https else "http"
-        auth_url = f"{protocol}://{host}:{port}/rest/com/vmware/cis/session"
-
-        try:
-            response = requests.post(
-                auth_url,
-                auth=HTTPBasicAuth(login, password),
-                verify=False  # vSphere often uses self-signed certs
-            )
-            response.raise_for_status()
-            session_data = response.json()
-            session_token = session_data.get("value")
-
-            if not session_token:
-                raise Exception("Failed to obtain vSphere session token")
-
-            return {
-                "host": host,
-                "port": port,
-                "session_token": session_token,
-                "use_https": self.use_https,
-                "login": login,
-                "password": password
-            }
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"vSphere authentication failed: {str(e)}")
-
-    def execute_command(self, session, command, options=None):
-        """
-        Execute an HTTP request with vSphere session authentication.
-
-        Args:
-            session (dict): Session configuration.
-            command (str): API endpoint path.
-            options (dict): Optional request parameters:
-                - method (str): HTTP method (default: GET)
-                - params (dict): URL query parameters
-                - headers (dict): HTTP headers
-                - data: Request body data
-                - json: JSON request body
-                - verify (bool): Verify SSL certificates (default: False for vSphere)
-
-        Returns:
-            bytes: Response content.
-        """
-        url = self._build_url(session["host"], session["port"], command)
-
-        method = options.get("method", "GET") if options else "GET"
-        headers = options.get("headers", {}) if options else {}
-        params = options.get("params") if options else None
-        data = options.get("data") if options else None
-        json_data = options.get("json") if options else None
-        verify = options.get("verify", False) if options else False
-
-        # Add vSphere session token to headers
-        headers["vmware-api-session-id"] = session["session_token"]
-
-        response = self._make_request(
-            method=method,
-            url=url,
-            headers=headers,
-            params=params,
-            data=data,
-            json=json_data,
-            verify=verify
-        )
-
-        return response.content
-
-    def close_session(self, session):
-        """
-        Close the vSphere session by deleting the session token.
-
-        Args:
-            session (dict): Session configuration.
-        """
-        try:
-            protocol = "https" if session.get("use_https", True) else "http"
-            url = f"{protocol}://{session['host']}:{session['port']}/rest/com/vmware/cis/session"
-
-            headers = {"vmware-api-session-id": session["session_token"]}
-
-            requests.delete(url, headers=headers, verify=False)
-        except Exception:
-            # Ignore errors during session cleanup
-            pass

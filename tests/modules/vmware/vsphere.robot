@@ -14,7 +14,7 @@ ${PORT}=        443
 
 Init test suite
     Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
-    Open Session    vcenter    http    vsphere    connexion.host    ${PORT}   connexion.username    connexion.password    is_secret=True
+    Open Session    vcenter    http    basicauth    connexion.host    ${PORT}   connexion.username    connexion.password    is_secret=True
 
 *** Test Cases ***
 

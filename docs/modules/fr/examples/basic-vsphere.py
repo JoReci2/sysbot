@@ -3,11 +3,11 @@ from sysbot.Sysbot import Sysbot
 # Créer une instance SysBot
 bot = Sysbot()
 
-# Ouvrir une session vers vCenter Server
+# Ouvrir une session vers vCenter Server en utilisant l'authentification Basic
 bot.open_session(
     alias="vcenter",
     protocol="http",
-    product="vsphere",
+    product="basicauth",
     host="vcenter.example.com",
     port=443,
     login="administrator@vsphere.local",

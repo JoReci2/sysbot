@@ -5,7 +5,7 @@ import json
 class Vsphere(ComponentBase):
     """
     VMware vSphere module for managing virtual machines, hosts, and datastores.
-    Requires a session opened with protocol="http", product="vsphere".
+    Requires a session opened with protocol="http", product="basicauth".
     """
 
     def list_vms(self, alias: str, **kwargs) -> list:

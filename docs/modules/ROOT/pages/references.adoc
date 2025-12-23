@@ -52,7 +52,7 @@ Open a connection session to a remote system.
 * `product` (str): Product type:
   - SSH: "bash", "powershell"
   - WinRM: "powershell"
-  - HTTP: "basicauth", "vsphere"
+  - HTTP: "basicauth", "apikey", "oauth1", "oauth2", "jwt", "saml", "hmac", "certificate", "openidconnect"
   - Socket: "tcp", "udp"
 * `host` (str): Target host address or IP
 * `port` (int): Connection port (optional, uses defaults from config)
@@ -322,19 +322,22 @@ bot.open_session("windows", "winrm", "powershell", "192.168.1.200",
 ==== Configuration
 
 * **Default Ports**: 80 (HTTP), 443 (HTTPS)
-* **Products**: "basicauth", "vsphere"
+* **Products**: "basicauth", "apikey", "oauth1", "oauth2", "jwt", "saml", "hmac", "certificate", "openidconnect"
 
 ==== Usage
 
 [source,python]
 ----
 # Basic authentication
-bot.open_session("api", "http", "basicauth", "api.example.com", 
+bot.open_session("api", "http", "basicauth", "api.example.com",
                 443, "user", "pass")
 
-# vSphere connection
-bot.open_session("vcenter", "http", "vsphere", "vcenter.example.com",
+# vSphere connection (using basicauth)
+bot.open_session("vcenter", "http", "basicauth", "vcenter.example.com",
                 443, "administrator@vsphere.local", "pass")
+
+# Get vSphere servers (using vmware.vsphere module)
+bot.vmware.vsphere.list_vms("vcenter")
 ----
 
 === Socket Connector
