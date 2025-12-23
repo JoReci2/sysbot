@@ -324,20 +324,26 @@ class Nsx(ComponentBase):
             return []
 
     def get_bgp_neighbors(self, alias: str, tier_id: str = None, **kwargs) -> list:
-        """Get BGP neighbors configuration.
+        """Get BGP neighbors configuration from Tier-0 gateways.
         
         Args:
             alias: Session identifier
-            tier_id: Optional Tier-0 or Tier-1 gateway ID
+            tier_id: Optional Tier-0 gateway ID. If provided, returns BGP neighbors for that gateway.
+                    If not provided, returns list of all Tier-0 gateways (use get_tiers for complete list).
             **kwargs: Additional command execution options
             
         Returns:
-            List of BGP neighbors with their details
+            List of BGP neighbors if tier_id provided, otherwise list of Tier-0 gateways.
+            
+        Note:
+            BGP neighbors are configured on Tier-0 gateways only.
+            To get BGP neighbors, first call without tier_id to get gateway IDs,
+            then call with specific tier_id to get its BGP neighbors.
         """
         if tier_id:
             command = f"/policy/api/v1/infra/tier-0s/{tier_id}/locale-services/default/bgp/neighbors"
         else:
-            # Get all Tier-0 gateways first, then get their BGP neighbors
+            # Return all Tier-0 gateways when no tier_id specified
             command = "/policy/api/v1/infra/tier-0s"
             
         output = self.execute_command(alias, command, options={"method": "GET"}, **kwargs)
@@ -348,12 +354,8 @@ class Nsx(ComponentBase):
         try:
             result = json.loads(output)
             if isinstance(result, dict):
-                if tier_id:
-                    neighbors = result.get("results", [])
-                    return neighbors if neighbors else []
-                else:
-                    # Return tier-0 gateways list for further BGP queries
-                    return result.get("results", [])
+                neighbors = result.get("results", [])
+                return neighbors if neighbors else []
             elif isinstance(result, list):
                 return result
             return []
