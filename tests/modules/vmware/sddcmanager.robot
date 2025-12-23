@@ -72,3 +72,27 @@ get_tasks method works
 get_task method works
     ${output}=    Call Components    modules.vmware.sddcmanager.get_task    target    test-task-id
     Should Be True    isinstance($output, dict)
+
+get_ntp method works
+    ${output}=    Call Components    modules.vmware.sddcmanager.get_ntp    target
+    Should Be True    isinstance($output, dict)
+
+get_dns method works
+    ${output}=    Call Components    modules.vmware.sddcmanager.get_dns    target
+    Should Be True    isinstance($output, dict)
+
+get_version method works
+    ${output}=    Call Components    modules.vmware.sddcmanager.get_version    target
+    Should Be True    isinstance($output, dict)
+
+get_vcf_services method works
+    ${output}=    Call Components    modules.vmware.sddcmanager.get_vcf_services    target
+    Should Be True    isinstance($output, list)
+
+get_ldap method works
+    ${output}=    Call Components    modules.vmware.sddcmanager.get_ldap    target
+    Should Be True    isinstance($output, dict)
+
+get_syslog method works
+    ${output}=    Call Components    modules.vmware.sddcmanager.get_syslog    target
+    Should Be True    isinstance($output, dict)

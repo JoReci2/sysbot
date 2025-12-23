@@ -174,3 +174,66 @@ class Sddcmanager(ComponentBase):
             return {}
         result = json.loads(output)
         return result
+
+    def get_ntp(self, alias: str, **kwargs) -> dict:
+        """Get NTP configuration."""
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/system/ntp-configuration", options=options)
+        if not output or output.strip() == "":
+            return {}
+        result = json.loads(output)
+        return result
+
+    def get_dns(self, alias: str, **kwargs) -> dict:
+        """Get DNS configuration."""
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/system/dns-configuration", options=options)
+        if not output or output.strip() == "":
+            return {}
+        result = json.loads(output)
+        return result
+
+    def get_version(self, alias: str, **kwargs) -> dict:
+        """Get SDDC Manager version information."""
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/system/version", options=options)
+        if not output or output.strip() == "":
+            return {}
+        result = json.loads(output)
+        return result
+
+    def get_vcf_services(self, alias: str, **kwargs) -> list:
+        """Get VCF services status."""
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/vcf-services", options=options)
+        if not output or output.strip() == "":
+            return []
+        result = json.loads(output)
+        # API returns {"elements": [...]}
+        if isinstance(result, dict) and "elements" in result:
+            return result["elements"]
+        return result if isinstance(result, list) else [result]
+
+    def get_ldap(self, alias: str, **kwargs) -> dict:
+        """Get LDAP configuration."""
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/system/ldap-configuration", options=options)
+        if not output or output.strip() == "":
+            return {}
+        result = json.loads(output)
+        return result
+
+    def get_syslog(self, alias: str, **kwargs) -> dict:
+        """Get syslog configuration."""
+        options = {"method": "GET"}
+        options.update(kwargs.get("options", {}))
+        output = self.execute_command(alias, "/v1/system/syslog-configuration", options=options)
+        if not output or output.strip() == "":
+            return {}
+        result = json.loads(output)
+        return result
