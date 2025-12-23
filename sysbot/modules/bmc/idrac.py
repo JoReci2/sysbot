@@ -271,3 +271,73 @@ class Idrac(ComponentBase):
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}/Jobs"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
         return json.loads(response.decode())
+
+    def get_ntp_source(self, alias: str, manager_id: str = "iDRAC.Embedded.1") -> list:
+        """
+        Get NTP server configuration from iDRAC.
+
+        Args:
+            alias (str): The session alias for the iDRAC connection.
+            manager_id (str): Manager identifier (default: "iDRAC.Embedded.1").
+
+        Returns:
+            list: List of NTP servers configured.
+        """
+        endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}/NetworkProtocol"
+        response = self.execute_command(alias, endpoint, options={"method": "GET"})
+        data = json.loads(response.decode())
+        return data.get("NTP", {}).get("NTPServers", [])
+
+    def get_timezone(self, alias: str, manager_id: str = "iDRAC.Embedded.1") -> str:
+        """
+        Get timezone configuration from iDRAC.
+
+        Args:
+            alias (str): The session alias for the iDRAC connection.
+            manager_id (str): Manager identifier (default: "iDRAC.Embedded.1").
+
+        Returns:
+            str: Timezone configuration.
+        """
+        endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}"
+        response = self.execute_command(alias, endpoint, options={"method": "GET"})
+        data = json.loads(response.decode())
+        # Check for timezone in different possible locations
+        timezone = data.get("DateTime", {}).get("TimeZone") if isinstance(data.get("DateTime"), dict) else None
+        if not timezone:
+            timezone = data.get("DateTimeLocalOffset", "Unknown")
+        return timezone
+
+    def get_utc_datetime(self, alias: str, manager_id: str = "iDRAC.Embedded.1") -> str:
+        """
+        Get current UTC datetime from iDRAC.
+
+        Args:
+            alias (str): The session alias for the iDRAC connection.
+            manager_id (str): Manager identifier (default: "iDRAC.Embedded.1").
+
+        Returns:
+            str: Current UTC datetime in ISO format.
+        """
+        endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}"
+        response = self.execute_command(alias, endpoint, options={"method": "GET"})
+        data = json.loads(response.decode())
+        return data.get("DateTime", "Unknown")
+
+    def get_language(self, alias: str, manager_id: str = "iDRAC.Embedded.1") -> str:
+        """
+        Get language configuration from iDRAC.
+
+        Args:
+            alias (str): The session alias for the iDRAC connection.
+            manager_id (str): Manager identifier (default: "iDRAC.Embedded.1").
+
+        Returns:
+            str: Language configuration.
+        """
+        endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}"
+        response = self.execute_command(alias, endpoint, options={"method": "GET"})
+        data = json.loads(response.decode())
+        # Language might be in OEM section for Dell
+        language = data.get("Oem", {}).get("Dell", {}).get("Language") or "Unknown"
+        return language
