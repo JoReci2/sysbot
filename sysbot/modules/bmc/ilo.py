@@ -240,6 +240,8 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}/NetworkProtocol"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
+        if not response:
+            return []
         data = json.loads(response.decode())
         return data.get("NTP", {}).get("NTPServers", [])
 
@@ -256,6 +258,8 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
+        if not response:
+            return "Unknown"
         data = json.loads(response.decode())
         # Check for timezone in different possible locations
         timezone = data.get("DateTime", {}).get("TimeZone") if isinstance(data.get("DateTime"), dict) else None
@@ -276,6 +280,8 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
+        if not response:
+            return "Unknown"
         data = json.loads(response.decode())
         return data.get("DateTime", "Unknown")
 
@@ -292,6 +298,8 @@ class Ilo(ComponentBase):
         """
         endpoint = f"{REDFISH_PREFIX}/Managers/{manager_id}"
         response = self.execute_command(alias, endpoint, options={"method": "GET"})
+        if not response:
+            return "Unknown"
         data = json.loads(response.decode())
         # Language might be in different locations depending on iLO version
         language = data.get("Oem", {}).get("Hp", {}).get("Language") or \
