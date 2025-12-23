@@ -75,3 +75,38 @@ Get Version
     ${output}=    Call Components    modules.vmware.nsx.get_version    nsx
     Should Be Equal As Strings    ${{type($output).__name__}}    dict
     Log    Version Info: ${output}
+
+Get Segments
+    ${output}=    Call Components    modules.vmware.nsx.get_segments    nsx
+    Should Be List    ${output}
+    Log    Segments: ${output}
+
+Get BGP Neighbors
+    ${output}=    Call Components    modules.vmware.nsx.get_bgp_neighbors    nsx
+    Should Be List    ${output}
+    Log    BGP Neighbors: ${output}
+
+Get Tiers
+    ${output}=    Call Components    modules.vmware.nsx.get_tiers    nsx
+    Should Be List    ${output}
+    Log    Tier Gateways: ${output}
+
+Get Alarms
+    ${output}=    Call Components    modules.vmware.nsx.get_alarms    nsx
+    Should Be List    ${output}
+    Log    Alarms: ${output}
+
+Get NTP Source
+    ${output}=    Call Components    modules.vmware.nsx.get_ntp_source    nsx
+    Should Be Equal As Strings    ${{type($output).__name__}}    dict
+    Log    NTP Source: ${output}
+
+Get Syslog Source
+    ${output}=    Call Components    modules.vmware.nsx.get_syslog_source    nsx
+    Should Be List    ${output}
+    Log    Syslog Exporters: ${output}
+
+Get LDAP Source
+    ${output}=    Call Components    modules.vmware.nsx.get_ldap_source    nsx
+    Should Be List    ${output}
+    Log    LDAP Sources: ${output}

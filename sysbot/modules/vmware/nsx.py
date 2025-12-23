@@ -295,3 +295,213 @@ class Nsx(ComponentBase):
             return {}
         except (json.JSONDecodeError, KeyError):
             return {}
+
+    def get_segments(self, alias: str, **kwargs) -> list:
+        """Get all segments in NSX-T environment.
+        
+        Args:
+            alias: Session identifier
+            **kwargs: Additional command execution options
+            
+        Returns:
+            List of segments with their details
+        """
+        command = "/policy/api/v1/infra/segments"
+        output = self.execute_command(alias, command, options={"method": "GET"}, **kwargs)
+        
+        if not output or output.strip() == "":
+            return []
+        
+        try:
+            result = json.loads(output)
+            if isinstance(result, dict):
+                segments = result.get("results", [])
+                return segments if segments else []
+            elif isinstance(result, list):
+                return result
+            return []
+        except (json.JSONDecodeError, KeyError):
+            return []
+
+    def get_bgp_neighbors(self, alias: str, tier_id: str = None, **kwargs) -> list:
+        """Get BGP neighbors configuration.
+        
+        Args:
+            alias: Session identifier
+            tier_id: Optional Tier-0 or Tier-1 gateway ID
+            **kwargs: Additional command execution options
+            
+        Returns:
+            List of BGP neighbors with their details
+        """
+        if tier_id:
+            command = f"/policy/api/v1/infra/tier-0s/{tier_id}/locale-services/default/bgp/neighbors"
+        else:
+            # Get all Tier-0 gateways first, then get their BGP neighbors
+            command = "/policy/api/v1/infra/tier-0s"
+            
+        output = self.execute_command(alias, command, options={"method": "GET"}, **kwargs)
+        
+        if not output or output.strip() == "":
+            return []
+        
+        try:
+            result = json.loads(output)
+            if isinstance(result, dict):
+                if tier_id:
+                    neighbors = result.get("results", [])
+                    return neighbors if neighbors else []
+                else:
+                    # Return tier-0 gateways list for further BGP queries
+                    return result.get("results", [])
+            elif isinstance(result, list):
+                return result
+            return []
+        except (json.JSONDecodeError, KeyError):
+            return []
+
+    def get_tiers(self, alias: str, tier_type: str = None, **kwargs) -> list:
+        """Get Tier gateways (Tier-0 and Tier-1).
+        
+        Args:
+            alias: Session identifier
+            tier_type: Optional tier type - "tier-0s" or "tier-1s". If None, returns both.
+            **kwargs: Additional command execution options
+            
+        Returns:
+            List of tier gateways with their details
+        """
+        tiers = []
+        
+        if tier_type is None or tier_type == "tier-0s":
+            command = "/policy/api/v1/infra/tier-0s"
+            output = self.execute_command(alias, command, options={"method": "GET"}, **kwargs)
+            
+            if output and output.strip() != "":
+                try:
+                    result = json.loads(output)
+                    if isinstance(result, dict):
+                        tier0s = result.get("results", [])
+                        tiers.extend(tier0s if tier0s else [])
+                except (json.JSONDecodeError, KeyError):
+                    pass
+        
+        if tier_type is None or tier_type == "tier-1s":
+            command = "/policy/api/v1/infra/tier-1s"
+            output = self.execute_command(alias, command, options={"method": "GET"}, **kwargs)
+            
+            if output and output.strip() != "":
+                try:
+                    result = json.loads(output)
+                    if isinstance(result, dict):
+                        tier1s = result.get("results", [])
+                        tiers.extend(tier1s if tier1s else [])
+                except (json.JSONDecodeError, KeyError):
+                    pass
+        
+        return tiers
+
+    def get_alarms(self, alias: str, **kwargs) -> list:
+        """Get all alarms in NSX environment.
+        
+        Args:
+            alias: Session identifier
+            **kwargs: Additional command execution options
+            
+        Returns:
+            List of alarms with their details
+        """
+        command = "/api/v1/alarms"
+        output = self.execute_command(alias, command, options={"method": "GET"}, **kwargs)
+        
+        if not output or output.strip() == "":
+            return []
+        
+        try:
+            result = json.loads(output)
+            if isinstance(result, dict):
+                alarms = result.get("results", [])
+                return alarms if alarms else []
+            elif isinstance(result, list):
+                return result
+            return []
+        except (json.JSONDecodeError, KeyError):
+            return []
+
+    def get_ntp_source(self, alias: str, **kwargs) -> dict:
+        """Get NTP source configuration.
+        
+        Args:
+            alias: Session identifier
+            **kwargs: Additional command execution options
+            
+        Returns:
+            Dictionary containing NTP configuration
+        """
+        command = "/api/v1/cluster/ntp"
+        output = self.execute_command(alias, command, options={"method": "GET"}, **kwargs)
+        
+        if not output or output.strip() == "":
+            return {}
+        
+        try:
+            result = json.loads(output)
+            if isinstance(result, dict):
+                return result
+            return {}
+        except (json.JSONDecodeError, KeyError):
+            return {}
+
+    def get_syslog_source(self, alias: str, **kwargs) -> list:
+        """Get syslog exporter configuration.
+        
+        Args:
+            alias: Session identifier
+            **kwargs: Additional command execution options
+            
+        Returns:
+            List of syslog exporters with their details
+        """
+        command = "/api/v1/node/services/syslog/exporters"
+        output = self.execute_command(alias, command, options={"method": "GET"}, **kwargs)
+        
+        if not output or output.strip() == "":
+            return []
+        
+        try:
+            result = json.loads(output)
+            if isinstance(result, dict):
+                exporters = result.get("results", [])
+                return exporters if exporters else []
+            elif isinstance(result, list):
+                return result
+            return []
+        except (json.JSONDecodeError, KeyError):
+            return []
+
+    def get_ldap_source(self, alias: str, **kwargs) -> list:
+        """Get LDAP identity source configuration.
+        
+        Args:
+            alias: Session identifier
+            **kwargs: Additional command execution options
+            
+        Returns:
+            List of LDAP identity sources with their details
+        """
+        command = "/api/v1/trust-management/principal-identities"
+        output = self.execute_command(alias, command, options={"method": "GET"}, **kwargs)
+        
+        if not output or output.strip() == "":
+            return []
+        
+        try:
+            result = json.loads(output)
+            if isinstance(result, dict):
+                sources = result.get("results", [])
+                return sources if sources else []
+            elif isinstance(result, list):
+                return result
+            return []
+        except (json.JSONDecodeError, KeyError):
+            return []

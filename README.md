@@ -187,6 +187,15 @@ switches = bot.modules.vmware.nsx.get_logical_switches("nsx")
 # Get firewall rules
 rules = bot.modules.vmware.nsx.get_firewall_rules("nsx")
 
+# Get segments
+segments = bot.modules.vmware.nsx.get_segments("nsx")
+
+# Get tier gateways
+tiers = bot.modules.vmware.nsx.get_tiers("nsx")
+
+# Get alarms
+alarms = bot.modules.vmware.nsx.get_alarms("nsx")
+
 # Get NSX version
 version = bot.modules.vmware.nsx.get_version("nsx")
 ```

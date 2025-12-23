@@ -740,6 +740,27 @@ get_controllers(alias) -> list
 
 # Get NSX version information
 get_version(alias) -> dict
+
+# Get segments
+get_segments(alias) -> list
+
+# Get BGP neighbors
+get_bgp_neighbors(alias, tier_id=None) -> list
+
+# Get tier gateways (Tier-0 and Tier-1)
+get_tiers(alias, tier_type=None) -> list
+
+# Get alarms
+get_alarms(alias) -> list
+
+# Get NTP source configuration
+get_ntp_source(alias) -> dict
+
+# Get syslog exporters
+get_syslog_source(alias) -> list
+
+# Get LDAP identity sources
+get_ldap_source(alias) -> list
 ----
 
 **Example:**
