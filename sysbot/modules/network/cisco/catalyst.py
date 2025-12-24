@@ -36,9 +36,16 @@ class Catalyst(ComponentBase):
         return output
 
     def vlan_exists(self, alias: str, vlan_id: int, **kwargs) -> bool:
-        """Check if a VLAN exists"""
+        """Check if a VLAN exists by verifying the VLAN ID appears in the output"""
         output = self.execute_command(alias, f"show vlan id {vlan_id}", **kwargs)
-        return "not found" not in output.lower()
+        # Check for the VLAN ID in the output and absence of error messages
+        output_lower = output.lower()
+        # Common error messages when VLAN doesn't exist
+        error_patterns = ["not found", "does not exist", "invalid", "error"]
+        has_errors = any(error in output_lower for error in error_patterns)
+        # VLAN should appear in the output (as a standalone number or at line start)
+        has_vlan_id = re.search(rf'\b{vlan_id}\b', output) is not None
+        return has_vlan_id and not has_errors
 
     def running_config(self, alias: str, **kwargs) -> str:
         """Get the running configuration"""
@@ -109,8 +116,8 @@ class Catalyst(ComponentBase):
         """Check if an interface is up (both line protocol and interface status)"""
         output = self.execute_command(alias, f"show interface {interface} | include line protocol", **kwargs)
         # Parse the status line which looks like: "GigabitEthernet1/0/1 is up, line protocol is up"
-        # Use regex to match the complete status line format
-        pattern = r'\b\w+[\d/.]+ is up,\s*line protocol is up'
+        # Use regex to match the complete status line format, supporting all interface name formats
+        pattern = r'[\w/.]+ is up,\s*line protocol is up'
         return bool(re.search(pattern, output, re.IGNORECASE))
 
     def save_config(self, alias: str, **kwargs) -> str:
