@@ -3,6 +3,7 @@ Unit tests for Polarion plugin functionality
 """
 
 import os
+import shutil
 import tempfile
 import unittest
 import xml.etree.ElementTree as ET
@@ -29,7 +30,6 @@ class TestPolarionExporter(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures"""
         # Clean up temp files
-        import shutil
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
     

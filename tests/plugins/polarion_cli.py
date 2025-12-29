@@ -27,6 +27,10 @@ import sys
 import os
 from pathlib import Path
 
+# Exit codes
+EXIT_SUCCESS = 0
+EXIT_FAILURE = 1
+
 # Import polarion module
 try:
     from sysbot.plugins.polarion import generate_polarion_xunit
@@ -118,7 +122,7 @@ def main():
     # Check input file exists
     if not os.path.exists(args.output_xml):
         print(f"Error: Input file not found: {args.output_xml}", file=sys.stderr)
-        return 1
+        return EXIT_FAILURE
     
     # Parse custom properties
     custom_properties = parse_properties(args.properties)
@@ -149,17 +153,17 @@ def main():
         file_size = os.path.getsize(result)
         print(f"  File size: {file_size} bytes")
         
-        return 0
+        return EXIT_SUCCESS
         
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
-        return 1
+        return EXIT_FAILURE
     except Exception as e:
         print(f"Error: Failed to generate xUnit file: {e}", file=sys.stderr)
         if args.verbose:
             import traceback
             traceback.print_exc()
-        return 1
+        return EXIT_FAILURE
 
 
 if __name__ == '__main__':
