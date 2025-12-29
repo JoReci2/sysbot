@@ -433,6 +433,82 @@ robot --listener sysbot.plugins.robot.listener.mongodb.Mongodb:mongodb://localho
 
 For more details, see the [documentation](https://joreci2.github.io/sysbot/) or browse the [docs](docs/) directory.
 
+## Polarion Integration Plugin
+
+SysBot includes a Polarion plugin that enables integration with Siemens Polarion ALM/QA for test result management. The plugin provides:
+
+- **xUnit Post-processor**: Converts Robot Framework output to Polarion-compatible xUnit XML using rebot
+- **Test Case Mapping**: Links Robot Framework tests to Polarion test cases via tags
+- **Custom Properties**: Supports Polarion custom fields and metadata
+
+### Linking Tests to Polarion
+
+Use tags in your Robot Framework tests to establish links with Polarion test cases:
+
+```robot
+*** Test Cases ***
+Login Functionality Test
+    [Documentation]    Validates user login with valid credentials
+    [Tags]    polarion-id:TEST-001    polarion-title:Login Test    polarion-priority:High
+    # Test steps...
+
+User Management Test
+    [Documentation]    Test user creation and deletion
+    [Tags]    polarion-id:TEST-002    polarion-testEnvironment:Production
+    # Test steps...
+```
+
+**Tag Format:**
+- `polarion-id:TEST-XXX` - Links to Polarion test case ID (required for mapping)
+- `polarion-title:Test Name` - Sets Polarion test case title
+- `polarion-{property}:{value}` - Custom Polarion properties (e.g., `polarion-priority:High`, `polarion-assignee:jdoe`)
+
+### Generating Polarion-Compatible xUnit
+
+**Python API:**
+```python
+from sysbot.plugins.polarion import generate_polarion_xunit
+
+generate_polarion_xunit(
+    output_xml='output.xml',
+    xunit_file='polarion_results.xml',
+    project_id='MYPROJECT',
+    test_run_id='RUN-001',
+    custom_properties={'environment': 'test', 'version': '1.0'}
+)
+```
+
+**Command Line:**
+```bash
+# Basic usage
+python -m sysbot.plugins.polarion output.xml
+
+# With Polarion configuration
+robot tests/
+python -c "from sysbot.plugins.polarion import generate_polarion_xunit; \
+    generate_polarion_xunit('output.xml', 'polarion.xml', \
+    project_id='PROJ', test_run_id='RUN-001')"
+
+# See tests/plugins/polarion_cli.py for a full CLI example
+```
+
+### Importing into Polarion
+
+Once you have the Polarion-compatible xUnit file:
+
+1. **Manual Import**: Use Polarion's UI to import the xUnit file
+2. **Scheduled Import**: Configure Polarion's scheduled xUnit importer
+3. **API Import**: Use tools like `dump2polarion` or Polarion's REST API
+
+The generated xUnit file includes:
+- Test case IDs for proper mapping to existing Polarion test cases
+- Test execution results (pass/fail/error)
+- Execution time and timestamps
+- Custom properties for filtering and reporting
+- Project and test run associations
+
+For more details, see the [documentation](https://joreci2.github.io/sysbot/) or browse the [docs](docs/) directory.
+
 ## Documentation
 
 Complete documentation is available in English and French:
