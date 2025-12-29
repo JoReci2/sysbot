@@ -159,7 +159,7 @@ class PolarionExporter:
     
     def _run_rebot(self, output_xml: str, xunit_file: str) -> None:
         """
-        Run rebot to generate xUnit XML.
+        Run rebot to generate xUnit XML using Robot Framework API.
         
         Args:
             output_xml: Path to Robot Framework output.xml
@@ -168,49 +168,30 @@ class PolarionExporter:
         Raises:
             RuntimeError: If rebot command fails
         """
-        import subprocess
-        
         try:
-            # Check that robotframework is available
-            import robot
+            from robot.api import ResultWriter
         except ImportError:
             raise ImportError(
                 "Robot Framework is required. Install it with: pip install robotframework"
             )
         
-        # Build rebot command
-        cmd = [
-            'rebot',
-            '--xunit', xunit_file,
-            '--report', 'NONE',
-            '--log', 'NONE',
-            output_xml
-        ]
-        
         try:
-            # Run rebot command - it may return non-zero if tests failed
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True
+            # Use Robot Framework ResultWriter API to generate xUnit
+            result = ResultWriter(output_xml)
+            result.write_results(
+                xunit=xunit_file,
+                report=None,
+                log=None
             )
             
-            # Check if xUnit file was created (this is the important part)
+            # Check if xUnit file was created
             if not os.path.exists(xunit_file):
-                error_msg = result.stderr if result.stderr else "Unknown error"
-                raise RuntimeError(
-                    f"rebot did not create xUnit file: {xunit_file}\n"
-                    f"Error: {error_msg}"
-                )
+                raise RuntimeError(f"Failed to create xUnit file: {xunit_file}")
                 
-        except FileNotFoundError:
-            raise RuntimeError(
-                "rebot command not found. Make sure Robot Framework is installed."
-            )
         except Exception as e:
-            if isinstance(e, RuntimeError):
+            if isinstance(e, (ImportError, RuntimeError)):
                 raise
-            raise RuntimeError(f"Failed to run rebot: {e}") from e
+            raise RuntimeError(f"Failed to generate xUnit: {e}") from e
     
     def _enhance_xunit(self, output_xml: str, xunit_file: str) -> None:
         """

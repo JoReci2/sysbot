@@ -480,16 +480,17 @@ generate_polarion_xunit(
 
 **Command Line:**
 ```bash
-# Basic usage
-python -m sysbot.plugins.polarion output.xml
+# Run Robot Framework tests
+robot --outputdir results tests/
 
-# With Polarion configuration
-robot tests/
+# Generate Polarion xUnit using Python
 python -c "from sysbot.plugins.polarion import generate_polarion_xunit; \
-    generate_polarion_xunit('output.xml', 'polarion.xml', \
+    generate_polarion_xunit('results/output.xml', 'results/polarion.xml', \
     project_id='PROJ', test_run_id='RUN-001')"
 
-# See tests/plugins/polarion_cli.py for a full CLI example
+# Or use the CLI tool
+python tests/plugins/polarion_cli.py results/output.xml \
+    --project PROJ --testrun RUN-001 -o results/polarion.xml
 ```
 
 ### Importing into Polarion
