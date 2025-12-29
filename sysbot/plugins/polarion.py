@@ -32,10 +32,8 @@ Requirements:
 """
 
 import os
-import re
 import xml.etree.ElementTree as ET
 from typing import Optional, Dict, List
-from datetime import datetime
 
 
 class PolarionExporter:

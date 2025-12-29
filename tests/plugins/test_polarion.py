@@ -8,11 +8,14 @@ import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-# Import the polarion module
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from sysbot.plugins.polarion import PolarionExporter, generate_polarion_xunit
+# Import the polarion module using relative import
+try:
+    from sysbot.plugins.polarion import PolarionExporter, generate_polarion_xunit
+except ImportError:
+    # Fallback for running tests directly
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+    from sysbot.plugins.polarion import PolarionExporter, generate_polarion_xunit
 
 
 class TestPolarionExporter(unittest.TestCase):

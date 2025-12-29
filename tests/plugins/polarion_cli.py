@@ -27,10 +27,13 @@ import sys
 import os
 from pathlib import Path
 
-# Add parent directory to path to allow importing sysbot
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from sysbot.plugins.polarion import generate_polarion_xunit
+# Import polarion module
+try:
+    from sysbot.plugins.polarion import generate_polarion_xunit
+except ImportError:
+    # Fallback for running script directly from tests directory
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+    from sysbot.plugins.polarion import generate_polarion_xunit
 
 
 def parse_args():
