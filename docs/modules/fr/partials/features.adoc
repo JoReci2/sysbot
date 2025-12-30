@@ -1,7 +1,0 @@
-* *Support multi-protocole* : SSH, HTTP, WinRM, Socket (TCP/UDP)
-* *Tunneling SSH* : Support des tunnels SSH imbriqués avec gestion automatique
-* *Multiplateforme* : Support des systèmes Linux et Windows
-* *Intégration Robot Framework* : Support intégré pour l'automatisation Robot Framework avec portée SUITE
-* *Architecture modulaire* : Chargement et découverte dynamiques des composants (modules et plugins)
-* *Gestion des connexions* : Cache de session robuste et gestion du cycle de vie
-* *Gestion des secrets* : Stockage et récupération sécurisés des données sensibles

@@ -1,7 +1,0 @@
-* **Multi-protocol Support**: SSH, HTTP, WinRM, Socket (TCP/UDP)
-* **SSH Tunneling**: Support for nested SSH tunnels with automatic management
-* **Cross-platform**: Support for Linux and Windows systems
-* **Robot Framework Integration**: Built-in support for Robot Framework automation with SUITE scope
-* **Modular Architecture**: Dynamic components loading and discovery (modules and plugins)
-* **Connection Management**: Robust session caching and lifecycle management
-* **Secret Management**: Secure storage and retrieval of sensitive data

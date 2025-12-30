@@ -1,4 +1,0 @@
-[source,bash]
-----
-pip install sysbot
-----
