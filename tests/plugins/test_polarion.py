@@ -11,20 +11,20 @@ from pathlib import Path
 
 # Import the polarion module using relative import
 try:
-    from sysbot.plugins.polarion import PolarionExporter, generate_polarion_xunit
+    from sysbot.plugins.polarion import Polarion
 except ImportError:
     # Fallback for running tests directly
     import sys
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-    from sysbot.plugins.polarion import PolarionExporter, generate_polarion_xunit
+    from sysbot.plugins.polarion import Polarion
 
 
-class TestPolarionExporter(unittest.TestCase):
-    """Test cases for PolarionExporter class"""
+class TestPolarion(unittest.TestCase):
+    """Test cases for Polarion class"""
     
     def setUp(self):
         """Set up test fixtures"""
-        self.exporter = PolarionExporter()
+        self.polarion = Polarion()
         self.temp_dir = tempfile.mkdtemp()
     
     def tearDown(self):
@@ -36,25 +36,25 @@ class TestPolarionExporter(unittest.TestCase):
     def test_extract_polarion_id(self):
         """Test extraction of Polarion test case ID from tags"""
         tags = ['smoke', 'polarion-id:TEST-123', 'regression']
-        result = PolarionExporter.extract_polarion_id(tags)
+        result = Polarion.extract_polarion_id(tags)
         self.assertEqual(result, 'TEST-123')
     
     def test_extract_polarion_id_not_found(self):
         """Test when no Polarion ID is present"""
         tags = ['smoke', 'regression']
-        result = PolarionExporter.extract_polarion_id(tags)
+        result = Polarion.extract_polarion_id(tags)
         self.assertIsNone(result)
     
     def test_extract_polarion_title(self):
         """Test extraction of Polarion test case title from tags"""
         tags = ['polarion-title:Login Test', 'smoke']
-        result = PolarionExporter.extract_polarion_title(tags)
+        result = Polarion.extract_polarion_title(tags)
         self.assertEqual(result, 'Login Test')
     
     def test_extract_polarion_title_not_found(self):
         """Test when no Polarion title is present"""
         tags = ['smoke', 'regression']
-        result = PolarionExporter.extract_polarion_title(tags)
+        result = Polarion.extract_polarion_title(tags)
         self.assertIsNone(result)
     
     def test_extract_polarion_properties(self):
@@ -65,7 +65,7 @@ class TestPolarionExporter(unittest.TestCase):
             'polarion-id:TEST-001',  # Should be skipped
             'smoke'
         ]
-        result = PolarionExporter.extract_polarion_properties(tags)
+        result = Polarion.extract_polarion_properties(tags)
         self.assertEqual(result, {
             'testEnvironment': 'prod',
             'assignee': 'jdoe'
@@ -74,7 +74,7 @@ class TestPolarionExporter(unittest.TestCase):
     def test_extract_polarion_properties_empty(self):
         """Test when no custom properties are present"""
         tags = ['smoke', 'regression']
-        result = PolarionExporter.extract_polarion_properties(tags)
+        result = Polarion.extract_polarion_properties(tags)
         self.assertEqual(result, {})
     
     def test_build_test_mapping(self):
@@ -93,7 +93,7 @@ class TestPolarionExporter(unittest.TestCase):
 </robot>
 """
         rf_root = ET.fromstring(rf_xml)
-        test_mapping = self.exporter._build_test_mapping(rf_root)
+        test_mapping = self.polarion._build_test_mapping(rf_root)
         
         self.assertIn('TestSuite.Test 1', test_mapping)
         test_info = test_mapping['TestSuite.Test 1']
@@ -106,26 +106,26 @@ class TestPolarionExporter(unittest.TestCase):
     def test_polarion_id_with_special_characters(self):
         """Test Polarion ID with special characters"""
         tags = ['polarion-id:TEST-001-ABC_123']
-        result = PolarionExporter.extract_polarion_id(tags)
+        result = Polarion.extract_polarion_id(tags)
         self.assertEqual(result, 'TEST-001-ABC_123')
     
     def test_polarion_title_with_spaces(self):
         """Test Polarion title with multiple words"""
         tags = ['polarion-title:This is a test with spaces']
-        result = PolarionExporter.extract_polarion_title(tags)
+        result = Polarion.extract_polarion_title(tags)
         self.assertEqual(result, 'This is a test with spaces')
     
     def test_multiple_polarion_ids(self):
         """Test that first Polarion ID is used when multiple are present"""
         tags = ['polarion-id:TEST-001', 'polarion-id:TEST-002']
-        result = PolarionExporter.extract_polarion_id(tags)
+        result = Polarion.extract_polarion_id(tags)
         self.assertEqual(result, 'TEST-001')
     
     def test_exporter_initialization(self):
-        """Test PolarionExporter initialization"""
-        self.assertIsNone(self.exporter.project_id)
-        self.assertIsNone(self.exporter.test_run_id)
-        self.assertEqual(self.exporter.custom_properties, {})
+        """Test Polarion initialization"""
+        self.assertIsNone(self.polarion.project_id)
+        self.assertIsNone(self.polarion.test_run_id)
+        self.assertEqual(self.polarion.custom_properties, {})
     
     def test_add_global_properties(self):
         """Test adding global properties to xUnit XML"""
@@ -140,12 +140,12 @@ class TestPolarionExporter(unittest.TestCase):
         xunit_root = ET.fromstring(xunit_xml)
         
         # Set properties
-        self.exporter.project_id = 'PROJ-001'
-        self.exporter.test_run_id = 'RUN-001'
-        self.exporter.custom_properties = {'environment': 'test'}
+        self.polarion.project_id = 'PROJ-001'
+        self.polarion.test_run_id = 'RUN-001'
+        self.polarion.custom_properties = {'environment': 'test'}
         
         # Add global properties
-        self.exporter._add_global_properties(xunit_root)
+        self.polarion._add_global_properties(xunit_root)
         
         # Verify properties were added
         properties = xunit_root.find('.//properties')
@@ -157,15 +157,12 @@ class TestPolarionExporter(unittest.TestCase):
         self.assertEqual(prop_dict['polarion-project-id'], 'PROJ-001')
         self.assertEqual(prop_dict['polarion-testrun-id'], 'RUN-001')
         self.assertEqual(prop_dict['polarion-custom-environment'], 'test')
-
-
-class TestConvenienceFunction(unittest.TestCase):
-    """Test the convenience function"""
     
-    def test_generate_polarion_xunit_invalid_file(self):
+    def test_generate_xunit_invalid_file(self):
         """Test that FileNotFoundError is raised for missing output.xml"""
+        polarion = Polarion()
         with self.assertRaises(FileNotFoundError):
-            generate_polarion_xunit('nonexistent.xml')
+            polarion.generate_xunit('nonexistent.xml', 'output.xml')
 
 
 if __name__ == '__main__':

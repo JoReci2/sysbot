@@ -8,10 +8,10 @@ with Siemens Polarion ALM/QA. It includes:
 - Metadata extraction and formatting for Polarion requirements
 
 Usage:
-    from sysbot.plugins.polarion import PolarionExporter
+    from sysbot.plugins.polarion import Polarion
     
-    exporter = PolarionExporter()
-    exporter.generate_xunit(
+    polarion = Polarion()
+    polarion.generate_xunit(
         output_xml='output.xml',
         xunit_file='polarion_results.xml',
         project_id='MY_PROJECT',
@@ -36,7 +36,7 @@ import xml.etree.ElementTree as ET
 from typing import Optional, Dict, List
 
 
-class PolarionExporter:
+class Polarion:
     """
     Polarion exporter for Robot Framework test results.
     
@@ -359,41 +359,3 @@ class PolarionExporter:
             prop = ET.SubElement(properties, 'property')
             prop.set('name', f'polarion-custom-{key}')
             prop.set('value', value)
-
-
-def generate_polarion_xunit(
-    output_xml: str,
-    xunit_file: str = 'polarion_results.xml',
-    project_id: Optional[str] = None,
-    test_run_id: Optional[str] = None,
-    custom_properties: Optional[Dict[str, str]] = None
-) -> str:
-    """
-    Convenience function to generate Polarion-compatible xUnit XML.
-    
-    Args:
-        output_xml: Path to Robot Framework output.xml file
-        xunit_file: Path where xUnit XML file should be saved (default: polarion_results.xml)
-        project_id: Polarion project ID (optional)
-        test_run_id: Polarion test run ID (optional)
-        custom_properties: Additional custom properties for all tests
-        
-    Returns:
-        Path to generated xUnit file
-        
-    Example:
-        generate_polarion_xunit(
-            'output.xml',
-            'polarion_results.xml',
-            project_id='MYPROJECT',
-            test_run_id='RUN-001'
-        )
-    """
-    exporter = PolarionExporter()
-    return exporter.generate_xunit(
-        output_xml=output_xml,
-        xunit_file=xunit_file,
-        project_id=project_id,
-        test_run_id=test_run_id,
-        custom_properties=custom_properties
-    )

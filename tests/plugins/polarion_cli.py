@@ -33,11 +33,11 @@ EXIT_FAILURE = 1
 
 # Import polarion module
 try:
-    from sysbot.plugins.polarion import generate_polarion_xunit
+    from sysbot.plugins.polarion import Polarion
 except ImportError:
     # Fallback for running script directly from tests directory
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-    from sysbot.plugins.polarion import generate_polarion_xunit
+    from sysbot.plugins.polarion import Polarion
 
 
 def parse_args():
@@ -139,7 +139,8 @@ def main():
     
     try:
         # Generate Polarion xUnit
-        result = generate_polarion_xunit(
+        polarion = Polarion()
+        result = polarion.generate_xunit(
             output_xml=args.output_xml,
             xunit_file=args.xunit_file,
             project_id=args.project_id,
