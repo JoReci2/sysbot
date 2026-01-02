@@ -1,16 +1,32 @@
 # SysBot
 
-A system test tool that provides a unified interface for connecting to and test various systems through different protocols. Built with Robot Framework integration in mind.
+## Overview
 
-## Features
+SysBot is a system test tool that provides a unified interface for connecting to and testing various systems through different protocols. Built with Robot Framework integration in mind, it offers a modular architecture that simplifies system automation and testing.
 
-- **Multi-protocol Support**: SSH, HTTP, WinRM, and more
+### Key Features
+
+- **Multi-protocol Support**: SSH, HTTP, WinRM, Socket and more
 - **SSH Tunneling**: Support for nested SSH tunnels with automatic management
 - **Cross-platform**: Support for Linux and Windows systems
 - **Robot Framework Integration**: Built-in support for Robot Framework automation with SUITE scope
-- **Modular Architecture**: Dynamic components loading and discovery (module and plugins)
+- **Modular Architecture**: Dynamic components loading and discovery (modules and plugins)
 - **Connection Management**: Robust session caching and lifecycle management
 - **Secret Management**: Secure storage and retrieval of sensitive data
+- **Database Listeners**: Store test results in SQLite, MySQL, PostgreSQL, or MongoDB
+- **Polarion Integration**: Generate Polarion-compatible xUnit reports for ALM/QA integration
+
+### Architecture
+
+```
+sysbot/
+├── Sysbot.py           # Main SysBot class
+├── connectors/         # Protocol-specific connectors
+├── plugins/            # Plugins utilities (data, vault, robot/listener)
+├── utils/
+│   └── engine.py       # Engine class
+└── modules/            # Modules
+```
 
 ## Installation
 
@@ -25,7 +41,21 @@ A system test tool that provides a unified interface for connecting to and test 
 pip install sysbot
 ```
 
-## Quick Start
+### Optional Dependencies
+
+For specific features, you can install additional dependencies:
+
+```bash
+# Install with all database support
+pip install sysbot[all_databases]
+
+# Install with specific database support
+pip install sysbot[mysql]        # MySQL support only
+pip install sysbot[postgresql]   # PostgreSQL support only
+pip install sysbot[mongodb]      # MongoDB support only
+```
+
+## Quickstart
 
 ### Basic SSH Connection
 
@@ -86,17 +116,13 @@ bot.open_session(
 )
 ```
 
-### Using secret management and plugins
+### Secret Management
 
 ```python
 from sysbot.Sysbot import Sysbot
 bot = Sysbot()
 
-# If secret is not used
-my_import = bot.plugins.data.csv("/path/to/file")
-my_import[0][name]
-
-# With secret usage
+# Using plugins with secret management
 bot.plugins.data.csv("/path/to/file", key="my_secret")
 secret_data = bot.get_secret("my_secret.0.name")
 
@@ -115,33 +141,6 @@ bot.plugins.vault.dump_engine(
 )
 # Access Vault secrets using dot notation
 db_url = bot.get_secret("vault_secrets.myapp/config.database_url")
-```
-
-### Using with Robot Framework
-
-```robot
-*** Settings ***
-Library        sysbot.Sysbot
-
-*** Variables ***
-${HOST}=       192.168.1.112
-${PORT}=       22
-${USER}=       sysbot
-${PASSWORD}=   P@ssw0rd
-
-*** Settings ***
-Suite Setup       Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
-Suite Teardown    Close All Sessions
-
-*** Test Cases ***
-
-Open Session without secret
-    Open Session    target    ssh    bash    ${HOST}    ${PORT}   ${USER}    ${PASSWORD}
-    Close All Sessions
-
-Open Session with secret
-    Open Session    target    ssh    bash    connexion.host    ${PORT}   connexion.username    connexion.password   is_secret=True
-    Close All Sessions
 ```
 
 ### Module System
@@ -174,13 +173,13 @@ bot.close_session("my_linux_server")
 bot.close_all_sessions()
 ```
 
-## Supported Protocols
+### Supported Protocols
 
-### SSH
+#### SSH
 - **Bash**: Full support for bash via SSH
 - **Powershell**: Support for powershell via SSH (requires SSH server)
 
-### Local Execution
+#### Local Execution
 - **Bash**: Execute bash/shell commands locally without SSH
 - **Powershell**: Execute PowerShell commands locally without SSH or WinRM
 
@@ -189,9 +188,7 @@ SysBot provides local execution connectors that allow running commands directly 
 - Testing without remote systems
 - Avoiding connection overhead for local operations
 
-#### Usage Examples
-
-##### Local Bash Execution
+**Local Bash Execution:**
 ```python
 from sysbot.Sysbot import Sysbot
 
@@ -210,18 +207,10 @@ bot.open_session(
 result = bot.execute_command("local_bash", "ls -la")
 print(result)
 
-# Execute with sudo (requires password or NOPASSWD in sudoers)
-result = bot.execute_command(
-    "local_bash", 
-    "cat /etc/shadow", 
-    runas=True, 
-    password="your_password"
-)
-
 bot.close_session("local_bash")
 ```
 
-##### Local PowerShell Execution
+**Local PowerShell Execution:**
 ```python
 from sysbot.Sysbot import Sysbot
 
@@ -240,24 +229,14 @@ bot.open_session(
 result = bot.execute_command("local_ps", "Get-Process | Select-Object -First 5")
 print(result)
 
-# Execute with elevated privileges (Windows only)
-result = bot.execute_command(
-    "local_ps",
-    "Get-Service",
-    runas=True
-)
-
 bot.close_session("local_ps")
 ```
 
-**Note**: For local execution, the `host` and `port` parameters are required by the API but are not actually used. You can pass any values like `"localhost"` and `0`.
+#### HTTP/HTTPS
 
-### HTTP/HTTPS
+SysBot provides a generic HTTP/HTTPS connector with support for 9 authentication methods.
 
-SysBot provides a generic HTTP/HTTPS connector with support for 9 authentication methods. Each authentication method is implemented as a separate, self-contained class.
-
-#### Supported Authentication Methods
-
+**Supported Authentication Methods:**
 1. **API Key (`apikey`)** - API Key authentication via headers or query parameters
 2. **Basic Auth (`basicauth`)** - Standard HTTP Basic Authentication
 3. **OAuth 1.0 (`oauth1`)** - OAuth 1.0 authentication (RFC 5849)
@@ -268,9 +247,9 @@ SysBot provides a generic HTTP/HTTPS connector with support for 9 authentication
 8. **Certificate (`certificate`)** - Client certificate authentication (mutual TLS)
 9. **OpenID Connect (`openidconnect`)** - OpenID Connect authentication
 
-#### Usage Examples
+**Usage Examples:**
 
-##### Basic Authentication
+Basic Authentication:
 ```python
 bot.open_session(
     alias="my_api",
@@ -285,7 +264,7 @@ bot.open_session(
 result = bot.execute_command("my_api", "/users", options={"method": "GET"})
 ```
 
-##### API Key Authentication
+API Key Authentication:
 ```python
 bot.open_session(
     alias="my_api",
@@ -300,103 +279,176 @@ bot.open_session(
 result = bot.execute_command("my_api", "/data", options={"method": "GET"})
 ```
 
-##### OAuth 2.0 Authentication
-```python
-bot.open_session(
-    alias="my_api",
-    protocol="http",
-    product="oauth2",
-    host="api.example.com",
-    port=443,
-    client_id="your-client-id",
-    client_secret="your-client-secret",
-    access_token="your-access-token"
-)
-
-result = bot.execute_command("my_api", "/protected", options={"method": "GET"})
-```
-
-##### JWT Authentication
-```python
-bot.open_session(
-    alias="my_api",
-    protocol="http",
-    product="jwt",
-    host="api.example.com",
-    port=443,
-    login="user@example.com",
-    secret_key="your-secret-key",
-    algorithm="HS256"
-)
-
-result = bot.execute_command("my_api", "/secure", options={"method": "GET"})
-```
-
-##### Certificate Authentication
-```python
-bot.open_session(
-    alias="my_api",
-    protocol="http",
-    product="certificate",
-    host="api.example.com",
-    port=443,
-    cert_file="/path/to/client.crt",
-    key_file="/path/to/client.key",
-    ca_bundle="/path/to/ca-bundle.crt"  # Optional
-)
-
-result = bot.execute_command("my_api", "/secure", options={"method": "GET"})
-```
-
-##### POST Request with JSON Data
-```python
-result = bot.execute_command(
-    "my_api",
-    "/users",
-    options={
-        "method": "POST",
-        "json": {"name": "John Doe", "email": "john@example.com"}
-    }
-)
-```
-
-#### HTTP/HTTPS Configuration
-
-- **SSL Verification**: Enabled by default for security. Can be disabled per request:
-  ```python
-  result = bot.execute_command("my_api", "/endpoint", options={"verify": False})
-  ```
-
-- **HTTP vs HTTPS**: Configure via port (80 for HTTP, 443 for HTTPS) or use `use_https` parameter
-
-- **Request Options**: All authentication methods support:
-  - `method`: HTTP method (GET, POST, PUT, DELETE, etc.)
-  - `headers`: Custom HTTP headers
-  - `params`: URL query parameters
-  - `data`: Request body data
-  - `json`: JSON request body
-  - `verify`: SSL certificate verification (default: True)
-
-### WinRM
+#### WinRM
 - **Powershell**: Native Windows Remote Management support
 
-### Socket
-- **TCP**: Native TCP socket with ssl if needed
+#### Socket
+- **TCP**: Native TCP socket with SSL if needed
 - **UDP**: Native UDP socket
 
-## Architecture
+## RobotFramework Usage
 
-```
-sysbot/
-├── Sysbot.py           # Main SysBot class
-├── connectors/         # Protocol-specific connectors
-├── plugins/            # Plugins utilities (data, vault, robot/listener)
-├── utils/
-│   └── engine.py       # Engine class
-└── modules/            # Modules
+SysBot is designed to work seamlessly with Robot Framework, providing powerful automation capabilities with a simple syntax.
+
+### Basic Robot Framework Test
+
+```robot
+*** Settings ***
+Library        sysbot.Sysbot
+
+*** Variables ***
+${HOST}=       192.168.1.112
+${PORT}=       22
+${USER}=       sysbot
+${PASSWORD}=   P@ssw0rd
+
+*** Settings ***
+Suite Setup       Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
+Suite Teardown    Close All Sessions
+
+*** Test Cases ***
+
+Open Session without secret
+    Open Session    target    ssh    bash    ${HOST}    ${PORT}   ${USER}    ${PASSWORD}
+    Close All Sessions
+
+Open Session with secret
+    Open Session    target    ssh    bash    connexion.host    ${PORT}   connexion.username    connexion.password   is_secret=True
+    Close All Sessions
 ```
 
-## Database Listener Plugin
+### Using Modules in Robot Framework
+
+Modules can be loaded and used to perform specific operations on target systems:
+
+```robot
+*** Settings ***
+Library        sysbot.Sysbot    linux.systemd    linux.dnf
+
+*** Test Cases ***
+
+Check System Service
+    Open Session    server1    ssh    bash    ${HOST}    ${PORT}    ${USER}    ${PASSWORD}
+    ${status}=    Linux Dnf Repolist    server1
+    Log    ${status}
+    Close All Sessions
+```
+
+### Secret Management in Robot Framework
+
+```robot
+*** Settings ***
+Library        sysbot.Sysbot
+
+*** Test Cases ***
+
+Using Secrets
+    Add Secret    db_password    MySecretPassword
+    ${password}=    Get Secret    db_password
+    Log    Using password: ${password}
+    Remove Secret    db_password
+```
+
+## UnitTest Usage
+
+SysBot can be used in Python unittest for system testing scenarios.
+
+### Basic UnitTest Example
+
+```python
+import unittest
+from sysbot.Sysbot import Sysbot
+
+class TestSystemConnections(unittest.TestCase):
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.bot = Sysbot()
+    
+    def tearDown(self):
+        """Clean up after tests."""
+        self.bot.close_all_sessions()
+    
+    def test_ssh_connection(self):
+        """Test SSH connection to a system."""
+        self.bot.open_session(
+            alias="test_server",
+            protocol="ssh",
+            product="bash",
+            host="192.168.1.100",
+            port=22,
+            login="testuser",
+            password="testpass"
+        )
+        
+        result = self.bot.execute_command("test_server", "echo 'Hello World'")
+        self.assertIn("Hello World", result)
+    
+    def test_http_api_call(self):
+        """Test HTTP API connection."""
+        self.bot.open_session(
+            alias="api",
+            protocol="http",
+            product="basicauth",
+            host="api.example.com",
+            port=443,
+            login="user",
+            password="pass"
+        )
+        
+        result = self.bot.execute_command(
+            "api",
+            "/health",
+            options={"method": "GET"}
+        )
+        self.assertIsNotNone(result)
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
+### Module Testing with UnitTest
+
+```python
+import unittest
+from sysbot.Sysbot import Sysbot
+
+class TestLinuxModules(unittest.TestCase):
+    
+    @classmethod
+    def setUpClass(cls):
+        """Set up class fixtures."""
+        cls.bot = Sysbot("linux.systemd", "linux.dnf")
+        cls.bot.open_session(
+            alias="linux_server",
+            protocol="ssh",
+            product="bash",
+            host="192.168.1.100",
+            port=22,
+            login="user",
+            password="pass"
+        )
+    
+    @classmethod
+    def tearDownClass(cls):
+        """Clean up class fixtures."""
+        cls.bot.close_all_sessions()
+    
+    def test_systemd_service_status(self):
+        """Test checking systemd service status."""
+        result = self.bot.linux.systemd.status("linux_server", "sshd")
+        self.assertIsNotNone(result)
+    
+    def test_dnf_repolist(self):
+        """Test listing DNF repositories."""
+        result = self.bot.linux.dnf.repolist("linux_server")
+        self.assertIsNotNone(result)
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
+## Listener Usage
 
 SysBot includes Robot Framework listener plugins that can store test results in various databases. Each database type has its own independent, self-contained listener. The listeners create a hierarchical structure: Campaign → Suite → Test Case → Keyword.
 
@@ -407,7 +459,7 @@ SysBot includes Robot Framework listener plugins that can store test results in 
 - **PostgreSQL**: Enterprise-grade relational database
 - **MongoDB**: NoSQL document database for flexible schemas
 
-### Usage
+### Usage with Robot Framework
 
 Each listener is used directly with its specific class:
 
@@ -425,15 +477,40 @@ robot --listener sysbot.plugins.robot.listener.postgresql.Postgresql:postgresql:
 robot --listener sysbot.plugins.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
 ```
 
-**Installation**: 
-- `pip install sysbot[all_databases]` - Install with all database support
-- `pip install sysbot[mysql]` - MySQL support only
-- `pip install sysbot[postgresql]` - PostgreSQL support only
-- `pip install sysbot[mongodb]` - MongoDB support only
+### Listener Parameters
 
-For more details, see the [documentation](https://joreci2.github.io/sysbot/) or browse the [docs](docs/) directory.
+The listener accepts two parameters:
+1. **Database Connection**: Connection string or path to database
+2. **Campaign Name**: Name of the test campaign for organizing results
 
-## Polarion Integration Plugin
+### Data Structure
+
+The listeners store test execution data in a hierarchical format:
+
+- **Campaign**: Top-level container for test executions
+  - **Suite**: Test suite information
+    - **Test Case**: Individual test cases
+      - **Keyword**: Keywords executed within tests
+
+Each level stores relevant metadata including:
+- Execution timestamps
+- Status (PASS/FAIL)
+- Error messages
+- Statistics
+
+### Installation Requirements
+
+```bash
+# Install with all database support
+pip install sysbot[all_databases]
+
+# Or install specific database support
+pip install sysbot[mysql]        # MySQL support only
+pip install sysbot[postgresql]   # PostgreSQL support only
+pip install sysbot[mongodb]      # MongoDB support only
+```
+
+## Polarion Integration
 
 SysBot includes a Polarion plugin that enables integration with Siemens Polarion ALM/QA for test result management. The plugin provides:
 
@@ -458,14 +535,15 @@ User Management Test
     # Test steps...
 ```
 
-**Tag Format:**
+### Tag Format
+
 - `polarion-id:TEST-XXX` - Links to Polarion test case ID (required for mapping)
 - `polarion-title:Test Name` - Sets Polarion test case title
 - `polarion-{property}:{value}` - Custom Polarion properties (e.g., `polarion-priority:High`, `polarion-assignee:jdoe`)
 
 ### Generating Polarion-Compatible xUnit
 
-**Python API:**
+**Using Python API:**
 ```python
 from sysbot.utils.polarion import Polarion
 
@@ -479,7 +557,7 @@ polarion.generate_xunit(
 )
 ```
 
-**Command Line:**
+**Using Command Line:**
 ```bash
 # Run Robot Framework tests
 robot --outputdir results tests/
@@ -499,6 +577,8 @@ Once you have the Polarion-compatible xUnit file:
 2. **Scheduled Import**: Configure Polarion's scheduled xUnit importer
 3. **API Import**: Use tools like `dump2polarion` or Polarion's REST API
 
+### Generated xUnit Content
+
 The generated xUnit file includes:
 - Test case IDs for proper mapping to existing Polarion test cases
 - Test execution results (pass/fail/error)
@@ -506,9 +586,9 @@ The generated xUnit file includes:
 - Custom properties for filtering and reporting
 - Project and test run associations
 
-For more details, see the [documentation](https://joreci2.github.io/sysbot/) or browse the [docs](docs/) directory.
+## Additional Resources
 
-## Documentation
+### Documentation
 
 Complete documentation is available in English and French:
 
@@ -530,7 +610,7 @@ Complete documentation is available in English and French:
 
 The documentation is built with [Antora](https://antora.org/) and uses AsciiDoc format. See [docs/README.adoc](docs/README.adoc) for information on building documentation locally.
 
-## Error Handling
+### Error Handling
 
 SysBot provides comprehensive error handling:
 
