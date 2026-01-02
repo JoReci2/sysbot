@@ -319,72 +319,80 @@ Connectors must implement a standard interface to work with the SysBot engine:
 
 ```python
 # sysbot/connectors/myprotocol.py
-class MyProtocolConnector:
+from sysbot.utils.engine import ConnectorInterface
+
+
+class Myprotocol(ConnectorInterface):
     """Connector for MyProtocol."""
     
-    def __init__(self, **kwargs):
-        """Initialize the connector with connection parameters.
+    def __init__(self, port=None):
+        """Initialize the connector with default port.
         
         Args:
-            **kwargs: Connection parameters (host, port, login, password, etc.)
+            port (int): Default port for this protocol.
         """
-        self.host = kwargs.get('host')
-        self.port = kwargs.get('port')
-        self.login = kwargs.get('login')
-        self.password = kwargs.get('password')
-        self.connection = None
+        super().__init__()
+        self.default_port = port
     
-    def connect(self):
-        """Establish the connection.
+    def open_session(self, host, port=None, login=None, password=None):
+        """Open a session to the target system.
+        
+        Args:
+            host (str): Hostname or IP address of the target system.
+            port (int): Port of the service. If None, uses default_port.
+            login (str): Username for the session.
+            password (str): Password for the session.
         
         Returns:
-            The connection object
-            
+            object: A session object (can be any type: connection, dict, etc.)
+        
         Raises:
-            ConnectionError: If connection fails
+            Exception: If there is an error opening the session.
         """
-        # Implement connection logic
+        if port is None:
+            port = self.default_port
+        
+        # Implement your connection logic here
+        # Return a session object that will be passed to execute_command and close_session
         pass
     
-    def disconnect(self):
-        """Close the connection."""
-        # Implement disconnection logic
-        pass
-    
-    def execute(self, command: str, **options) -> str:
+    def execute_command(self, session, command, **kwargs):
         """Execute a command through the protocol.
         
         Args:
-            command: The command to execute
-            **options: Additional options for command execution
-            
-        Returns:
-            The command output
-            
-        Raises:
-            RuntimeError: If execution fails
-        """
-        # Implement command execution
-        pass
-    
-    def is_connected(self) -> bool:
-        """Check if the connection is active.
+            session: The session object returned by open_session
+            command (str): The command to execute
+            **kwargs: Additional options for command execution (e.g., runas, password)
         
         Returns:
-            True if connected, False otherwise
+            str: The command output
+        
+        Raises:
+            Exception: If there is an error executing the command
         """
-        # Implement connection check
+        # Implement command execution logic
+        pass
+    
+    def close_session(self, session):
+        """Close an open session.
+        
+        Args:
+            session: The session object to close.
+        
+        Raises:
+            Exception: If there is an error closing the session.
+        """
+        # Implement session cleanup logic
         pass
 ```
 
 ### Required Methods
 
-Every connector must implement these methods:
+Every connector must implement these three mandatory methods:
 
-* `connect()`: Establish the connection
-* `disconnect()`: Close the connection
-* `execute(command, **options)`: Execute a command
-* `is_connected()`: Check connection status
+* `open_session(host, port, login, password)`: Open a connection/session to the target system
+* `execute_command(session, command, **kwargs)`: Execute a command through the protocol
+* `close_session(session)`: Close an open session and clean up resources
 
 ### Connector Registration
 
@@ -397,8 +405,8 @@ To register a new connector with SysBot:
 ### Connector Best Practices
 
 * **Error Handling**: Always catch and handle connection errors gracefully
-* **Resource Cleanup**: Implement proper cleanup in `disconnect()`
-* **Connection Pooling**: Consider connection reuse when appropriate
+* **Resource Cleanup**: Implement proper cleanup in `close_session()`
+* **Session Management**: Design session objects to hold all necessary connection state
 * **Timeouts**: Implement sensible timeout values
 * **SSL/TLS**: Support secure connections when applicable
 * **Authentication**: Support multiple authentication methods if relevant
@@ -406,35 +414,80 @@ To register a new connector with SysBot:
 
 ### Example: HTTP Connector
 
-The HTTP connector is a good reference implementation:
+The HTTP Basic Auth connector is a good reference implementation:
 
 ```python
-# sysbot/connectors/http.py
+# sysbot/connectors/http.py (Basicauth class)
+from sysbot.utils.engine import ConnectorInterface
+from requests.auth import HTTPBasicAuth
 import requests
 
-class HttpConnector:
-    def __init__(self, **kwargs):
-        self.host = kwargs.get('host')
-        self.port = kwargs.get('port', 443)
-        self.use_https = kwargs.get('use_https', True)
-        self.base_url = f"{'https' if self.use_https else 'http'}://{self.host}:{self.port}"
-        self.session = None
+
+class Basicauth(ConnectorInterface):
+    """HTTP connector with Basic Authentication."""
     
-    def connect(self):
-        self.session = requests.Session()
-        return self.session
+    def __init__(self, port=443, use_https=True):
+        """Initialize Basic Auth connector.
+        
+        Args:
+            port (int): Default port (default: 443).
+            use_https (bool): Whether to use HTTPS (default: True).
+        """
+        super().__init__()
+        self.default_port = port
+        self.use_https = use_https
     
-    def disconnect(self):
-        if self.session:
-            self.session.close()
+    def open_session(self, host, port=None, login=None, password=None):
+        """Open a session with Basic authentication.
+        
+        Args:
+            host (str): Hostname or IP address.
+            port (int): Port. If None, uses default_port.
+            login (str): Username.
+            password (str): Password.
+        
+        Returns:
+            dict: Session configuration containing connection details.
+        """
+        if port is None:
+            port = self.default_port
+        
+        return {
+            "host": host,
+            "port": port,
+            "login": login,
+            "password": password,
+            "use_https": self.use_https
+        }
     
-    def execute(self, endpoint: str, **options):
-        method = options.get('method', 'GET')
-        response = self.session.request(method, f"{self.base_url}{endpoint}", **options)
-        return response.text
+    def execute_command(self, session, command, options=None):
+        """Execute an HTTP request with Basic authentication.
+        
+        Args:
+            session (dict): Session configuration.
+            command (str): API endpoint path.
+            options (dict): Optional request parameters (method, params, headers, data, json, verify).
+        
+        Returns:
+            bytes: Response content.
+        """
+        protocol = "https" if session["use_https"] else "http"
+        url = f"{protocol}://{session['host']}:{session['port']}{command}"
+        
+        method = options.get("method", "GET") if options else "GET"
+        auth = HTTPBasicAuth(session["login"], session["password"])
+        
+        response = requests.request(method=method, url=url, auth=auth, **options if options else {})
+        response.raise_for_status()
+        return response.content
     
-    def is_connected(self):
-        return self.session is not None
+    def close_session(self, session):
+        """Close the session (no-op for Basic auth).
+        
+        Args:
+            session (dict): Session configuration.
+        """
+        pass
 ```
 
 ## Plugins Development
@@ -464,18 +517,15 @@ sysbot/plugins/
 
 ### Data Plugin Example
 
+Plugins inherit from `ComponentBase` and the class name must match the filename (capitalized). For example, `mydata.py` should have class `Mydata`:
+
 ```python
 # sysbot/plugins/mydata.py
-class MyDataPlugin:
+from sysbot.utils.engine import ComponentBase
+
+
+class Mydata(ComponentBase):
     """Plugin for handling custom data format."""
-    
-    def __init__(self, engine):
-        """Initialize the plugin with the engine instance.
-        
-        Args:
-            engine: The Sysbot engine instance
-        """
-        self.engine = engine
     
     def load(self, filepath: str, key: str = None) -> dict:
         """Load data from a file.
@@ -491,7 +541,7 @@ class MyDataPlugin:
         data = self._parse_file(filepath)
         
         if key:
-            self.engine.add_secret(key, data)
+            self._sysbot._cache.secrets.register(key, data)
         
         return data
     
