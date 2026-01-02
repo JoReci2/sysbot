@@ -467,7 +467,7 @@ User Management Test
 
 **Python API:**
 ```python
-from sysbot.plugins.polarion import Polarion
+from sysbot.utils.polarion import Polarion
 
 polarion = Polarion()
 polarion.generate_xunit(
@@ -485,14 +485,10 @@ polarion.generate_xunit(
 robot --outputdir results tests/
 
 # Generate Polarion xUnit using Python
-python -c "from sysbot.plugins.polarion import Polarion; \
+python -c "from sysbot.utils.polarion import Polarion; \
     polarion = Polarion(); \
     polarion.generate_xunit('results/output.xml', 'results/polarion.xml', \
     project_id='PROJ', test_run_id='RUN-001')"
-
-# Or use the CLI tool
-python tests/plugins/polarion_cli.py results/output.xml \
-    --project PROJ --testrun RUN-001 -o results/polarion.xml
 ```
 
 ### Importing into Polarion
