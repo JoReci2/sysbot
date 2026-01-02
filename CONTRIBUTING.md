@@ -474,10 +474,26 @@ class Basicauth(ConnectorInterface):
         protocol = "https" if session["use_https"] else "http"
         url = f"{protocol}://{session['host']}:{session['port']}{command}"
         
+        # Extract parameters from options
         method = options.get("method", "GET") if options else "GET"
+        headers = options.get("headers") if options else None
+        params = options.get("params") if options else None
+        data = options.get("data") if options else None
+        json_data = options.get("json") if options else None
+        verify = options.get("verify", True) if options else True
+        
         auth = HTTPBasicAuth(session["login"], session["password"])
         
-        response = requests.request(method=method, url=url, auth=auth, **options if options else {})
+        response = requests.request(
+            method=method,
+            url=url,
+            auth=auth,
+            headers=headers,
+            params=params,
+            data=data,
+            json=json_data,
+            verify=verify
+        )
         response.raise_for_status()
         return response.content
     
