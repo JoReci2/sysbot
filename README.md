@@ -118,6 +118,8 @@ bot.open_session(
 
 ### Secret Management
 
+SysBot provides a built-in secret management system for secure storage and retrieval of sensitive data like passwords, tokens, and configuration values. Secrets can be stored directly or loaded from external sources like files or HashiCorp Vault.
+
 ```python
 from sysbot.Sysbot import Sysbot
 bot = Sysbot()
