@@ -1,3 +1,0 @@
-* xref:user-manual.adoc[User Manual]
-* xref:developer.adoc[Developer]
-* xref:references.adoc[Reference]

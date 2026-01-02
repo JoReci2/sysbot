@@ -1,3 +1,0 @@
-* *Python* : Version 3.7 ou supérieure (Python 3.8+ recommandé)
-* *pip* : Gestionnaire de packages Python
-* *Git* : Pour cloner le dépôt (optionnel, pour le développement)
