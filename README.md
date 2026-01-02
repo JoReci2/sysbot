@@ -6,7 +6,7 @@ SysBot is a system test tool that provides a unified interface for connecting to
 
 ### Key Features
 
-- **Multi-protocol Support**: SSH, HTTP, WinRM, Socket and more
+- **Multi-protocol Support**: SSH, HTTP, WinRM, Socket, and more
 - **SSH Tunneling**: Support for nested SSH tunnels with automatic management
 - **Cross-platform**: Support for Linux and Windows systems
 - **Robot Framework Integration**: Built-in support for Robot Framework automation with SUITE scope
@@ -297,16 +297,14 @@ SysBot is designed to work seamlessly with Robot Framework, providing powerful a
 ```robot
 *** Settings ***
 Library        sysbot.Sysbot
+Suite Setup       Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
+Suite Teardown    Close All Sessions
 
 *** Variables ***
 ${HOST}=       192.168.1.112
 ${PORT}=       22
 ${USER}=       sysbot
 ${PASSWORD}=   P@ssw0rd
-
-*** Settings ***
-Suite Setup       Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
-Suite Teardown    Close All Sessions
 
 *** Test Cases ***
 

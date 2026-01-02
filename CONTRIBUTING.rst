@@ -311,16 +311,19 @@ Module Best Practices
 Module Usage
 ------------
 
-Once implemented, modules are automatically discovered and can be used like this:
+Once implemented, modules are automatically discovered and can be used as shown below. When instantiating Sysbot, you can optionally specify which modules to load using dot notation (e.g., ``"linux.systemd"``), or load all modules by not passing any arguments:
 
 .. code-block:: python
 
    from sysbot.Sysbot import Sysbot
    
-   bot = Sysbot("linux.systemd")  # Load specific module
-   # or
-   bot = Sysbot()  # Load all modules
+   # Load specific modules only
+   bot = Sysbot("linux.systemd", "linux.dnf")
    
+   # Or load all available modules
+   bot = Sysbot()
+   
+   # Open a session and use the module
    bot.open_session("server", "ssh", "bash", "192.168.1.100", 22, "user", "pass")
    result = bot.linux.systemd.status("server", "sshd")
 
