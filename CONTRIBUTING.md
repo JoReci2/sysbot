@@ -223,60 +223,63 @@ Each module should follow this structure:
 ```
 sysbot/modules/
 └── category/           # e.g., linux, windows, network
-    └── subcategory/    # e.g., systemd, dnf, firewall
-        ├── __init__.py
-        └── module.py
+    ├── __init__.py
+    ├── module1.py      # e.g., systemd.py, dnf.py, firewall.py
+    └── module2.py
 ```
+
+Modules are simple Python files placed directly in the category directory, each containing a class that inherits from `ComponentBase`.
 
 ### Module Implementation
 
 A typical module looks like this:
 
 ```python
-# sysbot/modules/linux/systemd/__init__.py
-from sysbot.modules.linux.systemd.systemd import Systemd
+# sysbot/modules/linux/systemd.py
+from sysbot.utils.engine import ComponentBase
 
-__all__ = ['Systemd']
-```
 
-```python
-# sysbot/modules/linux/systemd/systemd.py
-class Systemd:
+class Systemd(ComponentBase):
     """Module for managing systemd services."""
     
-    def __init__(self, engine):
-        """Initialize the module with the engine instance.
-        
-        Args:
-            engine: The Sysbot engine instance for executing commands
-        """
-        self.engine = engine
-    
-    def status(self, alias: str, service: str) -> str:
-        """Get the status of a systemd service.
+    def is_active(self, alias: str, name: str, **kwargs) -> str:
+        """Check if a systemd service is active.
         
         Args:
             alias: The session alias to use
-            service: The service name
-            
-        Returns:
-            The status output
-        """
-        cmd = f"systemctl status {service}"
-        return self.engine.execute_command(alias, cmd)
-    
-    def start(self, alias: str, service: str) -> str:
-        """Start a systemd service.
-        
-        Args:
-            alias: The session alias to use
-            service: The service name
+            name: The service name
+            **kwargs: Additional arguments passed to execute_command
             
         Returns:
             The command output
         """
-        cmd = f"systemctl start {service}"
-        return self.engine.execute_command(alias, cmd)
+        return self.execute_command(alias, f"systemctl is-active {name}", **kwargs)
+    
+    def is_enabled(self, alias: str, name: str, **kwargs) -> str:
+        """Check if a systemd service is enabled.
+        
+        Args:
+            alias: The session alias to use
+            name: The service name
+            **kwargs: Additional arguments passed to execute_command
+            
+        Returns:
+            The command output
+        """
+        return self.execute_command(alias, f"systemctl is-enabled {name}", **kwargs)
+    
+    def start(self, alias: str, name: str, **kwargs) -> str:
+        """Start a systemd service.
+        
+        Args:
+            alias: The session alias to use
+            name: The service name
+            **kwargs: Additional arguments passed to execute_command
+            
+        Returns:
+            The command output
+        """
+        return self.execute_command(alias, f"systemctl start {name}", **kwargs)
 ```
 
 ### Module Best Practices
@@ -303,7 +306,7 @@ bot = Sysbot()
 
 # Open a session and use the module
 bot.open_session("server", "ssh", "bash", "192.168.1.100", 22, "user", "pass")
-result = bot.linux.systemd.status("server", "sshd")
+result = bot.linux.systemd.is_active("server", "sshd")
 ```
 
 ## Connectors Development

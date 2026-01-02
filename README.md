@@ -1,5 +1,19 @@
 # SysBot
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Installation](#installation)
+- [Quickstart](#quickstart)
+- [RobotFramework Usage](#robotframework-usage)
+- [UnitTest Usage](#unittest-usage)
+- [Listener Usage](#listener-usage)
+- [Polarion Integration](#polarion-integration)
+- [Additional Resources](#additional-resources)
+- [License](#license)
+- [Author](#author)
+- [Acknowledgments](#acknowledgments)
+
 ## Overview
 
 SysBot is a system test tool that provides a unified interface for connecting to and testing various systems through different protocols. Built with Robot Framework integration in mind, it offers a modular architecture that simplifies system automation and testing.
