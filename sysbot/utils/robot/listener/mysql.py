@@ -1,13 +1,17 @@
 """
-SQLite Listener for Robot Framework BDD Database Integration
+MySQL Listener for Robot Framework BDD Database Integration
 
-This module provides a Robot Framework listener that stores test results in SQLite.
+This module provides a Robot Framework listener that stores test results in MySQL.
 
 Usage:
-    robot --listener sysbot.plugins.robot.listener.sqlite.Sqlite:results.db:MyCampaign tests/
+    robot --listener sysbot.utils.robot.listener.mysql.Mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
 
 Example:
-    robot --listener sysbot.plugins.robot.listener.sqlite.Sqlite:results.db:TestRun1 tests/
+    robot --listener sysbot.utils.robot.listener.mysql.Mysql:mysql://root:password@localhost/test_results:Sprint42 tests/
+
+Requirements:
+    - mysql-connector-python package must be installed
+    - MySQL server must be running and accessible
 """
 
 import datetime
@@ -22,32 +26,44 @@ except ImportError:
     SQLALCHEMY_AVAILABLE = False
 
 
-class Sqlite:
+class Mysql:
     """
-    Robot Framework listener that stores test results in SQLite database.
+    Robot Framework listener that stores test results in MySQL database.
     
-    SQLite is a lightweight, file-based database that requires no separate server.
-    Perfect for local testing and small to medium-sized test suites.
+    MySQL is a popular relational database suitable for medium to large test suites
+    and team environments where centralized test result storage is needed.
     
     The listener creates a hierarchical structure:
     - Test Campaign (top level)
       - Test Suite
         - Test Case
           - Keyword
+    
+    Requires: mysql-connector-python
+    Install with: pip install mysql-connector-python
     """
     
     ROBOT_LISTENER_API_VERSION = 3
     
     def __init__(self, connection_string: str, campaign_name: str = "Default Campaign"):
         """
-        Initialize the SQLite listener.
+        Initialize the MySQL listener.
         
         Args:
-            connection_string: Path to SQLite database file
+            connection_string: MySQL connection string (e.g., mysql://user:pass@host/db)
             campaign_name: Name of the test campaign (default: "Default Campaign")
+        
+        Raises:
+            ImportError: If SQLAlchemy or mysql-connector-python is not installed
         """
         if not SQLALCHEMY_AVAILABLE:
             raise ImportError("SQLAlchemy is required for SQL database support. Install it with: pip install sqlalchemy")
+        
+        # Check for mysql-connector-python
+        try:
+            import mysql.connector
+        except ImportError:
+            raise ImportError("mysql-connector-python is required for MySQL support. Install it with: pip install mysql-connector-python")
         
         self.connection_string = connection_string
         self.campaign_name = campaign_name
@@ -89,15 +105,20 @@ class Sqlite:
         Establish database connection using SQLAlchemy.
         
         Raises:
-            Exception: If connection to SQLite database fails.
+            Exception: If connection to MySQL database fails.
         """
         try:
-            url = f"sqlite:///{self.connection_string}"
+            # Convert mysql:// to mysql+mysqlconnector:// for SQLAlchemy
+            if self.connection_string.startswith("mysql://"):
+                url = self.connection_string.replace("mysql://", "mysql+mysqlconnector://", 1)
+            else:
+                url = self.connection_string
+            
             self.engine = create_engine(url)
             Session = sessionmaker(bind=self.engine)
             self.session = Session()
         except Exception as e:
-            raise Exception(f"Failed to connect to SQLite database: {e}") from e
+            raise Exception(f"Failed to connect to MySQL database: {e}") from e
     
     def _initialize_schema(self):
         """

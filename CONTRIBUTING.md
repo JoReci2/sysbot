@@ -572,7 +572,7 @@ class Mydata(ComponentBase):
 Listeners are special plugins for Robot Framework integration:
 
 ```python
-# sysbot/plugins/robot/listener/mylistener.py
+# sysbot/utils/robot/listener/mylistener.py
 class MyListener:
     """Robot Framework listener for custom functionality."""
     
@@ -605,7 +605,7 @@ class MyListener:
 Plugins are automatically registered when they are placed in the correct location:
 
 1. **Data plugins**: Add to `sysbot/plugins/` and import in `__init__.py`
-2. **Robot listeners**: Add to `sysbot/plugins/robot/listener/`
+2. **Robot listeners**: Add to `sysbot/utils/robot/listener/`
 
 ### Plugin Best Practices
 
@@ -641,7 +641,7 @@ bot.plugins.vault.dump_engine(
 Robot Framework listeners are used differently:
 
 ```bash
-robot --listener sysbot.plugins.robot.listener.mylistener.MyListener:arg1:arg2 tests/
+robot --listener sysbot.utils.robot.listener.mylistener.MyListener:arg1:arg2 tests/
 ```
 
 ## Acknowledgments

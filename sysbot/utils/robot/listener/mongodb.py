@@ -4,10 +4,10 @@ MongoDB Listener for Robot Framework BDD Database Integration
 This module provides a Robot Framework listener that stores test results in MongoDB.
 
 Usage:
-    robot --listener sysbot.plugins.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
+    robot --listener sysbot.utils.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
 
 Example:
-    robot --listener sysbot.plugins.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/test_results:Sprint42 tests/
+    robot --listener sysbot.utils.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/test_results:Sprint42 tests/
 
 Requirements:
     - pymongo package must be installed
