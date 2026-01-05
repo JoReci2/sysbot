@@ -31,7 +31,7 @@ from .utils.engine import Cache
 
 
 class Sysbot(metaclass=ComponentMeta):
-    ROBOT_LIBRARY_SCOPE = "SUITE"
+    ROBOT_LIBRARY_SCOPE = "GLOBAL"
     ROBOT_LIBRARY_DOC_FORMAT = "reST"
 
     def __init__(self, components=None):
