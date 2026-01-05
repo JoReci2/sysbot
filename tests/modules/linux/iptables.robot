@@ -13,8 +13,6 @@ Init test suite
     Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
     Open Session    target    ssh    bash    connexion.host    ${PORT}   connexion.username    connexion.password    is_secret=True
 
-*** Settings ***
-
 Suite Teardown    Close All Sessions
 Suite Setup       Init test suite
 

@@ -6,6 +6,7 @@ on Linux systems, including listing rules, checking chains, and viewing policies
 """
 from sysbot.utils.engine import ComponentBase
 from typing import List, Dict
+import re
 
 
 class Iptables(ComponentBase):
@@ -65,9 +66,9 @@ class Iptables(ComponentBase):
             alias, f"iptables -t {table} -L {chain} -n | head -1", **kwargs
         )
         # Parse output like: "Chain INPUT (policy DROP)"
-        if "policy" in output:
-            policy = output.split("policy")[1].strip().rstrip(")")
-            return policy
+        match = re.search(r'policy\s+(\w+)', output)
+        if match:
+            return match.group(1)
         return output.strip()
 
     def list_chains(self, alias: str, table: str = "filter", **kwargs) -> List[str]:
@@ -133,7 +134,9 @@ class Iptables(ComponentBase):
             f"iptables -t {table} -C {chain} {rule_spec} 2>&1 ; echo $?",
             **kwargs,
         )
-        return result.strip().endswith("0")
+        # Get the last line which contains the exit code
+        exit_code = result.strip().split('\n')[-1]
+        return exit_code == "0"
 
     def save_rules(self, alias: str, **kwargs) -> str:
         """
