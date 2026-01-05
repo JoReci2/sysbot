@@ -11,6 +11,10 @@ import re
 
 class Iptables(ComponentBase):
     """Iptables firewall management class for Linux systems."""
+    
+    # Maximum number of columns to parse from iptables rule output
+    # Format: num pkts bytes target prot opt in out source destination [options...]
+    _MAX_RULE_COLUMNS = 10
 
     def list_rules(self, alias: str, table: str = "filter", **kwargs) -> Dict[str, List[Dict[str, str]]]:
         """
@@ -47,7 +51,7 @@ class Iptables(ComponentBase):
                 continue
             # Parse rule lines
             elif current_chain and line[0].isdigit():
-                parts = line.split(None, 10)  # Split into max 11 parts
+                parts = line.split(None, self._MAX_RULE_COLUMNS)  # Split into max columns
                 if len(parts) >= 9:
                     rule = {
                         "num": parts[0],
@@ -106,7 +110,7 @@ class Iptables(ComponentBase):
                 continue
             # Parse rule lines
             elif current_chain and line[0].isdigit():
-                parts = line.split(None, 10)
+                parts = line.split(None, self._MAX_RULE_COLUMNS)
                 if len(parts) >= 9:
                     rule = {
                         "num": parts[0],
