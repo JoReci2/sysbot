@@ -1,3 +1,10 @@
+"""
+Windows File System Module
+
+This module provides comprehensive file system operations for Windows systems,
+including file type checking, attribute retrieval, content operations, and
+ACL (Access Control List) management using PowerShell.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 

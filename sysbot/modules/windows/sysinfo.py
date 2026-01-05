@@ -1,3 +1,10 @@
+"""
+Windows System Information Module
+
+This module provides methods for retrieving system information on Windows systems,
+including hostname, domain, timezone, hardware details, and operating system
+information using PowerShell and WMI.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 

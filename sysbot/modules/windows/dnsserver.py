@@ -1,3 +1,10 @@
+"""
+Windows DNS Server Module
+
+This module provides methods for managing and querying Windows DNS Server,
+including zones, resource records, forwarders, and DNS server configuration
+using PowerShell DNS Server cmdlets.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 

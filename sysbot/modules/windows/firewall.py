@@ -1,3 +1,9 @@
+"""
+Windows Firewall Module
+
+This module provides methods for managing and querying Windows Firewall settings,
+including profiles, rules, and security configurations using PowerShell cmdlets.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 from typing import Dict, List

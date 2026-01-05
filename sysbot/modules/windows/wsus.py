@@ -1,3 +1,10 @@
+"""
+Windows Server Update Services Module
+
+This module provides methods for managing and querying Windows Server Update
+Services (WSUS) including server configuration, update approvals, computer
+groups, and synchronization using PowerShell WSUS cmdlets.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 

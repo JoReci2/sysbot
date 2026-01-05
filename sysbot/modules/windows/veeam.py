@@ -1,3 +1,10 @@
+"""
+Veeam Backup & Replication Module
+
+This module provides methods for managing and querying Veeam Backup & Replication,
+including backup jobs, repositories, managed servers, backup sessions, and restore
+operations using PowerShell Veeam cmdlets.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 

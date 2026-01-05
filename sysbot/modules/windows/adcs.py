@@ -1,3 +1,10 @@
+"""
+Active Directory Certificate Services Module
+
+This module provides methods for managing and querying Active Directory Certificate
+Services (AD CS) including Certificate Authorities, issued certificates, templates,
+and PKI operations using PowerShell ADCS cmdlets.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 

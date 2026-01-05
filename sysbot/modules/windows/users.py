@@ -1,3 +1,9 @@
+"""
+Windows User Management Module
+
+This module provides methods for managing and querying user and group information
+on Windows systems using WMI (Windows Management Instrumentation).
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 

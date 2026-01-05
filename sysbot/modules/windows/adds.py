@@ -1,3 +1,10 @@
+"""
+Active Directory Domain Services Module
+
+This module provides methods for managing and querying Active Directory Domain
+Services (AD DS) including domains, forests, domain controllers, users, groups,
+computers, and organizational units using PowerShell AD cmdlets.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 

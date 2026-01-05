@@ -1,3 +1,10 @@
+"""
+Windows Network Interface Module
+
+This module provides methods for managing and querying network interfaces,
+IP addresses, routes, and network configuration on Windows systems using
+CIM/WMI classes.
+"""
 from sysbot.utils.engine import ComponentBase
 from sysbot.utils.helper import Windows
 import json
