@@ -12,7 +12,7 @@ import re
 class Iptables(ComponentBase):
     """Iptables firewall management class for Linux systems."""
 
-    def list_rules(self, alias: str, table: str = "filter", **kwargs) -> str:
+    def list_rules(self, alias: str, table: str = "filter", **kwargs) -> Dict[str, List[Dict[str, str]]]:
         """
         List all iptables rules for a specific table.
 
@@ -22,15 +22,53 @@ class Iptables(ComponentBase):
             **kwargs: Additional command execution options.
 
         Returns:
-            String containing all rules in the specified table.
+            Dictionary mapping chain names to lists of rule dictionaries.
+            Each rule dictionary contains: num, pkts, bytes, target, prot, opt, in, out, source, destination.
         """
-        return self.execute_command(
-            alias, f"iptables -t {table} -L -n -v", **kwargs
+        output = self.execute_command(
+            alias, f"iptables -t {table} -L -n -v --line-numbers", **kwargs
         )
+        
+        chains = {}
+        current_chain = None
+        
+        for line in output.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Detect chain header: "Chain INPUT (policy ACCEPT)"
+            if line.startswith("Chain "):
+                parts = line.split()
+                current_chain = parts[1]
+                chains[current_chain] = []
+            # Skip the column header line
+            elif line.startswith("num ") or line.startswith("pkts "):
+                continue
+            # Parse rule lines
+            elif current_chain and line[0].isdigit():
+                parts = line.split(None, 10)  # Split into max 11 parts
+                if len(parts) >= 9:
+                    rule = {
+                        "num": parts[0],
+                        "pkts": parts[1],
+                        "bytes": parts[2],
+                        "target": parts[3],
+                        "prot": parts[4],
+                        "opt": parts[5],
+                        "in": parts[6],
+                        "out": parts[7],
+                        "source": parts[8],
+                        "destination": parts[9] if len(parts) > 9 else "",
+                        "options": parts[10] if len(parts) > 10 else ""
+                    }
+                    chains[current_chain].append(rule)
+        
+        return chains
 
     def list_rules_line_numbers(
         self, alias: str, table: str = "filter", chain: str = None, **kwargs
-    ) -> str:
+    ) -> Dict[str, List[Dict[str, str]]]:
         """
         List iptables rules with line numbers for a specific table and optional chain.
 
@@ -41,13 +79,51 @@ class Iptables(ComponentBase):
             **kwargs: Additional command execution options.
 
         Returns:
-            String containing rules with line numbers.
+            Dictionary mapping chain names to lists of rule dictionaries.
+            Each rule dictionary contains: num, pkts, bytes, target, prot, opt, in, out, source, destination.
         """
         cmd = f"iptables -t {table} -L"
         if chain:
             cmd += f" {chain}"
         cmd += " -n -v --line-numbers"
-        return self.execute_command(alias, cmd, **kwargs)
+        output = self.execute_command(alias, cmd, **kwargs)
+        
+        chains = {}
+        current_chain = None
+        
+        for line in output.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Detect chain header
+            if line.startswith("Chain "):
+                parts = line.split()
+                current_chain = parts[1]
+                chains[current_chain] = []
+            # Skip the column header line
+            elif line.startswith("num ") or line.startswith("pkts "):
+                continue
+            # Parse rule lines
+            elif current_chain and line[0].isdigit():
+                parts = line.split(None, 10)
+                if len(parts) >= 9:
+                    rule = {
+                        "num": parts[0],
+                        "pkts": parts[1],
+                        "bytes": parts[2],
+                        "target": parts[3],
+                        "prot": parts[4],
+                        "opt": parts[5],
+                        "in": parts[6],
+                        "out": parts[7],
+                        "source": parts[8],
+                        "destination": parts[9] if len(parts) > 9 else "",
+                        "options": parts[10] if len(parts) > 10 else ""
+                    }
+                    chains[current_chain].append(rule)
+        
+        return chains
 
     def get_policy(self, alias: str, chain: str, table: str = "filter", **kwargs) -> str:
         """
@@ -138,7 +214,7 @@ class Iptables(ComponentBase):
         exit_code = result.strip().split('\n')[-1]
         return exit_code == "0"
 
-    def save_rules(self, alias: str, **kwargs) -> str:
+    def save_rules(self, alias: str, **kwargs) -> Dict[str, List[str]]:
         """
         Save current iptables rules using iptables-save.
 
@@ -147,13 +223,34 @@ class Iptables(ComponentBase):
             **kwargs: Additional command execution options.
 
         Returns:
-            String containing saved rules in iptables-save format.
+            Dictionary mapping table names to lists of rule specifications.
         """
-        return self.execute_command(alias, "iptables-save", **kwargs)
+        output = self.execute_command(alias, "iptables-save", **kwargs)
+        
+        tables = {}
+        current_table = None
+        
+        for line in output.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            
+            # Detect table: "*filter", "*nat", etc.
+            if line.startswith("*"):
+                current_table = line[1:]  # Remove the asterisk
+                tables[current_table] = []
+            # Skip COMMIT lines
+            elif line == "COMMIT":
+                continue
+            # Add rule/chain lines to current table
+            elif current_table:
+                tables[current_table].append(line)
+        
+        return tables
 
     def list_by_spec(
         self, alias: str, table: str = "filter", chain: str = None, **kwargs
-    ) -> str:
+    ) -> List[str]:
         """
         List iptables rules in specification format (as they would be entered).
 
@@ -164,9 +261,10 @@ class Iptables(ComponentBase):
             **kwargs: Additional command execution options.
 
         Returns:
-            String containing rules in specification format.
+            List of rule specification strings.
         """
         cmd = f"iptables -t {table} -S"
         if chain:
             cmd += f" {chain}"
-        return self.execute_command(alias, cmd, **kwargs)
+        output = self.execute_command(alias, cmd, **kwargs)
+        return [line.strip() for line in output.splitlines() if line.strip()]

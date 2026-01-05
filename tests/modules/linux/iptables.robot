@@ -20,11 +20,13 @@ Suite Setup       Init test suite
 
 list_rules method works
     ${output}=    Call Components    modules.linux.iptables.list_rules    target    filter    runas=True
-    Should Contain Any    ${output}    Chain INPUT    Chain OUTPUT    Chain FORWARD
+    Dictionary Should Contain Key    ${output}    INPUT
+    Dictionary Should Contain Key    ${output}    OUTPUT
+    Dictionary Should Contain Key    ${output}    FORWARD
 
 list_rules_line_numbers method works
     ${output}=    Call Components    modules.linux.iptables.list_rules_line_numbers    target    filter    INPUT    runas=True
-    Should Contain    ${output}    Chain INPUT
+    Dictionary Should Contain Key    ${output}    INPUT
 
 get_policy method works
     ${output}=    Call Components    modules.linux.iptables.get_policy    target    INPUT    filter    runas=True
@@ -42,7 +44,7 @@ count_rules method works
 
 save_rules method works
     ${output}=    Call Components    modules.linux.iptables.save_rules    target    runas=True
-    Should Contain    ${output}    *filter
+    Dictionary Should Contain Key    ${output}    filter
 
 list_by_spec method works
     ${output}=    Call Components    modules.linux.iptables.list_by_spec    target    filter    INPUT    runas=True
