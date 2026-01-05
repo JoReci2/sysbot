@@ -95,10 +95,6 @@ class ComponentLoader:
                     component_path = f"{prefix}.{item.stem}" if prefix else item.stem
                     available_components.append(component_path)
                 elif item.is_dir() and not item.name.startswith("."):
-                    # Skip robot.listener subdirectory as those are Robot Framework listeners
-                    # that require constructor arguments
-                    if prefix == "robot" and item.name == "listener":
-                        continue
                     new_prefix = f"{prefix}.{item.name}" if prefix else item.name
                     scan_directory(item, new_prefix)
 

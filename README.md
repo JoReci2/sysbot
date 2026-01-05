@@ -473,16 +473,16 @@ Each listener is used directly with its specific class:
 
 ```bash
 # Store results in SQLite
-robot --listener sysbot.plugins.robot.listener.sqlite.Sqlite:results.db:MyCampaign tests/
+robot --listener sysbot.utils.robot.listener.sqlite.Sqlite:results.db:MyCampaign tests/
 
 # Store results in MySQL
-robot --listener sysbot.plugins.robot.listener.mysql.Mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
+robot --listener sysbot.utils.robot.listener.mysql.Mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
 
 # Store results in PostgreSQL
-robot --listener sysbot.plugins.robot.listener.postgresql.Postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
+robot --listener sysbot.utils.robot.listener.postgresql.Postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
 
 # Store results in MongoDB
-robot --listener sysbot.plugins.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
+robot --listener sysbot.utils.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
 ```
 
 ### Listener Parameters
