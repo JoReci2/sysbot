@@ -10,8 +10,19 @@ import json
 
 
 class Dnsserver(ComponentBase):
+    """Windows DNS Server management class using PowerShell DNS Server cmdlets."""
+
     def get_server(self, alias: str, **kwargs) -> dict:
-        """Get DNS server configuration."""
+        """
+        Get DNS server configuration.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Dictionary containing DNS server configuration.
+        """
         command = "Get-DnsServer | ConvertTo-Json -Depth 3"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)

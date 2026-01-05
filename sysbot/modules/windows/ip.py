@@ -11,7 +11,20 @@ import json
 
 
 class Ip(ComponentBase):
+    """Windows network interface management class using CIM/WMI."""
+
     def addr(self, alias: str, **kwargs) -> dict:
+        """
+        Get network adapter IP configuration.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Dictionary containing network adapter configuration including DHCPEnabled,
+            IPAddress, IPSubnet, DefaultIPGateway, DNSServerSearchOrder, ServiceName, Index, and MTU.
+        """
         command = Windows.get_cim_class(
             namespace=r"root\cimv2",
             classname="Win32_NetworkAdapterConfiguration",
@@ -21,6 +34,17 @@ class Ip(ComponentBase):
         return json.loads(output)
 
     def link(self, alias: str, **kwargs) -> dict:
+        """
+        Get network adapter link layer information.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Dictionary containing network adapter information including Name, Status,
+            LinkSpeed, PhysicalMediaType, and MacAddress.
+        """
         command = Windows.get_cim_class(
             namespace="root/StandardCimv2",
             classname="MSFT_NetAdapter",
@@ -30,6 +54,17 @@ class Ip(ComponentBase):
         return json.loads(output)
 
     def route(self, alias: str, **kwargs) -> dict:
+        """
+        Get network routing table.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Dictionary containing routing information including InterfaceAlias, NextHop,
+            State, and DestinationPrefix.
+        """
         command = Windows.get_cim_class(
             namespace="root/StandardCimv2",
             classname="MSFT_NetRoute",
@@ -39,10 +74,32 @@ class Ip(ComponentBase):
         return json.loads(output)
 
     def resolve(self, alias: str, fqdn: str, **kwargs) -> dict:
+        """
+        Resolve a fully qualified domain name to IP address(es).
+
+        Args:
+            alias: Session alias for the connection.
+            fqdn: Fully qualified domain name to resolve.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Dictionary containing resolved IP address(es).
+        """
         command = f"(Resolve-DnsName {fqdn}).IPAddress | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
 
     def ping(self, alias: str, host: str, **kwargs) -> dict:
+        """
+        Test network connectivity to a host using Test-Connection.
+
+        Args:
+            alias: Session alias for the connection.
+            host: Hostname or IP address to ping.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Result of the connection test as a string (True/False).
+        """
         command = f"Test-Connection -ComputerName {host} -Count 1 -Quiet"
         return self.execute_command(alias, command, **kwargs)

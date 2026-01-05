@@ -10,8 +10,19 @@ import json
 
 
 class Adcs(ComponentBase):
+    """Active Directory Certificate Services management class using PowerShell ADCS cmdlets."""
+
     def get_ca(self, alias: str, **kwargs) -> dict:
-        """Get Certificate Authority information."""
+        """
+        Get Certificate Authority information.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Dictionary containing CA information including Name, Type, ConfigString, and Certificate.
+        """
         command = "Get-CertificationAuthority | Select-Object Name, Type, ConfigString, Certificate | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":

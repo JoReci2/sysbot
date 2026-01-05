@@ -10,8 +10,19 @@ import json
 
 
 class Veeam(ComponentBase):
+    """Veeam Backup & Replication management class using PowerShell Veeam cmdlets."""
+
     def get_servers(self, alias: str, **kwargs) -> list:
-        """Get managed servers in Veeam Backup & Replication."""
+        """
+        Get managed servers in Veeam Backup & Replication.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing server information including Name, Description, Type, and Info.
+        """
         command = "Get-VBRServer | Select-Object Name, Description, Type, Info | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":

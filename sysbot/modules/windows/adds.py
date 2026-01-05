@@ -10,8 +10,19 @@ import json
 
 
 class Adds(ComponentBase):
+    """Active Directory Domain Services management class using PowerShell AD cmdlets."""
+
     def get_domain(self, alias: str, **kwargs) -> dict:
-        """Get domain information."""
+        """
+        Get domain information.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Dictionary containing Active Directory domain information.
+        """
         command = "Get-ADDomain | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         return json.loads(output)
