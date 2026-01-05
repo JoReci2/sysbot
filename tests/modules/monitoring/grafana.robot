@@ -16,6 +16,32 @@ Init test suite
     Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
     Open Session    grafana    http    apikey    connexion.host    ${PORT}    api_key=connexion.api_key    is_secret=True
 
+Test Get Datasource By Id
+    [Arguments]    ${datasources}
+    ${datasource}=    Get From List    ${datasources}    0
+    ${datasource_id}=    Get From Dictionary    ${datasource}    id
+    ${output}=    Call Components    modules.monitoring.grafana.get_datasource_by_id    grafana    ${datasource_id}
+    Should Not Be Empty    ${output}
+    Dictionary Should Contain Key    ${output}    id
+    Dictionary Should Contain Key    ${output}    name
+
+Test Get Datasource By Name
+    [Arguments]    ${datasources}
+    ${datasource}=    Get From List    ${datasources}    0
+    ${datasource_name}=    Get From Dictionary    ${datasource}    name
+    ${output}=    Call Components    modules.monitoring.grafana.get_datasource_by_name    grafana    ${datasource_name}
+    Should Not Be Empty    ${output}
+    Dictionary Should Contain Key    ${output}    id
+    Dictionary Should Contain Key    ${output}    name
+
+Test Get Dashboard By Uid
+    [Arguments]    ${dashboards}
+    ${dashboard}=    Get From List    ${dashboards}    0
+    ${dashboard_uid}=    Get From Dictionary    ${dashboard}    uid
+    ${output}=    Call Components    modules.monitoring.grafana.get_dashboard_by_uid    grafana    ${dashboard_uid}
+    Should Not Be Empty    ${output}
+    Dictionary Should Contain Key    ${output}    dashboard
+
 *** Test Cases ***
 
 health_check method works
@@ -79,31 +105,3 @@ get_dashboard_by_uid method works with existing dashboard
     ${dashboards}=    Call Components    modules.monitoring.grafana.search_dashboards    grafana
     ${length}=    Get Length    ${dashboards}
     Run Keyword If    ${length} > 0    Test Get Dashboard By Uid    ${dashboards}
-
-*** Keywords ***
-
-Test Get Datasource By Id
-    [Arguments]    ${datasources}
-    ${datasource}=    Get From List    ${datasources}    0
-    ${datasource_id}=    Get From Dictionary    ${datasource}    id
-    ${output}=    Call Components    modules.monitoring.grafana.get_datasource_by_id    grafana    ${datasource_id}
-    Should Not Be Empty    ${output}
-    Dictionary Should Contain Key    ${output}    id
-    Dictionary Should Contain Key    ${output}    name
-
-Test Get Datasource By Name
-    [Arguments]    ${datasources}
-    ${datasource}=    Get From List    ${datasources}    0
-    ${datasource_name}=    Get From Dictionary    ${datasource}    name
-    ${output}=    Call Components    modules.monitoring.grafana.get_datasource_by_name    grafana    ${datasource_name}
-    Should Not Be Empty    ${output}
-    Dictionary Should Contain Key    ${output}    id
-    Dictionary Should Contain Key    ${output}    name
-
-Test Get Dashboard By Uid
-    [Arguments]    ${dashboards}
-    ${dashboard}=    Get From List    ${dashboards}    0
-    ${dashboard_uid}=    Get From Dictionary    ${dashboard}    uid
-    ${output}=    Call Components    modules.monitoring.grafana.get_dashboard_by_uid    grafana    ${dashboard_uid}
-    Should Not Be Empty    ${output}
-    Dictionary Should Contain Key    ${output}    dashboard
