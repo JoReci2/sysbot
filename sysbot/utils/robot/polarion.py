@@ -8,7 +8,7 @@ with Siemens Polarion ALM/QA. It includes:
 - Metadata extraction and formatting for Polarion requirements
 
 Usage:
-    from sysbot.utils.polarion import Polarion
+    from sysbot.utils.robot.polarion import Polarion
     
     polarion = Polarion()
     polarion.generate_xunit(

@@ -553,7 +553,7 @@ User Management Test
 
 **Using Python API:**
 ```python
-from sysbot.utils.polarion import Polarion
+from sysbot.utils.robot.polarion import Polarion
 
 polarion = Polarion()
 polarion.generate_xunit(
@@ -571,7 +571,7 @@ polarion.generate_xunit(
 robot --outputdir results tests/
 
 # Generate Polarion xUnit using Python
-python -c "from sysbot.utils.polarion import Polarion; \
+python -c "from sysbot.utils.robot.polarion import Polarion; \
     polarion = Polarion(); \
     polarion.generate_xunit('results/output.xml', 'results/polarion.xml', \
     project_id='PROJ', test_run_id='RUN-001')"
