@@ -1,5 +1,6 @@
 from sysbot.utils.engine import ComponentBase
 import json
+import shlex
 
 
 class Kubernetes(ComponentBase):
@@ -19,43 +20,43 @@ class Kubernetes(ComponentBase):
 
     def get_node(self, alias: str, name: str, **kwargs) -> dict:
         output = self.execute_command(
-            alias, f"kubectl get node {name} -o json", **kwargs
+            alias, f"kubectl get node {shlex.quote(name)} -o json", **kwargs
         )
         return json.loads(output)
 
     def get_pods(self, alias: str, namespace: str = "default", **kwargs) -> dict:
         output = self.execute_command(
-            alias, f"kubectl get pods -n {namespace} -o json", **kwargs
+            alias, f"kubectl get pods -n {shlex.quote(namespace)} -o json", **kwargs
         )
         return json.loads(output)
 
     def get_pod(self, alias: str, name: str, namespace: str = "default", **kwargs) -> dict:
         output = self.execute_command(
-            alias, f"kubectl get pod {name} -n {namespace} -o json", **kwargs
+            alias, f"kubectl get pod {shlex.quote(name)} -n {shlex.quote(namespace)} -o json", **kwargs
         )
         return json.loads(output)
 
     def get_services(self, alias: str, namespace: str = "default", **kwargs) -> dict:
         output = self.execute_command(
-            alias, f"kubectl get services -n {namespace} -o json", **kwargs
+            alias, f"kubectl get services -n {shlex.quote(namespace)} -o json", **kwargs
         )
         return json.loads(output)
 
     def get_service(self, alias: str, name: str, namespace: str = "default", **kwargs) -> dict:
         output = self.execute_command(
-            alias, f"kubectl get service {name} -n {namespace} -o json", **kwargs
+            alias, f"kubectl get service {shlex.quote(name)} -n {shlex.quote(namespace)} -o json", **kwargs
         )
         return json.loads(output)
 
     def get_deployments(self, alias: str, namespace: str = "default", **kwargs) -> dict:
         output = self.execute_command(
-            alias, f"kubectl get deployments -n {namespace} -o json", **kwargs
+            alias, f"kubectl get deployments -n {shlex.quote(namespace)} -o json", **kwargs
         )
         return json.loads(output)
 
     def get_deployment(self, alias: str, name: str, namespace: str = "default", **kwargs) -> dict:
         output = self.execute_command(
-            alias, f"kubectl get deployment {name} -n {namespace} -o json", **kwargs
+            alias, f"kubectl get deployment {shlex.quote(name)} -n {shlex.quote(namespace)} -o json", **kwargs
         )
         return json.loads(output)
 
@@ -67,30 +68,30 @@ class Kubernetes(ComponentBase):
 
     def get_namespace(self, alias: str, name: str, **kwargs) -> dict:
         output = self.execute_command(
-            alias, f"kubectl get namespace {name} -o json", **kwargs
+            alias, f"kubectl get namespace {shlex.quote(name)} -o json", **kwargs
         )
         return json.loads(output)
 
     def get_configmaps(self, alias: str, namespace: str = "default", **kwargs) -> dict:
         output = self.execute_command(
-            alias, f"kubectl get configmaps -n {namespace} -o json", **kwargs
+            alias, f"kubectl get configmaps -n {shlex.quote(namespace)} -o json", **kwargs
         )
         return json.loads(output)
 
     def get_configmap(self, alias: str, name: str, namespace: str = "default", **kwargs) -> dict:
         output = self.execute_command(
-            alias, f"kubectl get configmap {name} -n {namespace} -o json", **kwargs
+            alias, f"kubectl get configmap {shlex.quote(name)} -n {shlex.quote(namespace)} -o json", **kwargs
         )
         return json.loads(output)
 
     def get_secrets(self, alias: str, namespace: str = "default", **kwargs) -> dict:
         output = self.execute_command(
-            alias, f"kubectl get secrets -n {namespace} -o json", **kwargs
+            alias, f"kubectl get secrets -n {shlex.quote(namespace)} -o json", **kwargs
         )
         return json.loads(output)
 
     def get_secret(self, alias: str, name: str, namespace: str = "default", **kwargs) -> dict:
         output = self.execute_command(
-            alias, f"kubectl get secret {name} -n {namespace} -o json", **kwargs
+            alias, f"kubectl get secret {shlex.quote(name)} -n {shlex.quote(namespace)} -o json", **kwargs
         )
         return json.loads(output)
