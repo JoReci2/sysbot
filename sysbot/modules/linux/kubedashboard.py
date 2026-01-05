@@ -55,10 +55,7 @@ class Kubedashboard(ComponentBase):
 
     def check_dashboard_status(self, alias: str, namespace: str = "kubernetes-dashboard", **kwargs) -> dict:
         """Check if the Kubernetes Dashboard is running by getting deployment status."""
-        output = self.execute_command(
-            alias, f"kubectl get deployment kubernetes-dashboard -n {shlex.quote(namespace)} -o json", **kwargs
-        )
-        deployment = json.loads(output)
+        deployment = self.get_dashboard_deployment(alias, namespace, **kwargs)
         return {
             "name": deployment.get("metadata", {}).get("name"),
             "namespace": deployment.get("metadata", {}).get("namespace"),
