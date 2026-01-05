@@ -1,8 +1,7 @@
 """
 Utilities Package
 
-This package provides utility modules for the SysBot system, including:
-- engine: Core component management and loading functionality
-- helper: Various helper classes for Windows, timezone, and security operations
-- polarion: Integration with Polarion ALM/QA for test result management
+This package provides essential utility modules for the SysBot system, offering
+core component management, loading functionality, helper classes for various
+operations, and integration capabilities with external tools and services.
 """

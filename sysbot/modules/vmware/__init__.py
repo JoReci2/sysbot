@@ -1,8 +1,7 @@
 """
 VMware Modules Package
 
-This package provides modules for VMware virtualization platform management:
-- vsphere: VMware vSphere operations
-- nsx: VMware NSX network virtualization
-- sddcmanager: VMware SDDC Manager operations
+This package provides modules for VMware virtualization platform management,
+covering compute and storage operations, network virtualization, and
+software-defined data center orchestration and lifecycle management.
 """
