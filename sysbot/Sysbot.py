@@ -31,10 +31,30 @@ from .utils.engine import Cache
 
 
 class Sysbot(metaclass=ComponentMeta):
+    """
+    Main Sysbot class for managing system automation and remote connections.
+
+    This class provides a unified interface for managing remote system connections,
+    executing commands, and interacting with various system modules and plugins.
+    It supports multiple protocols (SSH, WinRM, Socket, Local) and can manage
+    tunneling configurations for complex network setups.
+
+    Attributes:
+        ROBOT_LIBRARY_SCOPE: Robot Framework library scope set to GLOBAL.
+        ROBOT_LIBRARY_DOC_FORMAT: Documentation format set to reST.
+    """
     ROBOT_LIBRARY_SCOPE = "GLOBAL"
     ROBOT_LIBRARY_DOC_FORMAT = "reST"
 
     def __init__(self, components=None):
+        """
+        Initialize the Sysbot instance.
+
+        Args:
+            components: Optional list of component paths to load. If None,
+                automatically discovers and loads all available modules and plugins.
+                Component paths should be in the format 'modules.name' or 'plugins.name'.
+        """
         if components is None:
             all_modules = ComponentLoader.discover_all_components(__file__, "modules")
             all_plugins = ComponentLoader.discover_all_components(__file__, "plugins")
@@ -58,6 +78,30 @@ class Sysbot(metaclass=ComponentMeta):
         is_secret=False,
         **kwargs,
     ) -> None:
+        """
+        Open a new remote session with the specified connection parameters.
+
+        This method establishes a connection to a remote system using the specified
+        protocol and credentials. It supports direct connections and tunneling through
+        intermediate hosts for complex network configurations.
+
+        Args:
+            alias: Unique identifier for the session.
+            protocol: Connection protocol to use (e.g., 'ssh', 'winrm', 'socket', 'local').
+            product: Product-specific implementation (e.g., 'bash', 'powershell').
+            host: Target host IP address or hostname.
+            port: Target port number.
+            login: Username for authentication. Optional if is_secret is True.
+            password: Password for authentication. Optional if is_secret is True.
+            tunnel_config: Optional tunnel configuration as JSON string or dict for
+                nested tunneling through intermediate hosts.
+            is_secret: If True, treats host, login, and password as secret keys to
+                retrieve actual values from the secret cache.
+            **kwargs: Additional protocol-specific connection options.
+
+        Raises:
+            Exception: If the session fails to open or tunnel configuration is invalid.
+        """
         tunnels = []
         self._protocol = TunnelingManager.get_protocol(protocol, product)
         self._remote_port = int(port)
@@ -115,6 +159,22 @@ class Sysbot(metaclass=ComponentMeta):
             raise Exception(f"Failed to open session: {str(e)}")
 
     def execute_command(self, alias: str, command: str, **kwargs) -> any:
+        """
+        Execute a command on a remote session.
+
+        Args:
+            alias: Session alias identifying the connection to use.
+            command: Command string to execute on the remote system.
+            **kwargs: Additional command execution options specific to the protocol.
+
+        Returns:
+            Command execution result. The format depends on the protocol used.
+
+        Raises:
+            ValueError: If the specified alias does not exist.
+            RuntimeError: If no valid session is found for the alias.
+            Exception: If command execution fails.
+        """
         try:
             connection = self._cache.connections.switch(alias)
             if not connection or "session" not in connection:
@@ -130,6 +190,15 @@ class Sysbot(metaclass=ComponentMeta):
             raise Exception(f"Failed to execute command: {str(e)}")
 
     def close_all_sessions(self) -> None:
+        """
+        Close all active sessions and clean up associated resources.
+
+        This method closes all open connections, stops all active tunnels,
+        and clears the connection cache.
+
+        Raises:
+            Exception: If any session fails to close properly.
+        """
         try:
             for connection in self._cache.connections.get_all().values():
                 self._protocol.close_session(connection["session"])
@@ -141,6 +210,16 @@ class Sysbot(metaclass=ComponentMeta):
             raise Exception(f"Failed to close all sessions: {str(e)}")
 
     def close_session(self, alias: str) -> None:
+        """
+        Close a specific session identified by its alias.
+
+        Args:
+            alias: Session alias identifying the connection to close.
+
+        Raises:
+            RuntimeError: If no valid session is found for the alias.
+            Exception: If the session fails to close properly.
+        """
         try:
             connection = self._cache.connections.switch(alias)
             if not connection or "session" not in connection:
@@ -151,6 +230,27 @@ class Sysbot(metaclass=ComponentMeta):
             raise Exception(f"Failed to close session: {str(e)}")
 
     def call_components(self, function_path: str, *args, **kwargs) -> any:
+        """
+        Dynamically call a function from loaded components.
+
+        This method allows calling any function from loaded modules or plugins
+        using a dot-notation path (e.g., 'modules.linux.systemd.is_active').
+
+        Args:
+            function_path: Dot-separated path to the function (e.g., 'module.submodule.function').
+                Must contain at least module.function.
+            *args: Positional arguments to pass to the function.
+            **kwargs: Keyword arguments to pass to the function.
+
+        Returns:
+            The result returned by the called function.
+
+        Raises:
+            ValueError: If the function path format is invalid.
+            AttributeError: If the module or function is not found.
+            TypeError: If the target is not a callable function.
+            Exception: If the function call fails.
+        """
         try:
             parts = function_path.split(".")
             if len(parts) < 2:
@@ -187,10 +287,32 @@ class Sysbot(metaclass=ComponentMeta):
             raise Exception(f"Failed to call function '{function_path}': {str(e)}")
 
     def get_secret(self, secret_name: str) -> any:
+        """
+        Retrieve a secret value from the secret cache.
+
+        Args:
+            secret_name: Name of the secret to retrieve.
+
+        Returns:
+            The secret value associated with the given name.
+        """
         return self._cache.secrets.get(secret_name)
 
     def add_secret(self, secret_name: str, value: any) -> None:
+        """
+        Add or update a secret in the secret cache.
+
+        Args:
+            secret_name: Name of the secret to store.
+            value: Secret value to store (can be any type).
+        """
         self._cache.secrets.register(secret_name, value)
 
     def remove_secret(self, secret_name: str) -> None:
+        """
+        Remove a secret from the secret cache.
+
+        Args:
+            secret_name: Name of the secret to remove.
+        """
         self._cache.secrets.clear(secret_name)

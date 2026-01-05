@@ -1,3 +1,10 @@
+"""
+Socket Connector Module
+
+This module provides TCP and UDP socket connectors with support for SSL/TLS
+encryption. It enables raw network communication for protocols not covered
+by other specialized connectors.
+"""
 import socket
 import ssl
 import select

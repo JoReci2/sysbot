@@ -84,7 +84,15 @@ class Postgresql:
         self._create_or_get_campaign()
     
     def _get_metadata(self, data):
-        """Safely extract and convert metadata to JSON string."""
+        """
+        Safely extract and convert metadata to JSON string.
+        
+        Args:
+            data: Robot Framework data object containing metadata.
+        
+        Returns:
+            JSON string representation of metadata, or empty JSON object if unavailable.
+        """
         try:
             if hasattr(data, 'metadata') and data.metadata:
                 return json.dumps(dict(data.metadata))
@@ -93,7 +101,12 @@ class Postgresql:
         return '{}'
     
     def _connect(self):
-        """Establish database connection using SQLAlchemy."""
+        """
+        Establish database connection using SQLAlchemy.
+        
+        Raises:
+            Exception: If connection to PostgreSQL database fails.
+        """
         try:
             # Convert postgresql:// to postgresql+psycopg2:// for SQLAlchemy
             if self.connection_string.startswith("postgresql://"):
@@ -108,7 +121,12 @@ class Postgresql:
             raise Exception(f"Failed to connect to PostgreSQL database: {e}") from e
     
     def _initialize_schema(self):
-        """Create SQL database tables using SQLAlchemy."""
+        """
+        Create SQL database tables using SQLAlchemy.
+        
+        Creates tables for test campaigns, test suites, test cases, and keywords
+        with appropriate foreign key relationships.
+        """
         # Create metadata instance
         self.metadata = MetaData()
         
@@ -163,7 +181,12 @@ class Postgresql:
         self.metadata.create_all(self.engine)
     
     def _create_or_get_campaign(self):
-        """Create a new campaign or get existing one."""
+        """
+        Create a new campaign or get existing one.
+        
+        Creates a new test campaign record in the database if it doesn't exist,
+        or retrieves the existing campaign with the same name.
+        """
         # Check if campaign exists
         stmt = select(self.test_campaigns_table).where(
             self.test_campaigns_table.c.name == self.campaign_name
@@ -192,7 +215,13 @@ class Postgresql:
             self.current_campaign = campaign_info
     
     def start_suite(self, data, result):
-        """Called when a test suite starts."""
+        """
+        Called when a test suite starts.
+        
+        Args:
+            data: Robot Framework suite data object.
+            result: Robot Framework suite result object.
+        """
         suite_info = {
             'campaign_id': self.current_campaign['id'],
             'name': data.name,
@@ -209,7 +238,13 @@ class Postgresql:
         self.current_suite = suite_info
     
     def end_suite(self, data, result):
-        """Called when a test suite ends."""
+        """
+        Called when a test suite ends.
+        
+        Args:
+            data: Robot Framework suite data object.
+            result: Robot Framework suite result object.
+        """
         if not self.current_suite:
             return
         
@@ -230,7 +265,13 @@ class Postgresql:
         self.current_suite = None
     
     def start_test(self, data, result):
-        """Called when a test case starts."""
+        """
+        Called when a test case starts.
+        
+        Args:
+            data: Robot Framework test data object.
+            result: Robot Framework test result object.
+        """
         if not self.current_suite:
             return
         
@@ -250,7 +291,13 @@ class Postgresql:
         self.current_test = test_info
     
     def end_test(self, data, result):
-        """Called when a test case ends."""
+        """
+        Called when a test case ends.
+        
+        Args:
+            data: Robot Framework test data object.
+            result: Robot Framework test result object.
+        """
         if not self.current_test:
             return
         
@@ -271,7 +318,13 @@ class Postgresql:
         self.current_test = None
     
     def start_keyword(self, data, result):
-        """Called when a keyword starts."""
+        """
+        Called when a keyword starts.
+        
+        Args:
+            data: Robot Framework keyword data object.
+            result: Robot Framework keyword result object.
+        """
         if not self.current_test:
             return
         
@@ -287,12 +340,23 @@ class Postgresql:
         self.session.flush()
     
     def end_keyword(self, data, result):
-        """Called when a keyword ends."""
+        """
+        Called when a keyword ends.
+        
+        Args:
+            data: Robot Framework keyword data object.
+            result: Robot Framework keyword result object.
+        """
         # For simplicity, we don't track keyword end times in this implementation
         pass
     
     def close(self):
-        """Close database connection and update campaign end time."""
+        """
+        Close database connection and update campaign end time.
+        
+        Updates the campaign end timestamp, commits pending transactions,
+        and closes the database connection.
+        """
         # Update campaign end time
         if self.current_campaign:
             end_time = datetime.datetime.now()
@@ -319,7 +383,12 @@ class Postgresql:
                 pass
     
     def __del__(self):
-        """Cleanup when listener is destroyed."""
+        """
+        Cleanup when listener is destroyed.
+        
+        Ensures database connection is properly closed when the listener
+        object is garbage collected.
+        """
         try:
             self.close()
         except Exception:

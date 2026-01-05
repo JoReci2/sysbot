@@ -1,3 +1,10 @@
+"""
+Local Execution Connector Module
+
+This module provides connectors for executing commands locally on the system
+without requiring SSH or WinRM connections. It supports both Bash/Shell and
+PowerShell execution depending on the platform.
+"""
 import subprocess
 import base64
 import platform

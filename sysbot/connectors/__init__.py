@@ -1,12 +1,10 @@
 """
-Connectors module for SysBot.
+Connectors Package
 
-This module provides various protocol connectors for system automation:
-- ssh: SSH connections with Bash and PowerShell support
-- winrm: Windows Remote Management with PowerShell support
-- http: HTTP/HTTPS connections with multiple authentication methods
-- socket: Socket connections with TCP and UDP support
-- local: Local execution with Bash and PowerShell support
+This package provides various protocol connectors for system automation,
+enabling secure remote and local command execution across different platforms
+and protocols. Supports shell-based, API-based, and socket-based communication
+with multiple authentication methods.
 """
 
 from . import ssh

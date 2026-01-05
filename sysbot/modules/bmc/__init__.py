@@ -1,9 +1,7 @@
 """
 BMC (Baseboard Management Controller) Modules
 
-This package provides test modules for various BMC systems:
-- ilo: HPE Integrated Lights-Out (iLO) management
-- idrac: Dell Integrated Dell Remote Access Controller (iDRAC) management
-
-All modules use the Redfish API protocol for BMC communication.
+This package provides modules for various Baseboard Management Controller
+systems, enabling remote hardware management, monitoring, and control across
+different server vendors using standardized API protocols.
 """

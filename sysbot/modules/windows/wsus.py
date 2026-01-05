@@ -1,10 +1,29 @@
+"""
+Windows Server Update Services Module
+
+This module provides methods for managing and querying Windows Server Update
+Services (WSUS) including server configuration, update approvals, computer
+groups, and synchronization using PowerShell WSUS cmdlets.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 
 
 class Wsus(ComponentBase):
+    """Windows Server Update Services management class using PowerShell WSUS cmdlets."""
+
     def get_server(self, alias: str, **kwargs) -> dict:
-        """Get WSUS server information."""
+        """
+        Get WSUS server information.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Dictionary containing WSUS server details including Name, PortNumber,
+            ServerProtocolVersion, and UpdateServer.
+        """
         command = "Get-WsusServer | Select-Object Name, PortNumber, ServerProtocolVersion, UpdateServer | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
@@ -12,7 +31,21 @@ class Wsus(ComponentBase):
         return json.loads(output)
 
     def get_update(self, alias: str, update_id: str = None, classification: str = None, approval: str = None, status: str = None, **kwargs) -> list:
-        """Get WSUS updates with optional filters."""
+        """
+        Get WSUS updates with optional filters.
+
+        Args:
+            alias: Session alias for the connection.
+            update_id: Optional update ID to filter by.
+            classification: Optional classification to filter by.
+            approval: Optional approval status to filter by.
+            status: Optional status to filter by.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing update information including Title, UpdateId,
+            Classification, Approval, ComputersNeedingThisUpdate, and ComputersInstalledThisUpdate.
+        """
         params = []
         if update_id:
             params.append(f"-UpdateId '{update_id}'")
@@ -35,7 +68,18 @@ class Wsus(ComponentBase):
         return result
 
     def get_computer(self, alias: str, computer_name: str = None, **kwargs) -> list:
-        """Get computers registered with WSUS."""
+        """
+        Get computers registered with WSUS.
+
+        Args:
+            alias: Session alias for the connection.
+            computer_name: Optional computer name to filter by.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing computer information including FullDomainName,
+            IPAddress, LastReportedStatusTime, LastSyncTime, and OSDescription.
+        """
         params = []
         if computer_name:
             params.append(f"-ComputerTargetName '{computer_name}'")
@@ -52,7 +96,16 @@ class Wsus(ComponentBase):
         return result
 
     def get_classification(self, alias: str, **kwargs) -> list:
-        """Get available update classifications."""
+        """
+        Get available update classifications.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing classification information including Classification and Id.
+        """
         command = "Get-WsusClassification | Select-Object Classification, Id | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
@@ -64,7 +117,16 @@ class Wsus(ComponentBase):
         return result
 
     def get_product(self, alias: str, **kwargs) -> list:
-        """Get available products for updates."""
+        """
+        Get available products for updates.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing product information including Product and Id.
+        """
         command = "Get-WsusProduct | Select-Object Product, Id | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
@@ -76,7 +138,16 @@ class Wsus(ComponentBase):
         return result
 
     def get_status(self, alias: str, **kwargs) -> dict:
-        """Get WSUS server status and statistics."""
+        """
+        Get WSUS server status and statistics.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Dictionary containing WSUS server statistics and status information.
+        """
         command = "Get-WsusServer | Get-WsusServerStatistics | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":

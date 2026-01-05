@@ -1,3 +1,10 @@
+"""
+Setup script for SysBot package.
+
+SysBot is a comprehensive library for system test automation with support for
+multiple protocols (SSH, WinRM, HTTP, Socket), secret management, and integration
+with Robot Framework and various database systems.
+"""
 from setuptools import setup, find_packages
 
 setup(
@@ -26,6 +33,7 @@ setup(
         "postgresql": ["psycopg2-binary"],
         "mongodb": ["pymongo"],
         "all_databases": ["mysql-connector-python", "psycopg2-binary", "pymongo"],
+        "dev": ["pdoc3"],
     },
     author="Thibault SCIRE",
     author_email="thibault.scire@outlook.com",

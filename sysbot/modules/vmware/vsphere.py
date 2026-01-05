@@ -1,3 +1,10 @@
+"""
+VMware vSphere Module
+
+This module provides methods for managing VMware vSphere environments including
+virtual machines, hosts, datastores, clusters, and resource pools using the
+vCenter REST API. Requires HTTP session with Basic authentication.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 

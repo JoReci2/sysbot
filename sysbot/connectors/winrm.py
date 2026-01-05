@@ -1,3 +1,10 @@
+"""
+WinRM Connector Module
+
+This module provides Windows Remote Management (WinRM) connectors for remote
+Windows system management. It supports PowerShell execution over WinRM using
+the pywinrm library for establishing and managing sessions.
+"""
 from winrm.protocol import Protocol
 from base64 import b64encode
 from sysbot.utils.engine import ConnectorInterface
