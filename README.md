@@ -12,7 +12,6 @@
 - [Additional Resources](#additional-resources)
 - [License](#license)
 - [Author](#author)
-- [Acknowledgments](#acknowledgments)
 
 ## Overview
 
@@ -602,28 +601,6 @@ The generated xUnit file includes:
 
 ## Additional Resources
 
-### Documentation
-
-Complete documentation is available in English and French:
-
-- **English**: [View Documentation](https://joreci2.github.io/sysbot/)
-- **French**: [Voir la Documentation](https://joreci2.github.io/sysbot/fr/)
-
-### Documentation Sections
-
-- **User Manual**
-  - Setup & Installation
-  - Quick Start
-  - Robot Framework Guide
-  - Unittest Guide
-  - Database Listener Plugin
-- **Developer Manual**
-  - Developer Guide
-- **References**
-  - API Reference
-
-The documentation is built with [Antora](https://antora.org/) and uses AsciiDoc format. See [docs/README.adoc](docs/README.adoc) for information on building documentation locally.
-
 ### Error Handling
 
 SysBot provides comprehensive error handling:
@@ -640,8 +617,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Author
 
 Thibault SCIRE - [GitHub](https://github.com/thibaultscire)
-
-## Acknowledgments
-
-- [Robot Framework](https://robotframework.org/) for automation framework
-- [Testinfra](https://testinfra.readthedocs.io/en/latest/) Discovered after development was well advanced but helped me to surpass myself
