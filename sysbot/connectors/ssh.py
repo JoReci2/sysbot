@@ -1,3 +1,10 @@
+"""
+SSH Connector Module
+
+This module provides SSH (Secure Shell) connectors for remote system access.
+It supports both Bash and PowerShell execution over SSH using the paramiko
+library for establishing and managing secure connections.
+"""
 import paramiko
 import base64
 from sysbot.utils.engine import ConnectorInterface

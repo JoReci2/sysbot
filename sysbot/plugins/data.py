@@ -1,3 +1,10 @@
+"""
+Data Plugin Module
+
+This module provides functionality for loading and managing data from various
+file formats (CSV, JSON, YAML) and storing them as secrets in the SysBot cache.
+Useful for managing test data and configuration files.
+"""
 import csv
 import json
 import yaml

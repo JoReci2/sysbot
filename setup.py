@@ -1,3 +1,10 @@
+"""
+Setup script for SysBot package.
+
+SysBot is a comprehensive library for system test automation with support for
+multiple protocols (SSH, WinRM, HTTP, Socket), secret management, and integration
+with Robot Framework and various database systems.
+"""
 from setuptools import setup, find_packages
 
 setup(

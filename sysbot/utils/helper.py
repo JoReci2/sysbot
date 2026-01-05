@@ -1,3 +1,10 @@
+"""
+Helper Utilities Module
+
+This module provides various helper classes and utility functions for SysBot,
+including Windows CIM helpers, timezone conversion utilities, and security-related
+operations such as certificate information retrieval.
+"""
 import datetime
 import socket
 import ssl

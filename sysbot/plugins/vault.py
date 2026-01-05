@@ -1,3 +1,10 @@
+"""
+Vault Plugin Module
+
+This module provides integration with HashiCorp Vault for secure secret management.
+It supports dumping secrets from Vault KV (Key-Value) engines and storing them
+in the SysBot secret cache for use in test automation.
+"""
 import hvac
 from typing import Union
 from sysbot.utils.engine import ComponentBase
