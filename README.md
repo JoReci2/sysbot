@@ -601,6 +601,36 @@ The generated xUnit file includes:
 
 ## Additional Resources
 
+### Documentation
+
+SysBot includes comprehensive Google-style docstrings for all modules, classes, and methods. You can generate and browse the documentation locally using pdoc3.
+
+#### Viewing Documentation with pdoc3
+
+Install pdoc3 as a development dependency:
+
+```bash
+pip install pdoc3
+```
+
+Generate and serve interactive HTML documentation:
+
+```bash
+# Start a local documentation server (recommended)
+pdoc3 --http localhost:8080 sysbot
+
+# Or generate static HTML files
+pdoc3 --html --output-dir docs sysbot
+```
+
+Then open your browser and navigate to `http://localhost:8080/sysbot` to browse the complete API documentation.
+
+The documentation includes:
+- **Module-level docstrings**: Purpose and overview of each module
+- **Class documentation**: Detailed class descriptions and initialization parameters
+- **Method documentation**: Comprehensive Args, Returns, and Raises sections
+- **Package structure**: Hierarchical organization of all components
+
 ### Error Handling
 
 SysBot provides comprehensive error handling:
