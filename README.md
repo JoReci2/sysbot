@@ -73,13 +73,10 @@ pip install sysbot[mongodb]      # MongoDB support only
 ### Basic SSH Connection
 
 ```python
-from sysbot.Sysbot import Sysbot
-
-# Create a SysBot instance
-bot = Sysbot()
+import sysbot
 
 # Open an SSH session to a Linux system
-bot.open_session(
+sysbot.open_session(
     alias="my_linux_server",
     protocol="ssh",
     product="bash",
@@ -90,11 +87,11 @@ bot.open_session(
 )
 
 # Execute a command
-result = bot.execute_command("my_linux_server", "ls -la")
+result = sysbot.execute_command("my_linux_server", "ls -la")
 print(result)
 
 # Close all sessions
-bot.close_all_sessions()
+sysbot.close_all_sessions()
 ```
 
 ### SSH Tunneling
@@ -117,7 +114,7 @@ tunnel_config = [
 ]
 
 # Open session through tunnels
-bot.open_session(
+sysbot.open_session(
     alias="tunneled_server",
     protocol="ssh", # or http / winrm / ect...
     product="bash",
@@ -134,20 +131,19 @@ bot.open_session(
 SysBot provides a built-in secret management system for secure storage and retrieval of sensitive data like passwords, tokens, and configuration values. Secrets can be stored directly or loaded from external sources like files or HashiCorp Vault.
 
 ```python
-from sysbot.Sysbot import Sysbot
-bot = Sysbot()
+import sysbot
 
 # Using plugins with secret management
-bot.plugins.data.csv("/path/to/file", key="my_secret")
-secret_data = bot.get_secret("my_secret.0.name")
+sysbot.plugins.data.csv("/path/to/file", key="my_secret")
+secret_data = sysbot.get_secret("my_secret.0.name")
 
 # Secret management without plugin
-bot.add_secret("new_secret", "very_secret_value")
-bot.get_secret("new_secret")
-bot.remove_secret("new_secret")
+sysbot.add_secret("new_secret", "very_secret_value")
+sysbot.get_secret("new_secret")
+sysbot.remove_secret("new_secret")
 
 # Using Vault plugin to dump HashiCorp Vault secrets
-bot.plugins.vault.dump_engine(
+sysbot.plugins.vault.dump_engine(
     token="hvs.CAESIJ...",
     url="https://vault.example.com:8200",
     engine_name="secret",
@@ -155,17 +151,17 @@ bot.plugins.vault.dump_engine(
     verify_ssl=False  # Set to True for production with valid certificates
 )
 # Access Vault secrets using dot notation
-db_url = bot.get_secret("vault_secrets.myapp/config.database_url")
+db_url = sysbot.get_secret("vault_secrets.myapp/config.database_url")
 ```
 
 ### Module System
 
 ```python
-# Call functions from loaded modules
-bot = Sysbot("linux.systemd", "linux.dnf") # bot = Sysbot() to load all modules
+# Call functions from loaded modules using the new import style
+import sysbot
 
 # Open an SSH session to a Linux system
-bot.open_session(
+sysbot.open_session(
     alias="my_linux_server",
     protocol="ssh",
     product="bash",
@@ -175,17 +171,17 @@ bot.open_session(
     password="password"
 )
 
-result = bot.linux.dnf.repolist("my_linux_server")
+result = sysbot.linux.dnf.repolist("my_linux_server")
 ```
 
 ### Session Management
 
 ```python
 # Close a specific session
-bot.close_session("my_linux_server")
+sysbot.close_session("my_linux_server")
 
 # Close all sessions (automatically handles tunnels)
-bot.close_all_sessions()
+sysbot.close_all_sessions()
 ```
 
 ### Supported Protocols
@@ -205,12 +201,10 @@ SysBot provides local execution connectors that allow running commands directly 
 
 **Local Bash Execution:**
 ```python
-from sysbot.Sysbot import Sysbot
-
-bot = Sysbot()
+import sysbot
 
 # Open a local bash session (no actual connection is made)
-bot.open_session(
+sysbot.open_session(
     alias="local_bash",
     protocol="local",
     product="bash",
@@ -219,20 +213,18 @@ bot.open_session(
 )
 
 # Execute commands locally
-result = bot.execute_command("local_bash", "ls -la")
+result = sysbot.execute_command("local_bash", "ls -la")
 print(result)
 
-bot.close_session("local_bash")
+sysbot.close_session("local_bash")
 ```
 
 **Local PowerShell Execution:**
 ```python
-from sysbot.Sysbot import Sysbot
-
-bot = Sysbot()
+import sysbot
 
 # Open a local PowerShell session (no actual connection is made)
-bot.open_session(
+sysbot.open_session(
     alias="local_ps",
     protocol="local",
     product="powershell",
@@ -241,10 +233,10 @@ bot.open_session(
 )
 
 # Execute PowerShell commands locally
-result = bot.execute_command("local_ps", "Get-Process | Select-Object -First 5")
+result = sysbot.execute_command("local_ps", "Get-Process | Select-Object -First 5")
 print(result)
 
-bot.close_session("local_ps")
+sysbot.close_session("local_ps")
 ```
 
 #### HTTP/HTTPS
@@ -266,7 +258,7 @@ SysBot provides a generic HTTP/HTTPS connector with support for 9 authentication
 
 Basic Authentication:
 ```python
-bot.open_session(
+sysbot.open_session(
     alias="my_api",
     protocol="http",
     product="basicauth",
@@ -276,12 +268,12 @@ bot.open_session(
     password="password"
 )
 
-result = bot.execute_command("my_api", "/users", options={"method": "GET"})
+result = sysbot.execute_command("my_api", "/users", options={"method": "GET"})
 ```
 
 API Key Authentication:
 ```python
-bot.open_session(
+sysbot.open_session(
     alias="my_api",
     protocol="http",
     product="apikey",
@@ -291,7 +283,7 @@ bot.open_session(
     api_key_header="X-API-Key"  # Custom header name (optional)
 )
 
-result = bot.execute_command("my_api", "/data", options={"method": "GET"})
+result = sysbot.execute_command("my_api", "/data", options={"method": "GET"})
 ```
 
 #### WinRM
@@ -370,21 +362,23 @@ SysBot can be used in Python unittest for system testing scenarios.
 
 ```python
 import unittest
-from sysbot.Sysbot import Sysbot
+import sysbot
 
 class TestSystemConnections(unittest.TestCase):
     
     def setUp(self):
         """Set up test fixtures."""
-        self.bot = Sysbot()
+        # Note: When using the module-level import, each test uses the same instance
+        # For test isolation, consider using: from sysbot.Sysbot import Sysbot; self.bot = Sysbot()
+        pass
     
     def tearDown(self):
         """Clean up after tests."""
-        self.bot.close_all_sessions()
+        sysbot.close_all_sessions()
     
     def test_ssh_connection(self):
         """Test SSH connection to a system."""
-        self.bot.open_session(
+        sysbot.open_session(
             alias="test_server",
             protocol="ssh",
             product="bash",
@@ -394,12 +388,12 @@ class TestSystemConnections(unittest.TestCase):
             password="testpass"
         )
         
-        result = self.bot.execute_command("test_server", "echo 'Hello World'")
+        result = sysbot.execute_command("test_server", "echo 'Hello World'")
         self.assertIn("Hello World", result)
     
     def test_http_api_call(self):
         """Test HTTP API connection."""
-        self.bot.open_session(
+        sysbot.open_session(
             alias="api",
             protocol="http",
             product="basicauth",
@@ -409,7 +403,7 @@ class TestSystemConnections(unittest.TestCase):
             password="pass"
         )
         
-        result = self.bot.execute_command(
+        result = sysbot.execute_command(
             "api",
             "/health",
             options={"method": "GET"}
