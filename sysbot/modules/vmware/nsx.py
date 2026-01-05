@@ -1,3 +1,10 @@
+"""
+VMware NSX Module
+
+This module provides methods for managing VMware NSX network virtualization
+and security, including logical switches, routers, firewalls, load balancers,
+and security groups using the NSX Manager API.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 

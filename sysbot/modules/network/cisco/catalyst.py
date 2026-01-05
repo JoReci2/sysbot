@@ -1,3 +1,10 @@
+"""
+Cisco Catalyst Switch Module
+
+This module provides methods for managing and querying Cisco Catalyst switches
+using CLI commands over SSH, including version information, interface status,
+VLAN configuration, and switch configuration.
+"""
 from sysbot.utils.engine import ComponentBase
 import re
 

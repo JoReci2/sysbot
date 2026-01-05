@@ -1,3 +1,10 @@
+"""
+VMware SDDC Manager Module
+
+This module provides methods for managing VMware Cloud Foundation through SDDC
+Manager, including hosts, clusters, domains, workload domains, and lifecycle
+management using the SDDC Manager REST API.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 
