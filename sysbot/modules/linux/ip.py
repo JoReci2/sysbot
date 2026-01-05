@@ -1,3 +1,10 @@
+"""
+Linux Network Interface Module
+
+This module provides methods for managing and querying network interfaces,
+IP addresses, routes, and network connectivity on Linux systems using the
+iproute2 (ip) command suite.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 

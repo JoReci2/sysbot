@@ -1,3 +1,10 @@
+"""
+Linux System Information Module
+
+This module provides methods for retrieving system information on Linux systems,
+including OS details, hostname, uptime, kernel version, CPU, memory, and
+hardware information.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 from datetime import datetime, timezone

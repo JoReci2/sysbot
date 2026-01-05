@@ -1,3 +1,10 @@
+"""
+DNF Package Manager Module
+
+This module provides methods for interacting with the DNF package manager on
+RHEL/Fedora-based Linux systems, including repository management and package
+operations.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 import configparser

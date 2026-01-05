@@ -1,3 +1,10 @@
+"""
+Linux File System Module
+
+This module provides comprehensive file system operations for Linux systems,
+including file type checking, attribute retrieval, content operations, and
+permission management.
+"""
 from sysbot.utils.engine import ComponentBase
 
 

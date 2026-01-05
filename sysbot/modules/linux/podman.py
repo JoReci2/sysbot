@@ -1,3 +1,10 @@
+"""
+Podman Container Module
+
+This module provides methods for managing Podman containers and pods on Linux
+systems, including container lifecycle operations, inspections, and resource
+management.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 

@@ -1,3 +1,9 @@
+"""
+SELinux Module
+
+This module provides methods for querying and managing SELinux (Security-Enhanced Linux)
+security contexts, status, and boolean settings on Linux systems.
+"""
 from sysbot.utils.engine import ComponentBase
 
 

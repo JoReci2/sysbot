@@ -1,3 +1,9 @@
+"""
+RPM Package Module
+
+This module provides methods for querying RPM packages on Linux systems,
+including checking installation status and retrieving package version information.
+"""
 from sysbot.utils.engine import ComponentBase
 
 

@@ -1,3 +1,10 @@
+"""
+Kubernetes Module
+
+This module provides methods for interacting with Kubernetes clusters using
+kubectl, including cluster information, node management, pod operations, and
+resource queries.
+"""
 from sysbot.utils.engine import ComponentBase
 import json
 import shlex

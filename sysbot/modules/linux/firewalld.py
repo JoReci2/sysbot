@@ -1,3 +1,10 @@
+"""
+Firewalld Module
+
+This module provides methods for managing and querying the firewalld firewall
+service on RHEL/Fedora-based Linux systems, including zone management and
+rule configuration.
+"""
 from sysbot.utils.engine import ComponentBase
 from typing import Dict, List
 

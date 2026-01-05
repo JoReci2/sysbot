@@ -1,3 +1,9 @@
+"""
+Linux User Management Module
+
+This module provides methods for managing and querying user and group information
+on Linux systems using the id and getent commands.
+"""
 from sysbot.utils.engine import ComponentBase
 
 

@@ -1,3 +1,9 @@
+"""
+Systemd Module
+
+This module provides methods for managing systemd services on Linux systems,
+including checking service status, enablement state, and failure status.
+"""
 from sysbot.utils.engine import ComponentBase
 
 

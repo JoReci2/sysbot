@@ -1,3 +1,9 @@
+"""
+Linux Process Management Module
+
+This module provides methods for querying and managing running processes on
+Linux systems, including process information, thread details, and security contexts.
+"""
 from sysbot.utils.engine import ComponentBase
 
 

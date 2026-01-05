@@ -1,3 +1,10 @@
+"""
+Libvirt Virtualization Module
+
+This module provides methods for managing virtual machines using libvirt on
+Linux systems, including domain management, storage pool operations, and
+network configuration.
+"""
 from sysbot.utils.engine import ComponentBase
 import shlex
 
