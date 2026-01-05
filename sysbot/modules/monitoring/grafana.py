@@ -2,7 +2,7 @@
 Grafana Module
 
 This module provides methods for interacting with Grafana monitoring system via REST API.
-It supports common operations such as health checks, datasource management, dashboard queries,
+It supports read-only operations such as health checks, datasource queries, dashboard queries,
 and user/organization management.
 
 Note: This module uses the HTTP connector with API Key or Basic authentication.
@@ -86,64 +86,6 @@ class Grafana(ComponentBase):
         )
         return json.loads(response.decode())
 
-    def create_datasource(self, alias: str, config: dict, **kwargs) -> dict:
-        """
-        Create a new datasource.
-
-        Args:
-            alias (str): The session alias for the Grafana connection.
-            config (dict): Datasource configuration containing name, type, url, etc.
-
-        Returns:
-            dict: Response from the creation operation.
-        """
-        response = self.execute_command(
-            alias,
-            "/api/datasources",
-            options={"method": "POST", "json": config},
-            **kwargs
-        )
-        return json.loads(response.decode())
-
-    def update_datasource(self, alias: str, datasource_id: int, config: dict, **kwargs) -> dict:
-        """
-        Update an existing datasource.
-
-        Args:
-            alias (str): The session alias for the Grafana connection.
-            datasource_id (int): Datasource identifier.
-            config (dict): Updated datasource configuration.
-
-        Returns:
-            dict: Response from the update operation.
-        """
-        response = self.execute_command(
-            alias,
-            f"/api/datasources/{datasource_id}",
-            options={"method": "PUT", "json": config},
-            **kwargs
-        )
-        return json.loads(response.decode())
-
-    def delete_datasource(self, alias: str, datasource_id: int, **kwargs) -> dict:
-        """
-        Delete a datasource by ID.
-
-        Args:
-            alias (str): The session alias for the Grafana connection.
-            datasource_id (int): Datasource identifier.
-
-        Returns:
-            dict: Response from the deletion operation.
-        """
-        response = self.execute_command(
-            alias,
-            f"/api/datasources/{datasource_id}",
-            options={"method": "DELETE"},
-            **kwargs
-        )
-        return json.loads(response.decode())
-
     def search_dashboards(self, alias: str, query: str = "", **kwargs) -> list:
         """
         Search for dashboards.
@@ -194,44 +136,6 @@ class Grafana(ComponentBase):
             alias,
             "/api/dashboards/home",
             options={"method": "GET"},
-            **kwargs
-        )
-        return json.loads(response.decode())
-
-    def create_or_update_dashboard(self, alias: str, dashboard: dict, **kwargs) -> dict:
-        """
-        Create or update a dashboard.
-
-        Args:
-            alias (str): The session alias for the Grafana connection.
-            dashboard (dict): Dashboard configuration containing dashboard JSON and metadata.
-
-        Returns:
-            dict: Response from the operation including dashboard ID and UID.
-        """
-        response = self.execute_command(
-            alias,
-            "/api/dashboards/db",
-            options={"method": "POST", "json": dashboard},
-            **kwargs
-        )
-        return json.loads(response.decode())
-
-    def delete_dashboard_by_uid(self, alias: str, dashboard_uid: str, **kwargs) -> dict:
-        """
-        Delete a dashboard by UID.
-
-        Args:
-            alias (str): The session alias for the Grafana connection.
-            dashboard_uid (str): Dashboard unique identifier.
-
-        Returns:
-            dict: Response from the deletion operation.
-        """
-        response = self.execute_command(
-            alias,
-            f"/api/dashboards/uid/{dashboard_uid}",
-            options={"method": "DELETE"},
             **kwargs
         )
         return json.loads(response.decode())
