@@ -2,8 +2,8 @@
 Grafana Module
 
 This module provides methods for interacting with Grafana monitoring system via REST API.
-It supports read-only operations such as health checks, datasource queries, dashboard queries,
-and user/organization management.
+It supports read-only operations such as health checks, datasource retrieval, dashboard retrieval,
+and user/organization information.
 
 Note: This module uses the HTTP connector with API Key or Basic authentication.
 Sessions should be opened with protocol="http" and product="apikey" or "basicauth".
