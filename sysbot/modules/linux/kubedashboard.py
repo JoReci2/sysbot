@@ -54,7 +54,16 @@ class Kubedashboard(ComponentBase):
         return json.loads(output)
 
     def check_dashboard_status(self, alias: str, namespace: str = "kubernetes-dashboard", **kwargs) -> dict:
-        """Check if the Kubernetes Dashboard is running by getting deployment status."""
+        """Check if the Kubernetes Dashboard is running by getting deployment status.
+        
+        Returns a simplified status dictionary with key deployment metrics:
+        - name: Deployment name
+        - namespace: Deployment namespace
+        - replicas: Desired number of replicas
+        - ready_replicas: Number of ready replicas
+        - available_replicas: Number of available replicas
+        - conditions: List of deployment conditions
+        """
         deployment = self.get_dashboard_deployment(alias, namespace, **kwargs)
         return {
             "name": deployment.get("metadata", {}).get("name"),
