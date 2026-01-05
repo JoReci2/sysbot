@@ -157,7 +157,7 @@ db_url = sysbot.get_secret("vault_secrets.myapp/config.database_url")
 ### Module System
 
 ```python
-# Call functions from loaded modules using the new import style
+# Import sysbot to access loaded components (all modules/plugins loaded by default)
 import sysbot
 
 # Open an SSH session to a Linux system
@@ -368,8 +368,9 @@ class TestSystemConnections(unittest.TestCase):
     
     def setUp(self):
         """Set up test fixtures."""
-        # Note: When using the module-level import, each test uses the same instance
-        # For test isolation, consider using: from sysbot.Sysbot import Sysbot; self.bot = Sysbot()
+        # Note: When using module-level import, tests share the same sysbot instance.
+        # This means state like open sessions and secrets persist between tests.
+        # For test isolation, use: from sysbot.Sysbot import Sysbot; self.bot = Sysbot()
         pass
     
     def tearDown(self):
