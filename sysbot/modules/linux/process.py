@@ -8,7 +8,21 @@ from sysbot.utils.engine import ComponentBase
 
 
 class Process(ComponentBase):
+    """Process management and querying class for Linux systems."""
+
     def ps(self, alias: str, name: str, **kwargs) -> dict:
+        """
+        Get process information by name using ps command.
+
+        Args:
+            alias: Session alias for the connection.
+            name: Process name to search for.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing process information including
+            user, pid, cpu, mem, vsz, rss, tty, stat, start, time, and command.
+        """
         output = self.execute_command(
             alias, f"ps aux | grep {name} | grep -v grep", **kwargs
         )
@@ -33,6 +47,18 @@ class Process(ComponentBase):
         return processes
 
     def thread(self, alias: str, name: str, **kwargs) -> dict:
+        """
+        Get thread information by process name.
+
+        Args:
+            alias: Session alias for the connection.
+            name: Process name to search for.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing thread information including
+            uid, pid, stack_ptr, tty, time, and command.
+        """
         output = self.execute_command(
             alias, f"ps axms | grep {name} | grep -v grep", **kwargs
         )
@@ -52,6 +78,18 @@ class Process(ComponentBase):
         return processes
 
     def security(self, alias: str, name: str, **kwargs) -> dict:
+        """
+        Get security context information for processes by name.
+
+        Args:
+            alias: Session alias for the connection.
+            name: Process name to search for.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing security information including
+            euser, ruser, suser, fuser, f, comm, and label (SELinux context).
+        """
         output = self.execute_command(
             alias,
             f"ps -eo euser,ruser,suser,fuser,f,comm,label | grep {name} | grep -v grep",
