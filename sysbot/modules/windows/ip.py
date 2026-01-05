@@ -83,7 +83,7 @@ class Ip(ComponentBase):
             **kwargs: Additional command execution options.
 
         Returns:
-            Dictionary containing resolved IP address(es).
+            JSON-parsed result containing the resolved IP address(es) as a list or single value.
         """
         command = f"(Resolve-DnsName {fqdn}).IPAddress | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
@@ -99,7 +99,7 @@ class Ip(ComponentBase):
             **kwargs: Additional command execution options.
 
         Returns:
-            Result of the connection test as a string (True/False).
+            String result from PowerShell ('True' or 'False') indicating connectivity status.
         """
         command = f"Test-Connection -ComputerName {host} -Count 1 -Quiet"
         return self.execute_command(alias, command, **kwargs)
