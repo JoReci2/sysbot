@@ -13,7 +13,7 @@ import json
 class Ip(ComponentBase):
     def addr(self, alias: str, **kwargs) -> dict:
         command = Windows.get_cim_class(
-            namespace="root\cimv2",
+            namespace=r"root\cimv2",
             classname="Win32_NetworkAdapterConfiguration",
             property="DHCPEnabled, IPAddress, IPSubnet, DefaultIPGateway, DNSServerSearchOrder, ServiceName, Index, MTU",
         )
