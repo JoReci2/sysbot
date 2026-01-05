@@ -34,7 +34,18 @@ class Veeam(ComponentBase):
         return result
 
     def get_backup_repositories(self, alias: str, name: str = None, **kwargs) -> list:
-        """Get backup repositories."""
+        """
+        Get backup repositories.
+
+        Args:
+            alias: Session alias for the connection.
+            name: Optional repository name to filter by.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing backup repository information including
+            Name, Description, Path, Type, and Extent.
+        """
         if name:
             command = f"Get-VBRBackupRepository -Name '{name}' | Select-Object Name, Description, Path, Type, Extent | ConvertTo-Json"
         else:
@@ -49,7 +60,18 @@ class Veeam(ComponentBase):
         return result
 
     def get_jobs(self, alias: str, name: str = None, **kwargs) -> list:
-        """Get backup and replication jobs."""
+        """
+        Get backup and replication jobs.
+
+        Args:
+            alias: Session alias for the connection.
+            name: Optional job name to filter by.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing job information including Name, Description,
+            JobType, IsScheduleEnabled, IsRunning, and LastResult.
+        """
         if name:
             command = f"Get-VBRJob -Name '{name}' | Select-Object Name, Description, JobType, IsScheduleEnabled, IsRunning, LastResult | ConvertTo-Json"
         else:
@@ -64,7 +86,18 @@ class Veeam(ComponentBase):
         return result
 
     def get_backups(self, alias: str, name: str = None, **kwargs) -> list:
-        """Get backups."""
+        """
+        Get backups.
+
+        Args:
+            alias: Session alias for the connection.
+            name: Optional backup name to filter by.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing backup information including Name, Description,
+            JobName, CreationTime, and JobType.
+        """
         if name:
             command = f"Get-VBRBackup -Name '{name}' | Select-Object Name, Description, JobName, CreationTime, JobType | ConvertTo-Json"
         else:
@@ -79,7 +112,18 @@ class Veeam(ComponentBase):
         return result
 
     def get_restore_points(self, alias: str, backup_name: str = None, **kwargs) -> list:
-        """Get restore points."""
+        """
+        Get restore points.
+
+        Args:
+            alias: Session alias for the connection.
+            backup_name: Optional backup name to filter restore points by.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing restore point information including Name,
+            CreationTime, Type, and VmName.
+        """
         if backup_name:
             command = f"Get-VBRBackup -Name '{backup_name}' | Get-VBRRestorePoint | Select-Object Name, CreationTime, Type, VmName | ConvertTo-Json"
         else:
@@ -94,7 +138,18 @@ class Veeam(ComponentBase):
         return result
 
     def get_backup_sessions(self, alias: str, job_name: str = None, **kwargs) -> list:
-        """Get backup sessions."""
+        """
+        Get backup sessions.
+
+        Args:
+            alias: Session alias for the connection.
+            job_name: Optional job name to filter sessions by.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing backup session information including Name,
+            JobName, State, Result, CreationTime, and EndTime.
+        """
         if job_name:
             command = f"Get-VBRJob -Name '{job_name}' | Get-VBRBackupSession | Select-Object Name, JobName, State, Result, CreationTime, EndTime | ConvertTo-Json"
         else:
@@ -109,7 +164,18 @@ class Veeam(ComponentBase):
         return result
 
     def get_vi_servers(self, alias: str, name: str = None, **kwargs) -> list:
-        """Get vSphere servers managed by Veeam."""
+        """
+        Get vSphere servers managed by Veeam.
+
+        Args:
+            alias: Session alias for the connection.
+            name: Optional vSphere server name to filter by.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing vSphere server information including Name,
+            Description, Type, ApiVersion, and IsUnavailable.
+        """
         if name:
             command = f"Get-VBRViServer -Name '{name}' | Select-Object Name, Description, Type, ApiVersion, IsUnavailable | ConvertTo-Json"
         else:
@@ -124,7 +190,17 @@ class Veeam(ComponentBase):
         return result
 
     def get_server_sessions(self, alias: str, **kwargs) -> list:
-        """Get server session information."""
+        """
+        Get server session information.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing server session information including User,
+            Server, and Port.
+        """
         command = "Get-VBRServerSession | Select-Object User, Server, Port | ConvertTo-Json"
         output = self.execute_command(alias, command, **kwargs)
         if not output or output.strip() == "":
