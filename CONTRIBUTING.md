@@ -515,7 +515,6 @@ Plugins extend SysBot's functionality by providing reusable utilities. They are 
 SysBot supports several types of plugins:
 
 * **Data Plugins**: For data manipulation and loading (CSV, YAML, JSON, etc.)
-* **Robot Plugins**: For Robot Framework integration (listeners, libraries)
 * **Integration Plugins**: For external system integration (Vault, Polarion, etc.)
 
 ### Plugin Structure
@@ -525,10 +524,7 @@ A typical plugin structure:
 ```
 sysbot/plugins/
 ├── __init__.py
-├── myplugin.py           # Plugin implementation
-└── robot/                # Robot Framework plugins
-    └── listener/         # Listener plugins
-        └── mylistener.py
+└── myplugin.py           # Plugin implementation
 ```
 
 ### Data Plugin Example
@@ -567,45 +563,11 @@ class Mydata(ComponentBase):
         pass
 ```
 
-### Robot Framework Listener Plugin
-
-Listeners are special plugins for Robot Framework integration:
-
-```python
-# sysbot/plugins/robot/listener/mylistener.py
-class MyListener:
-    """Robot Framework listener for custom functionality."""
-    
-    ROBOT_LISTENER_API_VERSION = 3
-    
-    def __init__(self, *args):
-        """Initialize the listener with arguments from Robot Framework."""
-        # Parse arguments passed from robot command line
-        pass
-    
-    def start_suite(self, data, result):
-        """Called when a test suite starts."""
-        pass
-    
-    def end_suite(self, data, result):
-        """Called when a test suite ends."""
-        pass
-    
-    def start_test(self, data, result):
-        """Called when a test case starts."""
-        pass
-    
-    def end_test(self, data, result):
-        """Called when a test case ends."""
-        pass
-```
-
 ### Plugin Registration
 
 Plugins are automatically registered when they are placed in the correct location:
 
 1. **Data plugins**: Add to `sysbot/plugins/` and import in `__init__.py`
-2. **Robot listeners**: Add to `sysbot/plugins/robot/listener/`
 
 ### Plugin Best Practices
 
@@ -638,10 +600,10 @@ bot.plugins.vault.dump_engine(
 )
 ```
 
-Robot Framework listeners are used differently:
+For Robot Framework test results, use the built-in xUnit output support:
 
 ```bash
-robot --listener sysbot.plugins.robot.listener.mylistener.MyListener:arg1:arg2 tests/
+robot --xunit xunit_output.xml tests/
 ```
 
 ## Acknowledgments

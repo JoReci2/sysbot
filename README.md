@@ -7,7 +7,7 @@
 - [Quickstart](#quickstart)
 - [RobotFramework Usage](#robotframework-usage)
 - [UnitTest Usage](#unittest-usage)
-- [Listener Usage](#listener-usage)
+- [Test Results Output](#test-results-output)
 - [Polarion Integration](#polarion-integration)
 - [Additional Resources](#additional-resources)
 - [License](#license)
@@ -26,7 +26,6 @@ SysBot is a system test tool that provides a unified interface for connecting to
 - **Modular Architecture**: Dynamic components loading and discovery (modules and plugins)
 - **Connection Management**: Robust session caching and lifecycle management
 - **Secret Management**: Secure storage and retrieval of sensitive data
-- **Database Listeners**: Store test results in SQLite, MySQL, PostgreSQL, or MongoDB
 - **Polarion Integration**: Generate Polarion-compatible xUnit reports for ALM/QA integration
 
 ### Architecture
@@ -35,7 +34,7 @@ SysBot is a system test tool that provides a unified interface for connecting to
 sysbot/
 ├── Sysbot.py           # Main SysBot class
 ├── connectors/         # Protocol-specific connectors
-├── plugins/            # Plugins utilities (data, vault, robot/listener)
+├── plugins/            # Plugins utilities (data, vault)
 ├── utils/
 │   └── engine.py       # Engine class
 └── modules/            # Modules
@@ -461,67 +460,20 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-## Listener Usage
+## Test Results Output
 
-SysBot includes Robot Framework listener plugins that can store test results in various databases. Each database type has its own independent, self-contained listener. The listeners create a hierarchical structure: Campaign → Suite → Test Case → Keyword.
+Robot Framework provides built-in xUnit output support for test result management and integration with CI/CD pipelines.
 
-### Available Listeners
-
-- **SQLite**: Lightweight file-based database, perfect for local testing
-- **MySQL**: Popular relational database for team environments
-- **PostgreSQL**: Enterprise-grade relational database
-- **MongoDB**: NoSQL document database for flexible schemas
-
-### Usage with Robot Framework
-
-Each listener is used directly with its specific class:
+### Using Robot Framework xUnit Output
 
 ```bash
-# Store results in SQLite
-robot --listener sysbot.plugins.robot.listener.sqlite.Sqlite:results.db:MyCampaign tests/
+# Generate xUnit XML output
+robot --xunit xunit_output.xml tests/
 
-# Store results in MySQL
-robot --listener sysbot.plugins.robot.listener.mysql.Mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
-
-# Store results in PostgreSQL
-robot --listener sysbot.plugins.robot.listener.postgresql.Postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
-
-# Store results in MongoDB
-robot --listener sysbot.plugins.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
+# xUnit output can be used with CI/CD tools like Jenkins, Azure DevOps, etc.
 ```
 
-### Listener Parameters
-
-The listener accepts two parameters:
-1. **Database Connection**: Connection string or path to database
-2. **Campaign Name**: Name of the test campaign for organizing results
-
-### Data Structure
-
-The listeners store test execution data in a hierarchical format:
-
-- **Campaign**: Top-level container for test executions
-  - **Suite**: Test suite information
-    - **Test Case**: Individual test cases
-      - **Keyword**: Keywords executed within tests
-
-Each level stores relevant metadata including:
-- Execution timestamps
-- Status (PASS/FAIL)
-- Error messages
-- Statistics
-
-### Installation Requirements
-
-```bash
-# Install with all database support
-pip install sysbot[all_databases]
-
-# Or install specific database support
-pip install sysbot[mysql]        # MySQL support only
-pip install sysbot[postgresql]   # PostgreSQL support only
-pip install sysbot[mongodb]      # MongoDB support only
-```
+For advanced test result management and ALM integration, see the [Polarion Integration](#polarion-integration) section.
 
 ## Polarion Integration
 

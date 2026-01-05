@@ -29,10 +29,6 @@ setup(
         "sqlalchemy",
     ],
     extras_require={
-        "mysql": ["mysql-connector-python"],
-        "postgresql": ["psycopg2-binary"],
-        "mongodb": ["pymongo"],
-        "all_databases": ["mysql-connector-python", "psycopg2-binary", "pymongo"],
         "dev": ["pdoc3"],
     },
     author="Thibault SCIRE",
