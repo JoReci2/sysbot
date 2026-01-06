@@ -1,4 +1,6 @@
 """
+SysBot - System Test Automation Library
+
 MIT License
 
 Copyright (c) 2024 Thibault SCIRE
@@ -20,7 +22,23 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+For complete documentation, see the README.md and CONTRIBUTING.md files 
+included in this package directory.
 """
+
+import os
+
+# Load README content for documentation
+_pkg_dir = os.path.dirname(__file__)
+_readme_path = os.path.join(_pkg_dir, 'README.md')
+_contributing_path = os.path.join(_pkg_dir, 'CONTRIBUTING.md')
+
+if os.path.exists(_readme_path):
+    with open(_readme_path, 'r', encoding='utf-8') as f:
+        __doc__ += "\n\n" + f.read()
 
 from .Sysbot import Sysbot
 __all__ = ['Sysbot']
