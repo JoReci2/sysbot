@@ -33,7 +33,7 @@ setup(
         "postgresql": ["psycopg2-binary"],
         "mongodb": ["pymongo"],
         "all_databases": ["mysql-connector-python", "psycopg2-binary", "pymongo"],
-        "dev": ["pdoc3"],
+        "dev": ["build", "pdoc3", "ruff", "bandit", "radon", "safety"],
     },
     author="Thibault SCIRE",
     author_email="thibault.scire@outlook.com",
