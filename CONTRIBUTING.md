@@ -296,13 +296,13 @@ class Systemd(ComponentBase):
 Once implemented, modules are automatically discovered and can be used as shown below. When instantiating Sysbot, you can optionally specify which modules to load using dot notation (e.g., `"linux.systemd"`), or load all modules by not passing any arguments:
 
 ```python
-from sysbot.Sysbot import Sysbot
+import sysbot
 
 # Load specific modules only
-bot = Sysbot("linux.systemd", "linux.dnf")
+bot = sysbot.Sysbot("linux.systemd", "linux.dnf")
 
 # Or load all available modules
-bot = Sysbot()
+bot = sysbot.Sysbot()
 
 # Open a session and use the module
 bot.open_session("server", "ssh", "bash", "192.168.1.100", 22, "user", "pass")
@@ -526,9 +526,6 @@ A typical plugin structure:
 sysbot/plugins/
 ├── __init__.py
 ├── myplugin.py           # Plugin implementation
-└── robot/                # Robot Framework plugins
-    └── listener/         # Listener plugins
-        └── mylistener.py
 ```
 
 ### Data Plugin Example
