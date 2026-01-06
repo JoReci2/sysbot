@@ -35,7 +35,7 @@ SysBot is a system test tool that provides a unified interface for connecting to
 sysbot/
 ├── Sysbot.py           # Main SysBot class
 ├── connectors/         # Protocol-specific connectors
-├── plugins/            # Plugins utilities (data, vault, robot/listener)
+├── plugins/            # Plugins utilities (data, vault)
 ├── utils/
 │   └── engine.py       # Engine class
 └── modules/            # Modules
@@ -66,6 +66,9 @@ pip install sysbot[all_databases]
 pip install sysbot[mysql]        # MySQL support only
 pip install sysbot[postgresql]   # PostgreSQL support only
 pip install sysbot[mongodb]      # MongoDB support only
+
+# Install with devellopment dependency
+pip install sysbot[dev]
 ```
 
 ## Quickstart
@@ -75,8 +78,10 @@ pip install sysbot[mongodb]      # MongoDB support only
 ```python
 import sysbot
 
+bot = sysbot.Sysbot()
+
 # Open an SSH session to a Linux system
-sysbot.open_session(
+bot.open_session(
     alias="my_linux_server",
     protocol="ssh",
     product="bash",
@@ -87,11 +92,11 @@ sysbot.open_session(
 )
 
 # Execute a command
-result = sysbot.execute_command("my_linux_server", "ls -la")
+result = bot.execute_command("my_linux_server", "ls -la")
 print(result)
 
 # Close all sessions
-sysbot.close_all_sessions()
+bot.close_all_sessions()
 ```
 
 ### SSH Tunneling
@@ -114,7 +119,7 @@ tunnel_config = [
 ]
 
 # Open session through tunnels
-sysbot.open_session(
+bot.open_session(
     alias="tunneled_server",
     protocol="ssh", # or http / winrm / ect...
     product="bash",
@@ -133,17 +138,19 @@ SysBot provides a built-in secret management system for secure storage and retri
 ```python
 import sysbot
 
+bot = sysbot.Sysbot()
+
 # Using plugins with secret management
-sysbot.plugins.data.csv("/path/to/file", key="my_secret")
-secret_data = sysbot.get_secret("my_secret.0.name")
+bot.plugins.data.csv("/path/to/file", key="my_secret")
+secret_data = bot.get_secret("my_secret.0.name")
 
 # Secret management without plugin
-sysbot.add_secret("new_secret", "very_secret_value")
-sysbot.get_secret("new_secret")
-sysbot.remove_secret("new_secret")
+bot.add_secret("new_secret", "very_secret_value")
+bot.get_secret("new_secret")
+bot.remove_secret("new_secret")
 
 # Using Vault plugin to dump HashiCorp Vault secrets
-sysbot.plugins.vault.dump_engine(
+bot.plugins.vault.dump_engine(
     token="hvs.CAESIJ...",
     url="https://vault.example.com:8200",
     engine_name="secret",
@@ -151,7 +158,7 @@ sysbot.plugins.vault.dump_engine(
     verify_ssl=False  # Set to True for production with valid certificates
 )
 # Access Vault secrets using dot notation
-db_url = sysbot.get_secret("vault_secrets.myapp/config.database_url")
+db_url = bot.get_secret("vault_secrets.myapp/config.database_url")
 ```
 
 ### Module System
@@ -160,8 +167,10 @@ db_url = sysbot.get_secret("vault_secrets.myapp/config.database_url")
 # Import sysbot to access loaded components (all modules/plugins loaded by default)
 import sysbot
 
+bot = sysbot.Sysbot()
+
 # Open an SSH session to a Linux system
-sysbot.open_session(
+bot.open_session(
     alias="my_linux_server",
     protocol="ssh",
     product="bash",
@@ -171,17 +180,17 @@ sysbot.open_session(
     password="password"
 )
 
-result = sysbot.linux.dnf.repolist("my_linux_server")
+result = bot.linux.dnf.repolist("my_linux_server")
 ```
 
 ### Session Management
 
 ```python
 # Close a specific session
-sysbot.close_session("my_linux_server")
+bot.close_session("my_linux_server")
 
 # Close all sessions (automatically handles tunnels)
-sysbot.close_all_sessions()
+bot.close_all_sessions()
 ```
 
 ### Supported Protocols
@@ -203,8 +212,10 @@ SysBot provides local execution connectors that allow running commands directly 
 ```python
 import sysbot
 
+bot = sysbot.Sysbot()
+
 # Open a local bash session (no actual connection is made)
-sysbot.open_session(
+bot.open_session(
     alias="local_bash",
     protocol="local",
     product="bash",
@@ -213,18 +224,20 @@ sysbot.open_session(
 )
 
 # Execute commands locally
-result = sysbot.execute_command("local_bash", "ls -la")
+result = bot.execute_command("local_bash", "ls -la")
 print(result)
 
-sysbot.close_session("local_bash")
+bot.close_session("local_bash")
 ```
 
 **Local PowerShell Execution:**
 ```python
 import sysbot
 
+bot = sysbot.Sysbot()
+
 # Open a local PowerShell session (no actual connection is made)
-sysbot.open_session(
+bot.open_session(
     alias="local_ps",
     protocol="local",
     product="powershell",
@@ -233,10 +246,10 @@ sysbot.open_session(
 )
 
 # Execute PowerShell commands locally
-result = sysbot.execute_command("local_ps", "Get-Process | Select-Object -First 5")
+result = bot.execute_command("local_ps", "Get-Process | Select-Object -First 5")
 print(result)
 
-sysbot.close_session("local_ps")
+bot.close_session("local_ps")
 ```
 
 #### HTTP/HTTPS
@@ -258,7 +271,7 @@ SysBot provides a generic HTTP/HTTPS connector with support for 9 authentication
 
 Basic Authentication:
 ```python
-sysbot.open_session(
+bot.open_session(
     alias="my_api",
     protocol="http",
     product="basicauth",
@@ -268,12 +281,12 @@ sysbot.open_session(
     password="password"
 )
 
-result = sysbot.execute_command("my_api", "/users", options={"method": "GET"})
+result = bot.execute_command("my_api", "/users", options={"method": "GET"})
 ```
 
 API Key Authentication:
 ```python
-sysbot.open_session(
+bot.open_session(
     alias="my_api",
     protocol="http",
     product="apikey",
@@ -283,7 +296,7 @@ sysbot.open_session(
     api_key_header="X-API-Key"  # Custom header name (optional)
 )
 
-result = sysbot.execute_command("my_api", "/data", options={"method": "GET"})
+result = bot.execute_command("my_api", "/data", options={"method": "GET"})
 ```
 
 #### WinRM
@@ -358,75 +371,18 @@ Using Secrets
 
 SysBot can be used in Python unittest for system testing scenarios.
 
-### Basic UnitTest Example
-
-```python
-import unittest
-import sysbot
-
-class TestSystemConnections(unittest.TestCase):
-    
-    def setUp(self):
-        """Set up test fixtures."""
-        # Note: When using module-level import, tests share the same sysbot instance.
-        # This means state like open sessions and secrets persist between tests.
-        # For test isolation, use: from sysbot.Sysbot import Sysbot; self.bot = Sysbot()
-        pass
-    
-    def tearDown(self):
-        """Clean up after tests."""
-        sysbot.close_all_sessions()
-    
-    def test_ssh_connection(self):
-        """Test SSH connection to a system."""
-        sysbot.open_session(
-            alias="test_server",
-            protocol="ssh",
-            product="bash",
-            host="192.168.1.100",
-            port=22,
-            login="testuser",
-            password="testpass"
-        )
-        
-        result = sysbot.execute_command("test_server", "echo 'Hello World'")
-        self.assertIn("Hello World", result)
-    
-    def test_http_api_call(self):
-        """Test HTTP API connection."""
-        sysbot.open_session(
-            alias="api",
-            protocol="http",
-            product="basicauth",
-            host="api.example.com",
-            port=443,
-            login="user",
-            password="pass"
-        )
-        
-        result = sysbot.execute_command(
-            "api",
-            "/health",
-            options={"method": "GET"}
-        )
-        self.assertIsNotNone(result)
-
-if __name__ == '__main__':
-    unittest.main()
-```
-
 ### Module Testing with UnitTest
 
 ```python
 import unittest
-from sysbot.Sysbot import Sysbot
+import Sysbot
 
 class TestLinuxModules(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
         """Set up class fixtures."""
-        cls.bot = Sysbot("linux.systemd", "linux.dnf")
+        cls.bot = sysbot.Sysbot("linux.systemd", "linux.dnf")
         cls.bot.open_session(
             alias="linux_server",
             protocol="ssh",
