@@ -67,7 +67,7 @@ pip install sysbot[mysql]        # MySQL support only
 pip install sysbot[postgresql]   # PostgreSQL support only
 pip install sysbot[mongodb]      # MongoDB support only
 
-# Install with devellopment dependency
+# Install with development dependency
 pip install sysbot[dev]
 ```
 

@@ -34,7 +34,6 @@ import os
 # Load README content for documentation
 _pkg_dir = os.path.dirname(__file__)
 _readme_path = os.path.join(_pkg_dir, 'README.md')
-_contributing_path = os.path.join(_pkg_dir, 'CONTRIBUTING.md')
 
 if os.path.exists(_readme_path):
     with open(_readme_path, 'r', encoding='utf-8') as f:
