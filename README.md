@@ -79,7 +79,7 @@ The documentation includes:
 - Complete API reference with detailed docstrings
 - Module-level documentation
 - Usage examples and guides
-- README and CONTRIBUTING guidelines embedded in the package
+- Complete README embedded in the package
 
 ### Generate Static Documentation
 
@@ -93,7 +93,7 @@ The generated HTML files will be in the `docs/` directory.
 
 ## Contributing
 
-Contributions are welcome! Please see the [CONTRIBUTING.md](sysbot/CONTRIBUTING.md) file in the package for guidelines on:
+Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on:
 - Development environment setup
 - Code standards and style guide
 - Testing requirements
