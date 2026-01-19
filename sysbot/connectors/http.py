@@ -97,6 +97,35 @@ class BaseHttp(ConnectorInterface):
         except requests.exceptions.RequestException as e:
             raise Exception(f"HTTP request failed: {str(e)}")
 
+    def test_connection(self, session, test_endpoint="/", test_method="GET", verify=True):
+        """
+        Test the connection by making a request to a test endpoint.
+
+        Args:
+            session (dict): Session configuration containing host, port, and auth details.
+            test_endpoint (str): Endpoint path to test (default: "/").
+            test_method (str): HTTP method to use for testing (default: "GET").
+            verify (bool): Whether to verify SSL certificates (default: True).
+
+        Returns:
+            bool: True if connection test succeeds.
+
+        Raises:
+            Exception: If the connection test fails.
+        """
+        # This method should be overridden by child classes to include auth
+        # but provides a basic structure
+        url = self._build_url(session["host"], session["port"], test_endpoint)
+        try:
+            response = self._make_request(
+                method=test_method,
+                url=url,
+                verify=verify
+            )
+            return True
+        except Exception as e:
+            raise Exception(f"Connection test failed: {str(e)}")
+
 
 class Apikey(BaseHttp):
     """
@@ -115,7 +144,8 @@ class Apikey(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None, api_key=None, 
-                     api_key_header="X-API-Key", api_key_in_query=False):
+                     api_key_header="X-API-Key", api_key_in_query=False, 
+                     test_endpoint=None, test_method="GET", verify=True):
         """
         Opens a session with API key authentication.
 
@@ -127,14 +157,20 @@ class Apikey(BaseHttp):
             api_key (str): The API key.
             api_key_header (str): Header name for API key (default: "X-API-Key").
             api_key_in_query (bool): If True, send API key as query parameter instead of header.
+            test_endpoint (str): Optional endpoint to test the connection (e.g., "/api/health").
+            test_method (str): HTTP method for connection test (default: "GET").
+            verify (bool): Whether to verify SSL certificates during test (default: True).
 
         Returns:
             dict: Session configuration.
+            
+        Raises:
+            Exception: If test_endpoint is provided and connection test fails.
         """
         if port is None:
             port = self.default_port
         
-        return {
+        session = {
             "host": host,
             "port": port,
             "api_key": api_key,
@@ -142,6 +178,42 @@ class Apikey(BaseHttp):
             "api_key_in_query": api_key_in_query,
             "use_https": self.use_https
         }
+        
+        # Test connection if test_endpoint is provided
+        if test_endpoint:
+            self._test_connection_with_auth(session, test_endpoint, test_method, verify)
+        
+        return session
+    
+    def _test_connection_with_auth(self, session, test_endpoint, test_method, verify):
+        """
+        Test connection with API key authentication.
+        
+        Args:
+            session (dict): Session configuration.
+            test_endpoint (str): Endpoint to test.
+            test_method (str): HTTP method for test.
+            verify (bool): Whether to verify SSL certificates.
+        
+        Raises:
+            Exception: If connection test fails.
+        """
+        url = self._build_url(session["host"], session["port"], test_endpoint)
+        headers = {}
+        params = {}
+        
+        if session.get("api_key_in_query"):
+            params[session["api_key_header"]] = session["api_key"]
+        else:
+            headers[session["api_key_header"]] = session["api_key"]
+        
+        self._make_request(
+            method=test_method,
+            url=url,
+            headers=headers,
+            params=params,
+            verify=verify
+        )
 
     def execute_command(self, session, command, options=None):
         """
@@ -212,7 +284,8 @@ class Basicauth(BaseHttp):
         """
         super().__init__(port, use_https)
 
-    def open_session(self, host, port=None, login=None, password=None):
+    def open_session(self, host, port=None, login=None, password=None,
+                     test_endpoint=None, test_method="GET", verify=True):
         """
         Opens a session with Basic authentication.
 
@@ -221,20 +294,55 @@ class Basicauth(BaseHttp):
             port (int): Port. If None, uses default_port.
             login (str): Username.
             password (str): Password.
+            test_endpoint (str): Optional endpoint to test the connection (e.g., "/api/health").
+            test_method (str): HTTP method for connection test (default: "GET").
+            verify (bool): Whether to verify SSL certificates during test (default: True).
 
         Returns:
             dict: Session configuration.
+            
+        Raises:
+            Exception: If test_endpoint is provided and connection test fails.
         """
         if port is None:
             port = self.default_port
         
-        return {
+        session = {
             "host": host,
             "port": port,
             "login": login,
             "password": password,
             "use_https": self.use_https
         }
+        
+        # Test connection if test_endpoint is provided
+        if test_endpoint:
+            self._test_connection_with_auth(session, test_endpoint, test_method, verify)
+        
+        return session
+    
+    def _test_connection_with_auth(self, session, test_endpoint, test_method, verify):
+        """
+        Test connection with Basic authentication.
+        
+        Args:
+            session (dict): Session configuration.
+            test_endpoint (str): Endpoint to test.
+            test_method (str): HTTP method for test.
+            verify (bool): Whether to verify SSL certificates.
+        
+        Raises:
+            Exception: If connection test fails.
+        """
+        url = self._build_url(session["host"], session["port"], test_endpoint)
+        auth = HTTPBasicAuth(session["login"], session["password"])
+        
+        self._make_request(
+            method=test_method,
+            url=url,
+            auth=auth,
+            verify=verify
+        )
 
     def execute_command(self, session, command, options=None):
         """
@@ -305,7 +413,8 @@ class Oauth1(BaseHttp):
 
     def open_session(self, host, port=None, login=None, password=None, 
                      client_key=None, client_secret=None, 
-                     resource_owner_key=None, resource_owner_secret=None):
+                     resource_owner_key=None, resource_owner_secret=None,
+                     test_endpoint=None, test_method="GET", verify=True):
         """
         Opens a session with OAuth 1.0 authentication.
 
@@ -318,14 +427,20 @@ class Oauth1(BaseHttp):
             client_secret (str): OAuth consumer secret.
             resource_owner_key (str): OAuth token.
             resource_owner_secret (str): OAuth token secret.
+            test_endpoint (str): Optional endpoint to test the connection (e.g., "/api/health").
+            test_method (str): HTTP method for connection test (default: "GET").
+            verify (bool): Whether to verify SSL certificates during test (default: True).
 
         Returns:
             dict: Session configuration.
+            
+        Raises:
+            Exception: If test_endpoint is provided and connection test fails.
         """
         if port is None:
             port = self.default_port
         
-        return {
+        session = {
             "host": host,
             "port": port,
             "client_key": client_key,
@@ -334,6 +449,40 @@ class Oauth1(BaseHttp):
             "resource_owner_secret": resource_owner_secret,
             "use_https": self.use_https
         }
+        
+        # Test connection if test_endpoint is provided
+        if test_endpoint:
+            self._test_connection_with_auth(session, test_endpoint, test_method, verify)
+        
+        return session
+    
+    def _test_connection_with_auth(self, session, test_endpoint, test_method, verify):
+        """
+        Test connection with OAuth 1.0 authentication.
+        
+        Args:
+            session (dict): Session configuration.
+            test_endpoint (str): Endpoint to test.
+            test_method (str): HTTP method for test.
+            verify (bool): Whether to verify SSL certificates.
+        
+        Raises:
+            Exception: If connection test fails.
+        """
+        url = self._build_url(session["host"], session["port"], test_endpoint)
+        auth = OAuth1(
+            session["client_key"],
+            session["client_secret"],
+            session["resource_owner_key"],
+            session["resource_owner_secret"]
+        )
+        
+        self._make_request(
+            method=test_method,
+            url=url,
+            auth=auth,
+            verify=verify
+        )
 
     def execute_command(self, session, command, options=None):
         """
@@ -409,7 +558,8 @@ class Oauth2(BaseHttp):
 
     def open_session(self, host, port=None, login=None, password=None,
                      client_id=None, client_secret=None, token_url=None,
-                     access_token=None, refresh_token=None):
+                     access_token=None, refresh_token=None,
+                     test_endpoint=None, test_method="GET", verify=True):
         """
         Opens a session with OAuth 2.0 authentication.
 
@@ -423,9 +573,15 @@ class Oauth2(BaseHttp):
             token_url (str): URL to obtain tokens.
             access_token (str): Existing access token (optional).
             refresh_token (str): Refresh token (optional).
+            test_endpoint (str): Optional endpoint to test the connection (e.g., "/api/health").
+            test_method (str): HTTP method for connection test (default: "GET").
+            verify (bool): Whether to verify SSL certificates during test (default: True).
 
         Returns:
             dict: Session configuration.
+            
+        Raises:
+            Exception: If test_endpoint is provided and connection test fails.
         """
         if port is None:
             port = self.default_port
@@ -455,7 +611,34 @@ class Oauth2(BaseHttp):
             except Exception as e:
                 raise Exception(f"Failed to obtain OAuth 2.0 token: {str(e)}")
         
+        # Test connection if test_endpoint is provided
+        if test_endpoint:
+            self._test_connection_with_auth(session_data, test_endpoint, test_method, verify)
+        
         return session_data
+    
+    def _test_connection_with_auth(self, session, test_endpoint, test_method, verify):
+        """
+        Test connection with OAuth 2.0 authentication.
+        
+        Args:
+            session (dict): Session configuration.
+            test_endpoint (str): Endpoint to test.
+            test_method (str): HTTP method for test.
+            verify (bool): Whether to verify SSL certificates.
+        
+        Raises:
+            Exception: If connection test fails.
+        """
+        url = self._build_url(session["host"], session["port"], test_endpoint)
+        headers = {"Authorization": f"Bearer {session['access_token']}"}
+        
+        self._make_request(
+            method=test_method,
+            url=url,
+            headers=headers,
+            verify=verify
+        )
 
     def execute_command(self, session, command, options=None):
         """
@@ -526,7 +709,8 @@ class Jwt(BaseHttp):
 
     def open_session(self, host, port=None, login=None, password=None,
                      secret_key=None, algorithm="HS256", token=None,
-                     payload=None, expiration_minutes=60):
+                     payload=None, expiration_minutes=60,
+                     test_endpoint=None, test_method="GET", verify=True):
         """
         Opens a session with JWT authentication.
 
@@ -540,9 +724,15 @@ class Jwt(BaseHttp):
             token (str): Existing JWT token (optional).
             payload (dict): Custom JWT payload (optional).
             expiration_minutes (int): Token expiration time in minutes (default: 60).
+            test_endpoint (str): Optional endpoint to test the connection (e.g., "/api/health").
+            test_method (str): HTTP method for connection test (default: "GET").
+            verify (bool): Whether to verify SSL certificates during test (default: True).
 
         Returns:
             dict: Session configuration.
+            
+        Raises:
+            Exception: If test_endpoint is provided and connection test fails.
         """
         if port is None:
             port = self.default_port
@@ -561,7 +751,7 @@ class Jwt(BaseHttp):
             
             token = jwt_lib.encode(payload, secret_key, algorithm=algorithm)
         
-        return {
+        session = {
             "host": host,
             "port": port,
             "token": token,
@@ -569,6 +759,35 @@ class Jwt(BaseHttp):
             "algorithm": algorithm,
             "use_https": self.use_https
         }
+        
+        # Test connection if test_endpoint is provided
+        if test_endpoint:
+            self._test_connection_with_auth(session, test_endpoint, test_method, verify)
+        
+        return session
+    
+    def _test_connection_with_auth(self, session, test_endpoint, test_method, verify):
+        """
+        Test connection with JWT authentication.
+        
+        Args:
+            session (dict): Session configuration.
+            test_endpoint (str): Endpoint to test.
+            test_method (str): HTTP method for test.
+            verify (bool): Whether to verify SSL certificates.
+        
+        Raises:
+            Exception: If connection test fails.
+        """
+        url = self._build_url(session["host"], session["port"], test_endpoint)
+        headers = {"Authorization": f"Bearer {session['token']}"}
+        
+        self._make_request(
+            method=test_method,
+            url=url,
+            headers=headers,
+            verify=verify
+        )
 
     def execute_command(self, session, command, options=None):
         """
@@ -634,7 +853,8 @@ class Saml(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None,
-                     saml_token=None, saml_header="X-SAML-Token"):
+                     saml_token=None, saml_header="X-SAML-Token",
+                     test_endpoint=None, test_method="GET", verify=True):
         """
         Opens a session with SAML authentication.
 
@@ -645,20 +865,55 @@ class Saml(BaseHttp):
             password (str): Not used (for compatibility).
             saml_token (str): SAML assertion/token.
             saml_header (str): Header name for SAML token (default: X-SAML-Token).
+            test_endpoint (str): Optional endpoint to test the connection (e.g., "/api/health").
+            test_method (str): HTTP method for connection test (default: "GET").
+            verify (bool): Whether to verify SSL certificates during test (default: True).
 
         Returns:
             dict: Session configuration.
+            
+        Raises:
+            Exception: If test_endpoint is provided and connection test fails.
         """
         if port is None:
             port = self.default_port
         
-        return {
+        session = {
             "host": host,
             "port": port,
             "saml_token": saml_token,
             "saml_header": saml_header,
             "use_https": self.use_https
         }
+        
+        # Test connection if test_endpoint is provided
+        if test_endpoint:
+            self._test_connection_with_auth(session, test_endpoint, test_method, verify)
+        
+        return session
+    
+    def _test_connection_with_auth(self, session, test_endpoint, test_method, verify):
+        """
+        Test connection with SAML authentication.
+        
+        Args:
+            session (dict): Session configuration.
+            test_endpoint (str): Endpoint to test.
+            test_method (str): HTTP method for test.
+            verify (bool): Whether to verify SSL certificates.
+        
+        Raises:
+            Exception: If connection test fails.
+        """
+        url = self._build_url(session["host"], session["port"], test_endpoint)
+        headers = {session["saml_header"]: session["saml_token"]}
+        
+        self._make_request(
+            method=test_method,
+            url=url,
+            headers=headers,
+            verify=verify
+        )
 
     def execute_command(self, session, command, options=None):
         """
@@ -724,7 +979,8 @@ class Hmac(BaseHttp):
     def open_session(self, host, port=None, login=None, password=None,
                      secret_key=None, algorithm="sha256", 
                      signature_header="X-Signature", 
-                     timestamp_header="X-Timestamp"):
+                     timestamp_header="X-Timestamp",
+                     test_endpoint=None, test_method="GET", verify=True):
         """
         Opens a session with HMAC authentication.
 
@@ -737,14 +993,20 @@ class Hmac(BaseHttp):
             algorithm (str): Hash algorithm (sha256, sha1, sha512, etc.).
             signature_header (str): Header name for signature (default: X-Signature).
             timestamp_header (str): Header name for timestamp (default: X-Timestamp).
+            test_endpoint (str): Optional endpoint to test the connection (e.g., "/api/health").
+            test_method (str): HTTP method for connection test (default: "GET").
+            verify (bool): Whether to verify SSL certificates during test (default: True).
 
         Returns:
             dict: Session configuration.
+            
+        Raises:
+            Exception: If test_endpoint is provided and connection test fails.
         """
         if port is None:
             port = self.default_port
         
-        return {
+        session = {
             "host": host,
             "port": port,
             "access_key": login,
@@ -754,6 +1016,55 @@ class Hmac(BaseHttp):
             "timestamp_header": timestamp_header,
             "use_https": self.use_https
         }
+        
+        # Test connection if test_endpoint is provided
+        if test_endpoint:
+            self._test_connection_with_auth(session, test_endpoint, test_method, verify)
+        
+        return session
+    
+    def _test_connection_with_auth(self, session, test_endpoint, test_method, verify):
+        """
+        Test connection with HMAC authentication.
+        
+        Args:
+            session (dict): Session configuration.
+            test_endpoint (str): Endpoint to test.
+            test_method (str): HTTP method for test.
+            verify (bool): Whether to verify SSL certificates.
+        
+        Raises:
+            Exception: If connection test fails.
+        """
+        url = self._build_url(session["host"], session["port"], test_endpoint)
+        
+        # Generate timestamp
+        timestamp = str(int(datetime.now(timezone.utc).timestamp()))
+        
+        # Generate signature
+        signature = self._generate_signature(
+            session["secret_key"],
+            session["algorithm"],
+            test_method,
+            test_endpoint,
+            timestamp,
+            ""
+        )
+        
+        headers = {
+            session["signature_header"]: signature,
+            session["timestamp_header"]: timestamp
+        }
+        
+        if session.get("access_key"):
+            headers["X-Access-Key"] = session["access_key"]
+        
+        self._make_request(
+            method=test_method,
+            url=url,
+            headers=headers,
+            verify=verify
+        )
 
     def _generate_signature(self, secret_key, algorithm, method, path, timestamp, body=""):
         """
@@ -877,7 +1188,8 @@ class Certificate(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None,
-                     cert_file=None, key_file=None, ca_bundle=None):
+                     cert_file=None, key_file=None, ca_bundle=None,
+                     test_endpoint=None, test_method="GET", verify=True):
         """
         Opens a session with client certificate authentication.
 
@@ -889,14 +1201,20 @@ class Certificate(BaseHttp):
             cert_file (str): Path to client certificate file.
             key_file (str): Path to private key file (optional, can be in cert_file).
             ca_bundle (str): Path to CA bundle for server verification (optional).
+            test_endpoint (str): Optional endpoint to test the connection (e.g., "/api/health").
+            test_method (str): HTTP method for connection test (default: "GET").
+            verify (bool): Whether to verify SSL certificates during test (default: True).
 
         Returns:
             dict: Session configuration.
+            
+        Raises:
+            Exception: If test_endpoint is provided and connection test fails.
         """
         if port is None:
             port = self.default_port
         
-        return {
+        session = {
             "host": host,
             "port": port,
             "cert_file": cert_file,
@@ -905,6 +1223,47 @@ class Certificate(BaseHttp):
             "key_password": password,
             "use_https": self.use_https
         }
+        
+        # Test connection if test_endpoint is provided
+        if test_endpoint:
+            self._test_connection_with_auth(session, test_endpoint, test_method, verify)
+        
+        return session
+    
+    def _test_connection_with_auth(self, session, test_endpoint, test_method, verify):
+        """
+        Test connection with certificate authentication.
+        
+        Args:
+            session (dict): Session configuration.
+            test_endpoint (str): Endpoint to test.
+            test_method (str): HTTP method for test.
+            verify (bool): Whether to verify SSL certificates.
+        
+        Raises:
+            Exception: If connection test fails.
+        """
+        url = self._build_url(session["host"], session["port"], test_endpoint)
+        
+        # Prepare certificate tuple
+        if session.get("key_file"):
+            cert = (session["cert_file"], session["key_file"])
+        else:
+            cert = session["cert_file"]
+        
+        # Use CA bundle if provided
+        verify_param = session.get("ca_bundle") if session.get("ca_bundle") else verify
+        
+        try:
+            response = requests.request(
+                method=test_method.upper(),
+                url=url,
+                cert=cert,
+                verify=verify_param
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Connection test failed: {str(e)}")
 
     def execute_command(self, session, command, options=None):
         """
@@ -986,7 +1345,8 @@ class Openidconnect(BaseHttp):
     def open_session(self, host, port=None, login=None, password=None,
                      client_id=None, client_secret=None, 
                      discovery_url=None, token_endpoint=None,
-                     id_token=None, access_token=None):
+                     id_token=None, access_token=None,
+                     test_endpoint=None, test_method="GET", verify=True):
         """
         Opens a session with OpenID Connect authentication.
 
@@ -1001,9 +1361,15 @@ class Openidconnect(BaseHttp):
             token_endpoint (str): Token endpoint URL (optional).
             id_token (str): Existing ID token (optional).
             access_token (str): Existing access token (optional).
+            test_endpoint (str): Optional endpoint to test the connection (e.g., "/api/health").
+            test_method (str): HTTP method for connection test (default: "GET").
+            verify (bool): Whether to verify SSL certificates during test (default: True).
 
         Returns:
             dict: Session configuration.
+            
+        Raises:
+            Exception: If test_endpoint is provided and connection test fails.
         """
         if port is None:
             port = self.default_port
@@ -1043,7 +1409,40 @@ class Openidconnect(BaseHttp):
             except Exception as e:
                 raise Exception(f"Failed to obtain OpenID Connect tokens: {str(e)}")
         
+        # Test connection if test_endpoint is provided
+        if test_endpoint:
+            self._test_connection_with_auth(session_data, test_endpoint, test_method, verify)
+        
         return session_data
+    
+    def _test_connection_with_auth(self, session, test_endpoint, test_method, verify):
+        """
+        Test connection with OpenID Connect authentication.
+        
+        Args:
+            session (dict): Session configuration.
+            test_endpoint (str): Endpoint to test.
+            test_method (str): HTTP method for test.
+            verify (bool): Whether to verify SSL certificates.
+        
+        Raises:
+            Exception: If connection test fails.
+        """
+        url = self._build_url(session["host"], session["port"], test_endpoint)
+        
+        # Use access_token or id_token (prefer access_token)
+        token = session.get("access_token") or session.get("id_token")
+        if token:
+            headers = {"Authorization": f"Bearer {token}"}
+        else:
+            headers = {}
+        
+        self._make_request(
+            method=test_method,
+            url=url,
+            headers=headers,
+            verify=verify
+        )
 
     def execute_command(self, session, command, options=None):
         """
