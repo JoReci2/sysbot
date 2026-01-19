@@ -61,7 +61,8 @@ class BaseHttp(ConnectorInterface):
         protocol = "https" if self.use_https else "http"
         return f"{protocol}://{host}:{port}{endpoint}"
 
-    def _make_request(self, method, url, auth=None, headers=None, params=None, data=None, json=None, verify=True):
+    def _make_request(self, method, url, auth=None, headers=None, params=None,
+                      data=None, json=None, verify=True, cert=None):
         """
         Make an HTTP request with error handling.
 
@@ -74,6 +75,7 @@ class BaseHttp(ConnectorInterface):
             data: Request body data.
             json: JSON request body.
             verify (bool): Whether to verify SSL certificates (default: True).
+            cert: Client certificate (path or tuple) for mutual TLS (optional).
 
         Returns:
             requests.Response: The response object.
@@ -90,41 +92,13 @@ class BaseHttp(ConnectorInterface):
                 params=params,
                 data=data,
                 json=json,
-                verify=verify
+                verify=verify,
+                cert=cert
             )
             response.raise_for_status()
             return response
         except requests.exceptions.RequestException as e:
             raise Exception(f"HTTP request failed: {str(e)}")
-
-    def test_connection(self, session, test_endpoint="/", test_method="GET", verify=True):
-        """
-        Test the connection by making a request to a test endpoint.
-
-        Args:
-            session (dict): Session configuration containing host, port, and auth details.
-            test_endpoint (str): Endpoint path to test (default: "/").
-            test_method (str): HTTP method to use for testing (default: "GET").
-            verify (bool): Whether to verify SSL certificates (default: True).
-
-        Returns:
-            bool: True if connection test succeeds.
-
-        Raises:
-            Exception: If the connection test fails.
-        """
-        # This method should be overridden by child classes to include auth
-        # but provides a basic structure
-        url = self._build_url(session["host"], session["port"], test_endpoint)
-        try:
-            self._make_request(
-                method=test_method,
-                url=url,
-                verify=verify
-            )
-            return True
-        except Exception as e:
-            raise Exception(f"Connection test failed: {str(e)}")
 
 
 class Apikey(BaseHttp):
@@ -1255,16 +1229,12 @@ class Certificate(BaseHttp):
         # Use CA bundle if provided
         verify_param = session.get("ca_bundle") if session.get("ca_bundle") else verify
 
-        try:
-            response = requests.request(
-                method=test_method.upper(),
-                url=url,
-                cert=cert,
-                verify=verify_param
-            )
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Connection test failed: {str(e)}")
+        self._make_request(
+            method=test_method,
+            url=url,
+            verify=verify_param,
+            cert=cert
+        )
 
     def execute_command(self, session, command, options=None):
         """
@@ -1302,21 +1272,18 @@ class Certificate(BaseHttp):
         else:
             verify = True
 
-        try:
-            response = requests.request(
-                method=method.upper(),
-                url=url,
-                cert=cert,
-                verify=verify,
-                headers=headers,
-                params=params,
-                data=data,
-                json=json_data
-            )
-            response.raise_for_status()
-            return response.content
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"HTTP request with certificate failed: {str(e)}")
+        response = self._make_request(
+            method=method,
+            url=url,
+            cert=cert,
+            verify=verify,
+            headers=headers,
+            params=params,
+            data=data,
+            json=json_data
+        )
+
+        return response.content
 
     def close_session(self, session):
         """
