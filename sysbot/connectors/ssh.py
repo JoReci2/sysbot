@@ -3,10 +3,12 @@ SSH Connector Module
 
 This module provides SSH (Secure Shell) connectors for remote system access.
 It supports both Bash and PowerShell execution over SSH using the paramiko
-library for establishing and managing secure connections.
+library for establishing and managing secure connections, as well as network
+device connections using the netmiko library for non-standard SSH interfaces.
 """
 import paramiko
 import base64
+from netmiko import ConnectHandler
 from sysbot.utils.engine import ConnectorInterface
 
 
@@ -232,3 +234,104 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
             session.close()
         except Exception as e:
             raise Exception(f"Failed to close SSH session: {str(e)}")
+
+
+class Network(ConnectorInterface):
+    """
+    This class provides methods for interacting with network devices using SSH.
+    It uses the netmiko library to establish and manage SSH connections to
+    network equipment such as Cisco switches, routers, and other network devices.
+    
+    This connector is designed for devices with non-standard SSH interfaces that
+    don't provide a traditional shell environment (bash/powershell).
+    """
+
+    def __init__(self, port=22, device_type="cisco_ios"):
+        """
+        Initialize SSH Network connector with default port and device type.
+
+        Args:
+            port (int): Default SSH port (default: 22).
+            device_type (str): Device type for netmiko (default: "cisco_ios").
+                Common types: cisco_ios, cisco_nxos, cisco_asa, arista_eos,
+                juniper_junos, hp_comware, etc.
+        """
+        super().__init__()
+        self.default_port = port
+        self.default_device_type = device_type
+
+    def open_session(self, host, port=None, login=None, password=None, device_type=None, **kwargs):
+        """
+        Opens an SSH session to a network device.
+
+        Args:
+            host (str): Hostname or IP address of the target device.
+            port (int): Port of the SSH service. If None, uses default_port.
+            login (str): Username for the session.
+            password (str): Password for the session.
+            device_type (str): Device type for netmiko. If None, uses default_device_type.
+            **kwargs: Additional netmiko connection parameters (e.g., secret, timeout).
+
+        Returns:
+            netmiko.ConnectHandler: An authenticated SSH connection to the network device.
+
+        Raises:
+            Exception: If there is an error opening the session.
+        """
+        if port is None:
+            port = self.default_port
+        if device_type is None:
+            device_type = self.default_device_type
+        
+        try:
+            device = {
+                'device_type': device_type,
+                'host': host,
+                'port': port,
+                'username': login,
+                'password': password,
+            }
+            
+            # Merge any additional kwargs (like secret, timeout, etc.)
+            device.update(kwargs)
+            
+            connection = ConnectHandler(**device)
+            return connection
+        except Exception as e:
+            raise Exception(f"Failed to open SSH network session: {str(e)}")
+
+    def execute_command(self, session, command, **kwargs):
+        """
+        Executes a command on a network device via SSH.
+
+        Args:
+            session: The netmiko connection object
+            command (str): The command to execute
+            **kwargs: Additional netmiko command options (e.g., expect_string, delay_factor)
+
+        Returns:
+            str: The output of the command execution
+
+        Raises:
+            Exception: If there is an error executing the command
+        """
+        try:
+            output = session.send_command(command, **kwargs)
+            return output
+        except Exception as e:
+            raise Exception(f"Failed to execute command: {str(e)}")
+
+    def close_session(self, session):
+        """
+        Closes an open SSH session to a network device.
+
+        Args:
+            session: The netmiko connection object to close.
+
+        Raises:
+            Exception: If there is an error closing the session.
+        """
+        try:
+            session.disconnect()
+        except Exception as e:
+            raise Exception(f"Failed to close SSH network session: {str(e)}")
