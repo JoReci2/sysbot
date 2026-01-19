@@ -260,7 +260,7 @@ class Network(ConnectorInterface):
         self.default_port = port
         self.default_device_type = device_type
 
-    def open_session(self, host, port=None, login=None, password=None, device_type=None, **kwargs):
+    def open_session(self, host, port=None, login=None, password=None, **kwargs):
         """
         Opens an SSH session to a network device.
 
@@ -269,8 +269,13 @@ class Network(ConnectorInterface):
             port (int): Port of the SSH service. If None, uses default_port.
             login (str): Username for the session.
             password (str): Password for the session.
-            device_type (str): Device type for netmiko. If None, uses default_device_type.
-            **kwargs: Additional netmiko connection parameters (e.g., secret, timeout).
+            **kwargs: Additional netmiko connection parameters:
+                - device_type (str): Device type for netmiko. If not provided, uses default_device_type.
+                - secret (str): Enable password for privileged mode.
+                - timeout (int): Connection timeout in seconds.
+                - session_timeout (int): Session timeout in seconds.
+                - auth_timeout (int): Authentication timeout in seconds.
+                - banner_timeout (int): Banner timeout in seconds.
 
         Returns:
             netmiko.ConnectHandler: An authenticated SSH connection to the network device.
@@ -280,15 +285,18 @@ class Network(ConnectorInterface):
         """
         if port is None:
             port = self.default_port
-        if device_type is None:
-            device_type = self.default_device_type
+        
+        # Extract device_type from kwargs or use default
+        device_type = kwargs.pop('device_type', self.default_device_type)
         
         try:
+            # Build netmiko connection parameters
+            # Note: netmiko uses 'username' while the interface uses 'login'
             device = {
                 'device_type': device_type,
                 'host': host,
                 'port': port,
-                'username': login,
+                'username': login,  # Map 'login' to netmiko's 'username'
                 'password': password,
             }
             
