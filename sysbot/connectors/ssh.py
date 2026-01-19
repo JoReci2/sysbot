@@ -314,10 +314,16 @@ class Hardware(ConnectorInterface):
                 device['device_type'] = 'autodetect'
                 guesser = SSHDetect(**device)
                 best_match = guesser.autodetect()
-                guesser.connection.disconnect()
+                
+                # Safely disconnect if connection was established
+                if hasattr(guesser, 'connection') and guesser.connection:
+                    guesser.connection.disconnect()
                 
                 if best_match is None:
-                    raise Exception("Failed to autodetect device type")
+                    raise Exception(
+                        f"Failed to autodetect device type for host {host}. "
+                        f"Please specify device_type explicitly (e.g., device_type='cisco_ios')"
+                    )
                 
                 device_type = best_match
             
