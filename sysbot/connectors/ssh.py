@@ -3,12 +3,13 @@ SSH Connector Module
 
 This module provides SSH (Secure Shell) connectors for remote system access.
 It supports both Bash and PowerShell execution over SSH using the paramiko
-library for establishing and managing secure connections, as well as network
-device connections using the netmiko library for non-standard SSH interfaces.
+library for establishing and managing secure connections, as well as hardware
+network device connections using the netmiko library for non-standard SSH interfaces.
 """
 import paramiko
 import base64
 from netmiko import ConnectHandler
+from netmiko.ssh_autodetect import SSHDetect
 from sysbot.utils.engine import ConnectorInterface
 
 
@@ -236,25 +237,29 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
             raise Exception(f"Failed to close SSH session: {str(e)}")
 
 
-class Network(ConnectorInterface):
+class Hardware(ConnectorInterface):
     """
-    This class provides methods for interacting with network devices using SSH.
+    This class provides methods for interacting with hardware network devices using SSH.
     It uses the netmiko library to establish and manage SSH connections to
     network equipment such as Cisco switches, routers, and other network devices.
     
     This connector is designed for devices with non-standard SSH interfaces that
     don't provide a traditional shell environment (bash/powershell).
+    
+    The device type is automatically detected using netmiko's SSHDetect unless
+    explicitly specified.
     """
 
-    def __init__(self, port=22, device_type="cisco_ios"):
+    def __init__(self, port=22, device_type="autodetect"):
         """
-        Initialize SSH Network connector with default port and device type.
+        Initialize SSH Hardware connector with default port and device type.
 
         Args:
             port (int): Default SSH port (default: 22).
-            device_type (str): Device type for netmiko (default: "cisco_ios").
-                Common types: cisco_ios, cisco_nxos, cisco_asa, arista_eos,
-                juniper_junos, hp_comware, etc.
+            device_type (str): Device type for netmiko (default: "autodetect").
+                When set to "autodetect", the connector will automatically detect
+                the device type. Can be explicitly set to: cisco_ios, cisco_nxos, 
+                cisco_asa, arista_eos, juniper_junos, hp_comware, etc.
         """
         super().__init__()
         self.default_port = port
@@ -271,6 +276,7 @@ class Network(ConnectorInterface):
             password (str): Password for the session.
             **kwargs: Additional netmiko connection parameters:
                 - device_type (str): Device type for netmiko. If not provided, uses default_device_type.
+                  Set to "autodetect" to automatically detect the device type.
                 - secret (str): Enable password for privileged mode.
                 - timeout (int): Connection timeout in seconds.
                 - session_timeout (int): Session timeout in seconds.
@@ -293,7 +299,6 @@ class Network(ConnectorInterface):
             # Build netmiko connection parameters
             # Note: netmiko uses 'username' while the interface uses 'login'
             device = {
-                'device_type': device_type,
                 'host': host,
                 'port': port,
                 'username': login,  # Map 'login' to netmiko's 'username'
@@ -303,10 +308,26 @@ class Network(ConnectorInterface):
             # Merge any additional kwargs (like secret, timeout, etc.)
             device.update(kwargs)
             
+            # Auto-detect device type if requested
+            if device_type == "autodetect":
+                # Use SSHDetect to determine the device type
+                device['device_type'] = 'autodetect'
+                guesser = SSHDetect(**device)
+                best_match = guesser.autodetect()
+                guesser.connection.disconnect()
+                
+                if best_match is None:
+                    raise Exception("Failed to autodetect device type")
+                
+                device_type = best_match
+            
+            # Set the device type
+            device['device_type'] = device_type
+            
             connection = ConnectHandler(**device)
             return connection
         except Exception as e:
-            raise Exception(f"Failed to open SSH network session: {str(e)}")
+            raise Exception(f"Failed to open SSH hardware session: {str(e)}")
 
     def execute_command(self, session, command, **kwargs):
         """
@@ -342,4 +363,4 @@ class Network(ConnectorInterface):
         try:
             session.disconnect()
         except Exception as e:
-            raise Exception(f"Failed to close SSH network session: {str(e)}")
+            raise Exception(f"Failed to close SSH hardware session: {str(e)}")
