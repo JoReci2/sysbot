@@ -61,7 +61,7 @@ class BaseHttp(ConnectorInterface):
         """
         endpoint_test = session.get("endpoint_test")
         if not endpoint_test:
-            raise Exception("endpoint_test is not configured in the session")
+            raise Exception("endpoint_test parameter is required for connection testing but not configured in the session")
         
         try:
             # Use execute_command to test the connection
@@ -69,7 +69,7 @@ class BaseHttp(ConnectorInterface):
             self.execute_command(session, endpoint_test, {"method": "GET"})
             return True
         except Exception as e:
-            raise Exception(f"Connection test failed: {str(e)}")
+            raise Exception(f"Connection test failed for endpoint {endpoint_test}: {str(e)}")
 
     def _build_url(self, host, port, endpoint):
         """
@@ -490,18 +490,25 @@ class Oauth2(BaseHttp):
         }
         
         # If access_token is not provided, try to get one
-        if not access_token and auth_url and client_id and client_secret:
-            try:
-                oauth = OAuth2Session(client_id)
-                token = oauth.fetch_token(
-                    token_url=auth_url,
-                    client_id=client_id,
-                    client_secret=client_secret
+        if not access_token:
+            if auth_url and client_id and client_secret:
+                try:
+                    oauth = OAuth2Session(client_id)
+                    token = oauth.fetch_token(
+                        token_url=auth_url,
+                        client_id=client_id,
+                        client_secret=client_secret
+                    )
+                    session_data["access_token"] = token.get("access_token")
+                    session_data["refresh_token"] = token.get("refresh_token")
+                except Exception as e:
+                    raise Exception(f"Failed to obtain OAuth 2.0 token: {str(e)}")
+            elif client_id and client_secret:
+                # Client credentials provided but no auth endpoint
+                raise Exception(
+                    "OAuth 2.0 requires either an access_token or an authentication endpoint "
+                    "(endpoint_auth or token_url) with client credentials to obtain a token"
                 )
-                session_data["access_token"] = token.get("access_token")
-                session_data["refresh_token"] = token.get("refresh_token")
-            except Exception as e:
-                raise Exception(f"Failed to obtain OAuth 2.0 token: {str(e)}")
         
         return session_data
 
@@ -1097,27 +1104,34 @@ class Openidconnect(BaseHttp):
         }
         
         # If tokens not provided, try to get them
-        if not access_token and auth_url and client_id and client_secret:
-            try:
-                token_data = {
-                    "grant_type": "client_credentials",
-                    "client_id": client_id,
-                    "client_secret": client_secret
-                }
-                
-                if login and password:
-                    token_data["grant_type"] = "password"
-                    token_data["username"] = login
-                    token_data["password"] = password
-                
-                response = requests.post(auth_url, data=token_data)
-                response.raise_for_status()
-                tokens = response.json()
-                
-                session_data["access_token"] = tokens.get("access_token")
-                session_data["id_token"] = tokens.get("id_token")
-            except Exception as e:
-                raise Exception(f"Failed to obtain OpenID Connect tokens: {str(e)}")
+        if not access_token:
+            if auth_url and client_id and client_secret:
+                try:
+                    token_data = {
+                        "grant_type": "client_credentials",
+                        "client_id": client_id,
+                        "client_secret": client_secret
+                    }
+                    
+                    if login and password:
+                        token_data["grant_type"] = "password"
+                        token_data["username"] = login
+                        token_data["password"] = password
+                    
+                    response = requests.post(auth_url, data=token_data)
+                    response.raise_for_status()
+                    tokens = response.json()
+                    
+                    session_data["access_token"] = tokens.get("access_token")
+                    session_data["id_token"] = tokens.get("id_token")
+                except Exception as e:
+                    raise Exception(f"Failed to obtain OpenID Connect tokens: {str(e)}")
+            elif client_id and client_secret:
+                # Client credentials provided but no auth endpoint
+                raise Exception(
+                    "OpenID Connect requires either an access_token/id_token or an authentication endpoint "
+                    "(endpoint_auth or token_endpoint) with client credentials to obtain tokens"
+                )
         
         return session_data
 
