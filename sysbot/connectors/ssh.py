@@ -239,6 +239,8 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
 
 class Hardware(ConnectorInterface):
     """
+    Hardware SSH Connector for Network Devices
+    
     This class provides methods for interacting with hardware network devices using SSH.
     It uses the netmiko library to establish and manage SSH connections to
     network equipment such as Cisco switches, routers, and other network devices.
@@ -246,8 +248,104 @@ class Hardware(ConnectorInterface):
     This connector is designed for devices with non-standard SSH interfaces that
     don't provide a traditional shell environment (bash/powershell).
     
-    The device type is automatically detected using netmiko's SSHDetect unless
-    explicitly specified.
+    Features:
+        - Automatic device type detection using netmiko's SSHDetect
+        - Support for 100+ device types (Cisco, Arista, Juniper, HP, Dell, Palo Alto, etc.)
+        - Direct CLI command execution without shell wrapping
+        - Enable mode support for privileged commands
+        - Configurable timeouts and connection parameters
+    
+    Supported Device Types:
+        - Cisco: cisco_ios, cisco_nxos, cisco_asa, cisco_xe, cisco_xr
+        - Arista: arista_eos
+        - Juniper: juniper_junos
+        - HP: hp_comware, hp_procurve
+        - Dell: dell_force10, dell_os10
+        - Palo Alto: paloalto_panos
+        - And many more (see netmiko documentation)
+    
+    Usage Examples:
+        Basic usage with automatic device detection:
+        
+        >>> from sysbot.Sysbot import Sysbot
+        >>> bot = Sysbot()
+        >>> bot.open_session(
+        ...     alias='my_switch',
+        ...     protocol='ssh',
+        ...     product='hardware',
+        ...     host='192.168.1.1',
+        ...     port=22,
+        ...     login='admin',
+        ...     password='password'
+        ... )
+        >>> output = bot.execute_command('my_switch', 'show version')
+        >>> print(output)
+        >>> bot.close_all_sessions()
+        
+        With explicit device type (skips autodetection):
+        
+        >>> bot.open_session(
+        ...     alias='my_switch',
+        ...     protocol='ssh',
+        ...     product='hardware',
+        ...     host='192.168.1.1',
+        ...     port=22,
+        ...     login='admin',
+        ...     password='password',
+        ...     device_type='cisco_nxos'
+        ... )
+        
+        With enable mode for privileged commands:
+        
+        >>> bot.open_session(
+        ...     alias='my_switch',
+        ...     protocol='ssh',
+        ...     product='hardware',
+        ...     host='192.168.1.1',
+        ...     port=22,
+        ...     login='admin',
+        ...     password='password',
+        ...     secret='enable_password',
+        ...     device_type='cisco_ios'
+        ... )
+        
+        With custom timeouts:
+        
+        >>> bot.open_session(
+        ...     alias='my_switch',
+        ...     protocol='ssh',
+        ...     product='hardware',
+        ...     host='192.168.1.1',
+        ...     port=22,
+        ...     login='admin',
+        ...     password='password',
+        ...     timeout=60,
+        ...     session_timeout=60
+        ... )
+        
+        Robot Framework example:
+        
+        >>> # Automatic detection
+        >>> Open Session    my_switch    ssh    hardware    192.168.1.1    22    admin    password
+        >>> ${output}=    Execute Command    my_switch    show version
+        >>> Log    ${output}
+        >>> Close All Sessions
+        
+        Robot Framework with explicit device type:
+        
+        >>> Open Session    my_switch    ssh    hardware    192.168.1.1    22    admin    password    device_type=cisco_ios
+        >>> ${output}=    Execute Command    my_switch    show running-config
+        >>> Close Session    my_switch
+    
+    Notes:
+        - Autodetection adds a small overhead on first connection (creates temporary connection to detect type)
+        - For production environments with known device types, consider specifying device_type explicitly
+        - The connector automatically handles device-specific command formatting and output parsing
+        - Some devices may require the 'secret' parameter for enable/privileged mode access
+    
+    See Also:
+        - netmiko documentation: https://github.com/ktbyers/netmiko
+        - Supported platforms: https://github.com/ktbyers/netmiko/blob/develop/PLATFORMS.md
     """
 
     def __init__(self, port=22, device_type="autodetect"):
@@ -260,6 +358,19 @@ class Hardware(ConnectorInterface):
                 When set to "autodetect", the connector will automatically detect
                 the device type. Can be explicitly set to: cisco_ios, cisco_nxos, 
                 cisco_asa, arista_eos, juniper_junos, hp_comware, etc.
+        
+        Examples:
+            >>> # Default initialization with autodetect
+            >>> connector = Hardware()
+            
+            >>> # Custom port
+            >>> connector = Hardware(port=2222)
+            
+            >>> # Explicit device type (skips autodetection)
+            >>> connector = Hardware(device_type='cisco_nxos')
+            
+            >>> # Custom port with explicit device type
+            >>> connector = Hardware(port=2222, device_type='arista_eos')
         """
         super().__init__()
         self.default_port = port
@@ -287,7 +398,52 @@ class Hardware(ConnectorInterface):
             netmiko.ConnectHandler: An authenticated SSH connection to the network device.
 
         Raises:
-            Exception: If there is an error opening the session.
+            Exception: If there is an error opening the session or autodetection fails.
+        
+        Examples:
+            >>> # Automatic device detection (default)
+            >>> session = connector.open_session(
+            ...     host='192.168.1.1',
+            ...     port=22,
+            ...     login='admin',
+            ...     password='password'
+            ... )
+            
+            >>> # Explicit device type
+            >>> session = connector.open_session(
+            ...     host='192.168.1.1',
+            ...     port=22,
+            ...     login='admin',
+            ...     password='password',
+            ...     device_type='cisco_ios'
+            ... )
+            
+            >>> # With enable password for privileged mode
+            >>> session = connector.open_session(
+            ...     host='192.168.1.1',
+            ...     port=22,
+            ...     login='admin',
+            ...     password='password',
+            ...     secret='enable_password',
+            ...     device_type='cisco_ios'
+            ... )
+            
+            >>> # With custom timeouts
+            >>> session = connector.open_session(
+            ...     host='192.168.1.1',
+            ...     port=22,
+            ...     login='admin',
+            ...     password='password',
+            ...     timeout=120,
+            ...     session_timeout=120
+            ... )
+        
+        Notes:
+            - When device_type is "autodetect", a temporary connection is created
+              to detect the device type, then disconnected before establishing the
+              final connection.
+            - Autodetection may add 5-10 seconds to connection time.
+            - If autodetection fails, specify device_type explicitly.
         """
         if port is None:
             port = self.default_port
@@ -340,15 +496,50 @@ class Hardware(ConnectorInterface):
         Executes a command on a network device via SSH.
 
         Args:
-            session: The netmiko connection object
-            command (str): The command to execute
-            **kwargs: Additional netmiko command options (e.g., expect_string, delay_factor)
+            session: The netmiko connection object returned by open_session.
+            command (str): The command to execute on the device.
+            **kwargs: Additional netmiko command options:
+                - expect_string (str): Regular expression pattern to expect in output.
+                - delay_factor (int): Multiplier for internal delays (default: 1).
+                - max_loops (int): Maximum number of read loops (default: 500).
+                - strip_prompt (bool): Remove trailing prompt from output (default: True).
+                - strip_command (bool): Remove echoed command from output (default: True).
 
         Returns:
-            str: The output of the command execution
+            str: The output of the command execution.
 
         Raises:
-            Exception: If there is an error executing the command
+            Exception: If there is an error executing the command.
+        
+        Examples:
+            >>> # Simple command execution
+            >>> output = connector.execute_command(session, 'show version')
+            >>> print(output)
+            
+            >>> # Command with delay factor for slow devices
+            >>> output = connector.execute_command(
+            ...     session,
+            ...     'show tech-support',
+            ...     delay_factor=2
+            ... )
+            
+            >>> # Command with custom expect string
+            >>> output = connector.execute_command(
+            ...     session,
+            ...     'show running-config',
+            ...     expect_string=r'#'
+            ... )
+            
+            >>> # Multiple commands
+            >>> version = connector.execute_command(session, 'show version')
+            >>> interfaces = connector.execute_command(session, 'show ip interface brief')
+            >>> vlans = connector.execute_command(session, 'show vlan')
+        
+        Notes:
+            - Commands are sent directly to the device CLI without shell wrapping.
+            - The device's command prompt is automatically stripped from output.
+            - For configuration commands, consider using netmiko's send_config_set method
+              through the session object directly.
         """
         try:
             output = session.send_command(command, **kwargs)
@@ -365,6 +556,30 @@ class Hardware(ConnectorInterface):
 
         Raises:
             Exception: If there is an error closing the session.
+        
+        Examples:
+            >>> # Close a single session
+            >>> connector.close_session(session)
+            
+            >>> # Using with context (recommended pattern)
+            >>> session = None
+            >>> try:
+            ...     session = connector.open_session(
+            ...         host='192.168.1.1',
+            ...         port=22,
+            ...         login='admin',
+            ...         password='password'
+            ...     )
+            ...     output = connector.execute_command(session, 'show version')
+            ...     print(output)
+            ... finally:
+            ...     if session:
+            ...         connector.close_session(session)
+        
+        Notes:
+            - Always close sessions when done to free resources.
+            - The connection is gracefully disconnected.
+            - Calling close on an already closed session may raise an exception.
         """
         try:
             session.disconnect()
