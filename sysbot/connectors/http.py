@@ -46,6 +46,31 @@ class BaseHttp(ConnectorInterface):
         self.default_port = port
         self.use_https = use_https
 
+    def test_connection(self, session):
+        """
+        Test the connection using the endpoint_test if provided.
+
+        Args:
+            session (dict): Session configuration containing endpoint_test.
+
+        Returns:
+            bool: True if connection test succeeds.
+
+        Raises:
+            Exception: If endpoint_test is not configured or connection fails.
+        """
+        endpoint_test = session.get("endpoint_test")
+        if not endpoint_test:
+            raise Exception("endpoint_test is not configured in the session")
+        
+        try:
+            # Use execute_command to test the connection
+            # This will use the authentication method configured for this session
+            self.execute_command(session, endpoint_test, {"method": "GET"})
+            return True
+        except Exception as e:
+            raise Exception(f"Connection test failed: {str(e)}")
+
     def _build_url(self, host, port, endpoint):
         """
         Build the full URL for the request.
@@ -115,7 +140,8 @@ class Apikey(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None, api_key=None, 
-                     api_key_header="X-API-Key", api_key_in_query=False):
+                     api_key_header="X-API-Key", api_key_in_query=False,
+                     endpoint_auth=None, endpoint_test=None):
         """
         Opens a session with API key authentication.
 
@@ -127,6 +153,8 @@ class Apikey(BaseHttp):
             api_key (str): The API key.
             api_key_header (str): Header name for API key (default: "X-API-Key").
             api_key_in_query (bool): If True, send API key as query parameter instead of header.
+            endpoint_auth (str): Authentication endpoint (optional, for compatibility).
+            endpoint_test (str): Endpoint to test connection (optional).
 
         Returns:
             dict: Session configuration.
@@ -140,6 +168,8 @@ class Apikey(BaseHttp):
             "api_key": api_key,
             "api_key_header": api_key_header,
             "api_key_in_query": api_key_in_query,
+            "endpoint_auth": endpoint_auth,
+            "endpoint_test": endpoint_test,
             "use_https": self.use_https
         }
 
@@ -212,7 +242,8 @@ class Basicauth(BaseHttp):
         """
         super().__init__(port, use_https)
 
-    def open_session(self, host, port=None, login=None, password=None):
+    def open_session(self, host, port=None, login=None, password=None,
+                     endpoint_auth=None, endpoint_test=None):
         """
         Opens a session with Basic authentication.
 
@@ -221,6 +252,8 @@ class Basicauth(BaseHttp):
             port (int): Port. If None, uses default_port.
             login (str): Username.
             password (str): Password.
+            endpoint_auth (str): Authentication endpoint (optional, for compatibility).
+            endpoint_test (str): Endpoint to test connection (optional).
 
         Returns:
             dict: Session configuration.
@@ -233,6 +266,8 @@ class Basicauth(BaseHttp):
             "port": port,
             "login": login,
             "password": password,
+            "endpoint_auth": endpoint_auth,
+            "endpoint_test": endpoint_test,
             "use_https": self.use_https
         }
 
@@ -305,7 +340,8 @@ class Oauth1(BaseHttp):
 
     def open_session(self, host, port=None, login=None, password=None, 
                      client_key=None, client_secret=None, 
-                     resource_owner_key=None, resource_owner_secret=None):
+                     resource_owner_key=None, resource_owner_secret=None,
+                     endpoint_auth=None, endpoint_test=None):
         """
         Opens a session with OAuth 1.0 authentication.
 
@@ -318,6 +354,8 @@ class Oauth1(BaseHttp):
             client_secret (str): OAuth consumer secret.
             resource_owner_key (str): OAuth token.
             resource_owner_secret (str): OAuth token secret.
+            endpoint_auth (str): Authentication endpoint (optional, for token exchange).
+            endpoint_test (str): Endpoint to test connection (optional).
 
         Returns:
             dict: Session configuration.
@@ -332,6 +370,8 @@ class Oauth1(BaseHttp):
             "client_secret": client_secret,
             "resource_owner_key": resource_owner_key,
             "resource_owner_secret": resource_owner_secret,
+            "endpoint_auth": endpoint_auth,
+            "endpoint_test": endpoint_test,
             "use_https": self.use_https
         }
 
@@ -409,7 +449,8 @@ class Oauth2(BaseHttp):
 
     def open_session(self, host, port=None, login=None, password=None,
                      client_id=None, client_secret=None, token_url=None,
-                     access_token=None, refresh_token=None):
+                     access_token=None, refresh_token=None,
+                     endpoint_auth=None, endpoint_test=None):
         """
         Opens a session with OAuth 2.0 authentication.
 
@@ -420,9 +461,11 @@ class Oauth2(BaseHttp):
             password (str): Not used (for compatibility).
             client_id (str): OAuth 2.0 client ID.
             client_secret (str): OAuth 2.0 client secret.
-            token_url (str): URL to obtain tokens.
+            token_url (str): URL to obtain tokens (deprecated, use endpoint_auth instead).
             access_token (str): Existing access token (optional).
             refresh_token (str): Refresh token (optional).
+            endpoint_auth (str): Authentication endpoint for token exchange (preferred).
+            endpoint_test (str): Endpoint to test connection (optional).
 
         Returns:
             dict: Session configuration.
@@ -430,23 +473,28 @@ class Oauth2(BaseHttp):
         if port is None:
             port = self.default_port
         
+        # Use endpoint_auth if provided, otherwise fall back to token_url for backward compatibility
+        auth_url = endpoint_auth or token_url
+        
         session_data = {
             "host": host,
             "port": port,
             "client_id": client_id,
             "client_secret": client_secret,
-            "token_url": token_url,
+            "token_url": auth_url,
             "access_token": access_token,
             "refresh_token": refresh_token,
+            "endpoint_auth": endpoint_auth,
+            "endpoint_test": endpoint_test,
             "use_https": self.use_https
         }
         
         # If access_token is not provided, try to get one
-        if not access_token and token_url and client_id and client_secret:
+        if not access_token and auth_url and client_id and client_secret:
             try:
                 oauth = OAuth2Session(client_id)
                 token = oauth.fetch_token(
-                    token_url=token_url,
+                    token_url=auth_url,
                     client_id=client_id,
                     client_secret=client_secret
                 )
@@ -526,7 +574,8 @@ class Jwt(BaseHttp):
 
     def open_session(self, host, port=None, login=None, password=None,
                      secret_key=None, algorithm="HS256", token=None,
-                     payload=None, expiration_minutes=60):
+                     payload=None, expiration_minutes=60,
+                     endpoint_auth=None, endpoint_test=None):
         """
         Opens a session with JWT authentication.
 
@@ -540,6 +589,8 @@ class Jwt(BaseHttp):
             token (str): Existing JWT token (optional).
             payload (dict): Custom JWT payload (optional).
             expiration_minutes (int): Token expiration time in minutes (default: 60).
+            endpoint_auth (str): Authentication endpoint (optional, for token exchange).
+            endpoint_test (str): Endpoint to test connection (optional).
 
         Returns:
             dict: Session configuration.
@@ -567,6 +618,8 @@ class Jwt(BaseHttp):
             "token": token,
             "secret_key": secret_key,
             "algorithm": algorithm,
+            "endpoint_auth": endpoint_auth,
+            "endpoint_test": endpoint_test,
             "use_https": self.use_https
         }
 
@@ -634,7 +687,8 @@ class Saml(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None,
-                     saml_token=None, saml_header="X-SAML-Token"):
+                     saml_token=None, saml_header="X-SAML-Token",
+                     endpoint_auth=None, endpoint_test=None):
         """
         Opens a session with SAML authentication.
 
@@ -645,6 +699,8 @@ class Saml(BaseHttp):
             password (str): Not used (for compatibility).
             saml_token (str): SAML assertion/token.
             saml_header (str): Header name for SAML token (default: X-SAML-Token).
+            endpoint_auth (str): Authentication endpoint (optional, for SAML assertion exchange).
+            endpoint_test (str): Endpoint to test connection (optional).
 
         Returns:
             dict: Session configuration.
@@ -657,6 +713,8 @@ class Saml(BaseHttp):
             "port": port,
             "saml_token": saml_token,
             "saml_header": saml_header,
+            "endpoint_auth": endpoint_auth,
+            "endpoint_test": endpoint_test,
             "use_https": self.use_https
         }
 
@@ -724,7 +782,8 @@ class Hmac(BaseHttp):
     def open_session(self, host, port=None, login=None, password=None,
                      secret_key=None, algorithm="sha256", 
                      signature_header="X-Signature", 
-                     timestamp_header="X-Timestamp"):
+                     timestamp_header="X-Timestamp",
+                     endpoint_auth=None, endpoint_test=None):
         """
         Opens a session with HMAC authentication.
 
@@ -737,6 +796,8 @@ class Hmac(BaseHttp):
             algorithm (str): Hash algorithm (sha256, sha1, sha512, etc.).
             signature_header (str): Header name for signature (default: X-Signature).
             timestamp_header (str): Header name for timestamp (default: X-Timestamp).
+            endpoint_auth (str): Authentication endpoint (optional, for compatibility).
+            endpoint_test (str): Endpoint to test connection (optional).
 
         Returns:
             dict: Session configuration.
@@ -752,6 +813,8 @@ class Hmac(BaseHttp):
             "algorithm": algorithm,
             "signature_header": signature_header,
             "timestamp_header": timestamp_header,
+            "endpoint_auth": endpoint_auth,
+            "endpoint_test": endpoint_test,
             "use_https": self.use_https
         }
 
@@ -877,7 +940,8 @@ class Certificate(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None,
-                     cert_file=None, key_file=None, ca_bundle=None):
+                     cert_file=None, key_file=None, ca_bundle=None,
+                     endpoint_auth=None, endpoint_test=None):
         """
         Opens a session with client certificate authentication.
 
@@ -889,6 +953,8 @@ class Certificate(BaseHttp):
             cert_file (str): Path to client certificate file.
             key_file (str): Path to private key file (optional, can be in cert_file).
             ca_bundle (str): Path to CA bundle for server verification (optional).
+            endpoint_auth (str): Authentication endpoint (optional, for compatibility).
+            endpoint_test (str): Endpoint to test connection (optional).
 
         Returns:
             dict: Session configuration.
@@ -903,6 +969,8 @@ class Certificate(BaseHttp):
             "key_file": key_file,
             "ca_bundle": ca_bundle,
             "key_password": password,
+            "endpoint_auth": endpoint_auth,
+            "endpoint_test": endpoint_test,
             "use_https": self.use_https
         }
 
@@ -986,7 +1054,8 @@ class Openidconnect(BaseHttp):
     def open_session(self, host, port=None, login=None, password=None,
                      client_id=None, client_secret=None, 
                      discovery_url=None, token_endpoint=None,
-                     id_token=None, access_token=None):
+                     id_token=None, access_token=None,
+                     endpoint_auth=None, endpoint_test=None):
         """
         Opens a session with OpenID Connect authentication.
 
@@ -998,9 +1067,11 @@ class Openidconnect(BaseHttp):
             client_id (str): OpenID Connect client ID.
             client_secret (str): OpenID Connect client secret.
             discovery_url (str): OpenID Connect discovery URL (optional).
-            token_endpoint (str): Token endpoint URL (optional).
+            token_endpoint (str): Token endpoint URL (deprecated, use endpoint_auth instead).
             id_token (str): Existing ID token (optional).
             access_token (str): Existing access token (optional).
+            endpoint_auth (str): Authentication endpoint for token exchange (preferred).
+            endpoint_test (str): Endpoint to test connection (optional).
 
         Returns:
             dict: Session configuration.
@@ -1008,20 +1079,25 @@ class Openidconnect(BaseHttp):
         if port is None:
             port = self.default_port
         
+        # Use endpoint_auth if provided, otherwise fall back to token_endpoint for backward compatibility
+        auth_url = endpoint_auth or token_endpoint
+        
         session_data = {
             "host": host,
             "port": port,
             "client_id": client_id,
             "client_secret": client_secret,
             "discovery_url": discovery_url,
-            "token_endpoint": token_endpoint,
+            "token_endpoint": auth_url,
             "id_token": id_token,
             "access_token": access_token,
+            "endpoint_auth": endpoint_auth,
+            "endpoint_test": endpoint_test,
             "use_https": self.use_https
         }
         
         # If tokens not provided, try to get them
-        if not access_token and token_endpoint and client_id and client_secret:
+        if not access_token and auth_url and client_id and client_secret:
             try:
                 token_data = {
                     "grant_type": "client_credentials",
@@ -1034,7 +1110,7 @@ class Openidconnect(BaseHttp):
                     token_data["username"] = login
                     token_data["password"] = password
                 
-                response = requests.post(token_endpoint, data=token_data)
+                response = requests.post(auth_url, data=token_data)
                 response.raise_for_status()
                 tokens = response.json()
                 
