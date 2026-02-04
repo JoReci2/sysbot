@@ -128,7 +128,8 @@ class Data(ComponentBase):
         Load Ansible inventory file and optionally store in secrets cache.
         
         Supports both INI and YAML inventory formats. Automatically detects format
-        based on file extension (.ini, .yml, .yaml).
+        based on file extension (.ini, .yml, .yaml). Files without extensions are
+        treated as INI format.
         
         Args:
             file: Path to the Ansible inventory file to load.
@@ -282,14 +283,13 @@ class Data(ComponentBase):
                             group_name = current_section[:-5]
                             if '=' in line:
                                 key, value = line.split('=', 1)
-                                # Try to convert numeric values
-                                try:
-                                    if '.' in value:
-                                        groups[group_name]["vars"][key.strip()] = float(value.strip())
-                                    else:
-                                        groups[group_name]["vars"][key.strip()] = int(value.strip())
-                                except ValueError:
-                                    groups[group_name]["vars"][key.strip()] = value.strip()
+                                key = key.strip()
+                                value = value.strip()
+                                # Try to convert to int (only if all digits)
+                                if value.isdigit():
+                                    groups[group_name]["vars"][key] = int(value)
+                                else:
+                                    groups[group_name]["vars"][key] = value
                         
                         # Children section - just list child group names
                         elif current_section.endswith(':children'):
@@ -308,13 +308,10 @@ class Data(ComponentBase):
                                 for part in parts[1:]:
                                     if '=' in part:
                                         key, value = part.split('=', 1)
-                                        # Try to convert numeric values
-                                        try:
-                                            if '.' in value:
-                                                host_vars[key] = float(value)
-                                            else:
-                                                host_vars[key] = int(value)
-                                        except ValueError:
+                                        # Try to convert to int (only if all digits)
+                                        if value.isdigit():
+                                            host_vars[key] = int(value)
+                                        else:
                                             host_vars[key] = value
                                 
                                 groups[current_section]["hosts"][hostname] = host_vars
