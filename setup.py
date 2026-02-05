@@ -27,6 +27,7 @@ setup(
         "cryptography",
         "hvac",
         "sqlalchemy",
+        "ansible-runner",
     ],
     extras_require={
         "mysql": ["mysql-connector-python"],

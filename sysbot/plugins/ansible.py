@@ -3,19 +3,26 @@ Ansible Plugin Module
 
 This module provides functionality for loading and parsing Ansible inventory files.
 Supports both INI and YAML inventory formats with automatic format detection.
+Also provides functionality for executing Ansible playbooks using ansible-runner.
 """
 import yaml
+import tempfile
+import shutil
+import os
 from pathlib import Path
+
+import ansible_runner
 
 from sysbot.utils.engine import ComponentBase
 
 
 class Ansible(ComponentBase):
     """
-    Ansible inventory loader plugin for managing Ansible inventory data.
+    Ansible plugin for managing Ansible inventory data and executing playbooks.
     
     This class provides methods to load Ansible inventory files in both INI
-    and YAML formats and optionally store them in the SysBot secrets cache.
+    and YAML formats, execute Ansible playbooks using ansible-runner, and 
+    optionally store results in the SysBot secrets cache.
     """
     
     def inventory(self, file: str, key: str = None) -> dict:
@@ -214,3 +221,200 @@ class Ansible(ComponentBase):
             return {"groups": groups}
         except Exception as e:
             raise RuntimeError(f"Error processing INI inventory: {e}")
+
+    def playbook(
+        self,
+        playbook: str,
+        inventory: str = None,
+        limit: str = None,
+        tags: str = None,
+        skip_tags: str = None,
+        extra_vars: dict = None,
+        check: bool = False,
+        diff: bool = False,
+        verbose: int = 0,
+        forks: int = None,
+        **kwargs
+    ) -> dict:
+        """
+        Execute an Ansible playbook using ansible-runner.
+        
+        This method uses the official ansible-runner library to execute playbooks,
+        providing better integration, event handling, and artifact management.
+        
+        Args:
+            playbook: Path to the Ansible playbook file to execute.
+            inventory: Path to the inventory file, comma-separated host list,
+                      or dictionary/list representing inventory structure.
+            limit: Limit execution to specific hosts or groups.
+            tags: Only run plays and tasks tagged with these values (comma-separated).
+            skip_tags: Skip plays and tasks tagged with these values (comma-separated).
+            extra_vars: Dictionary of extra variables to pass to the playbook.
+            check: Run in check mode (dry-run), don't make any changes.
+            diff: Show differences when changing small files and templates.
+            verbose: Increase verbosity level (0-4, where 0 is default).
+            forks: Control Ansible parallel concurrency.
+            **kwargs: Additional ansible-runner options (e.g., timeout, quiet).
+        
+        Returns:
+            Dictionary containing playbook execution results:
+            {
+                "success": bool,
+                "status": str (one of: successful, failed, timeout, canceled),
+                "rc": int (return code),
+                "stats": dict (playbook statistics per host),
+                "stdout": str (captured output)
+            }
+        
+        Raises:
+            FileNotFoundError: If the playbook file does not exist.
+            ValueError: If invalid parameters are provided.
+            RuntimeError: If there's an error executing the playbook.
+        
+        Example:
+            result = ansible.playbook(
+                playbook="site.yml",
+                inventory="inventory.ini",
+                limit="webservers",
+                extra_vars={"version": "1.2.3"},
+                check=True
+            )
+        """
+        playbook_path = Path(playbook)
+        
+        try:
+            if not playbook_path.exists():
+                raise FileNotFoundError(f"Ansible playbook file not found: {playbook_path}")
+            
+            # Validate verbosity range (Ansible supports 0-4, i.e., -v, -vv, -vvv, -vvvv)
+            if verbose < 0 or verbose > 4:
+                raise ValueError("Verbosity level must be between 0 and 4")
+            
+            # Validate extra_vars if provided
+            if extra_vars is not None:
+                if not isinstance(extra_vars, dict):
+                    raise ValueError("extra_vars must be a dictionary")
+                # Validate that extra_vars only contains safe types
+                for key, value in extra_vars.items():
+                    if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
+                        raise ValueError(f"Unsupported type for extra_var '{key}': {type(value)}")
+            
+            # Validate tags and skip_tags to prevent command injection
+            import re
+            tag_pattern = re.compile(r'^[a-zA-Z0-9_,\-]+$')
+            if tags and not tag_pattern.match(tags):
+                raise ValueError("tags parameter contains invalid characters. Only alphanumeric, underscore, hyphen, and comma are allowed.")
+            if skip_tags and not tag_pattern.match(skip_tags):
+                raise ValueError("skip_tags parameter contains invalid characters. Only alphanumeric, underscore, hyphen, and comma are allowed.")
+            
+            # Create a temporary directory for ansible-runner
+            with tempfile.TemporaryDirectory() as tmpdir:
+                # Set up the project directory structure
+                project_dir = os.path.join(tmpdir, 'project')
+                os.makedirs(project_dir)
+                
+                # Copy the playbook to the project directory
+                playbook_name = playbook_path.name
+                shutil.copy(str(playbook_path), os.path.join(project_dir, playbook_name))
+                
+                # If playbook references other files in the same directory, copy them too
+                playbook_dir = playbook_path.parent
+                if playbook_dir != Path('.'):
+                    for item in playbook_dir.iterdir():
+                        if item.is_file() and item != playbook_path:
+                            try:
+                                shutil.copy(str(item), project_dir)
+                            except Exception:
+                                # Skip files that can't be copied
+                                pass
+                
+                # Prepare runner arguments
+                runner_args = {
+                    'private_data_dir': tmpdir,
+                    'playbook': playbook_name,
+                    'quiet': False,
+                }
+                
+                # Add verbosity only if greater than 0
+                if verbose > 0:
+                    runner_args['verbosity'] = verbose
+                
+                # Add inventory if specified
+                if inventory:
+                    # Check if inventory is a path
+                    inventory_path = Path(inventory)
+                    if inventory_path.exists():
+                        # Copy inventory file to the private_data_dir
+                        inventory_dir = os.path.join(tmpdir, 'inventory')
+                        os.makedirs(inventory_dir)
+                        shutil.copy(str(inventory_path), os.path.join(inventory_dir, inventory_path.name))
+                        runner_args['inventory'] = inventory_path.name
+                    else:
+                        # Assume it's a comma-separated host list or inline inventory
+                        runner_args['inventory'] = inventory
+                
+                # Add limit if specified
+                if limit:
+                    runner_args['limit'] = limit
+                
+                # Add extra variables
+                if extra_vars:
+                    runner_args['extravars'] = extra_vars
+                
+                # Add forks if specified
+                if forks is not None:
+                    if not isinstance(forks, int) or forks < 1:
+                        raise ValueError("forks must be a positive integer")
+                    runner_args['forks'] = forks
+                
+                # Build cmdline options for tags, skip-tags, check, diff
+                cmdline_parts = []
+                if tags:
+                    cmdline_parts.append(f"--tags {tags}")
+                if skip_tags:
+                    cmdline_parts.append(f"--skip-tags {skip_tags}")
+                if check:
+                    cmdline_parts.append("--check")
+                if diff:
+                    cmdline_parts.append("--diff")
+                
+                if cmdline_parts:
+                    runner_args['cmdline'] = ' '.join(cmdline_parts)
+                
+                # Add any additional kwargs (e.g., timeout, quiet)
+                allowed_kwargs = {'timeout', 'quiet', 'suppress_env_files', 
+                                 'process_isolation', 'container_image'}
+                for key, value in kwargs.items():
+                    if key in allowed_kwargs:
+                        runner_args[key] = value
+                
+                # Run the playbook
+                r = ansible_runner.run(**runner_args)
+                
+                # Collect stdout from events
+                stdout_lines = []
+                if hasattr(r, 'events'):
+                    for event in r.events:
+                        if 'stdout' in event and event['stdout']:
+                            stdout_lines.append(event['stdout'])
+                
+                stdout = '\n'.join(stdout_lines) if stdout_lines else ''
+                
+                # Prepare the result dictionary
+                # ansible-runner always provides rc and status attributes
+                output = {
+                    "success": r.status == 'successful',
+                    "status": r.status,
+                    "rc": r.rc,
+                    "stats": r.stats,
+                    "stdout": stdout
+                }
+                
+                return output
+                
+        except FileNotFoundError:
+            raise
+        except ValueError:
+            raise
+        except Exception as e:
+            raise RuntimeError(f"Error executing Ansible playbook: {e}")
