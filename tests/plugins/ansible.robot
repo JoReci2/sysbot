@@ -61,3 +61,30 @@ Execute Ansible playbook and check stats
     Should Be Equal    ${result}[success]    ${True}
     Dictionary Should Contain Key    ${result}    stats
     Should Not Be Empty    ${result}[stats]
+
+Execute Ansible role on localhost
+    ${result}=    Call Components    plugins.ansible.role    test_role    hosts=localhost    roles_path=tests/.dataset/roles
+    Should Be Equal    ${result}[success]    ${True}
+    Should Be Equal As Integers    ${result}[rc]    0
+    Should Contain    ${result}[stdout]    Test role is being executed
+
+Execute Ansible role with extra variables
+    ${extra_vars}=    Create Dictionary    custom_var=test_value_123
+    ${result}=    Call Components    plugins.ansible.role    test_role    hosts=localhost    roles_path=tests/.dataset/roles    extra_vars=${extra_vars}
+    Should Be Equal    ${result}[success]    ${True}
+    Should Contain    ${result}[stdout]    Custom variable: test_value_123
+
+Execute Ansible role in check mode
+    ${result}=    Call Components    plugins.ansible.role    test_role    hosts=localhost    roles_path=tests/.dataset/roles    check=${True}
+    Should Be Equal    ${result}[success]    ${True}
+    Should Be Equal As Integers    ${result}[rc]    0
+
+Execute Ansible role with verbose output
+    ${result}=    Call Components    plugins.ansible.role    test_role    hosts=localhost    roles_path=tests/.dataset/roles    verbose=${1}
+    Should Be Equal    ${result}[success]    ${True}
+    Should Contain    ${result}[stdout]    TASK
+
+Execute Ansible role with inventory
+    ${result}=    Call Components    plugins.ansible.role    test_role    hosts=webservers    inventory=tests/.dataset/ansible_inventory.ini    roles_path=tests/.dataset/roles
+    Should Be Equal    ${result}[success]    ${True}
+    Should Be Equal As Integers    ${result}[rc]    0

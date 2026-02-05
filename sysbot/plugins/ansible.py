@@ -3,7 +3,7 @@ Ansible Plugin Module
 
 This module provides functionality for loading and parsing Ansible inventory files.
 Supports both INI and YAML inventory formats with automatic format detection.
-Also provides functionality for executing Ansible playbooks using ansible-runner.
+Also provides functionality for executing Ansible playbooks and roles using ansible-runner.
 """
 import yaml
 import tempfile
@@ -18,11 +18,11 @@ from sysbot.utils.engine import ComponentBase
 
 class Ansible(ComponentBase):
     """
-    Ansible plugin for managing Ansible inventory data and executing playbooks.
+    Ansible plugin for managing Ansible inventory data and executing playbooks and roles.
     
     This class provides methods to load Ansible inventory files in both INI
-    and YAML formats, execute Ansible playbooks using ansible-runner, and 
-    optionally store results in the SysBot secrets cache.
+    and YAML formats, execute Ansible playbooks and roles using ansible-runner,
+    and optionally store results in the SysBot secrets cache.
     """
     
     def inventory(self, file: str, key: str = None) -> dict:
@@ -418,3 +418,182 @@ class Ansible(ComponentBase):
             raise
         except Exception as e:
             raise RuntimeError(f"Error executing Ansible playbook: {e}")
+
+    def role(
+        self,
+        role: str,
+        hosts: str,
+        inventory: str = None,
+        extra_vars: dict = None,
+        check: bool = False,
+        diff: bool = False,
+        verbose: int = 0,
+        forks: int = None,
+        **kwargs
+    ) -> dict:
+        """
+        Execute an Ansible role on specific hosts using ansible-runner.
+        
+        This method dynamically creates a playbook that applies the specified role
+        to the given hosts, then executes it using ansible-runner.
+        
+        Args:
+            role: Name of the Ansible role to execute. Can be a role name from
+                  roles directory or a fully qualified role name (e.g., namespace.rolename).
+            hosts: Target hosts or groups to execute the role on. Can be a specific
+                   host, a group name, or a pattern (e.g., "webservers", "web*.example.com").
+            inventory: Path to the inventory file, comma-separated host list,
+                      or dictionary/list representing inventory structure.
+            extra_vars: Dictionary of extra variables to pass to the role.
+            check: Run in check mode (dry-run), don't make any changes.
+            diff: Show differences when changing small files and templates.
+            verbose: Increase verbosity level (0-4, where 0 is default).
+            forks: Control Ansible parallel concurrency.
+            **kwargs: Additional ansible-runner options (e.g., timeout, quiet).
+        
+        Returns:
+            Dictionary containing role execution results:
+            {
+                "success": bool,
+                "status": str (one of: successful, failed, timeout, canceled),
+                "rc": int (return code),
+                "stats": dict (playbook statistics per host),
+                "stdout": str (captured output)
+            }
+        
+        Raises:
+            ValueError: If invalid parameters are provided.
+            RuntimeError: If there's an error executing the role.
+        
+        Example:
+            result = ansible.role(
+                role="common",
+                hosts="webservers",
+                inventory="inventory.ini",
+                extra_vars={"ntp_server": "ntp.example.com"},
+                check=True
+            )
+        """
+        try:
+            # Validate role name to prevent path traversal or injection
+            import re
+            role_pattern = re.compile(r'^[a-zA-Z0-9_\-\.]+$')
+            if not role_pattern.match(role):
+                raise ValueError("role parameter contains invalid characters. Only alphanumeric, underscore, hyphen, and dot are allowed.")
+            
+            # Validate hosts parameter
+            if not hosts or not isinstance(hosts, str):
+                raise ValueError("hosts parameter must be a non-empty string")
+            
+            # Validate extra_vars if provided
+            if extra_vars is not None:
+                if not isinstance(extra_vars, dict):
+                    raise ValueError("extra_vars must be a dictionary")
+                # Validate that extra_vars only contains safe types
+                for key, value in extra_vars.items():
+                    if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
+                        raise ValueError(f"Unsupported type for extra_var '{key}': {type(value)}")
+            
+            # Validate verbosity range
+            if verbose < 0 or verbose > 4:
+                raise ValueError("Verbosity level must be between 0 and 4")
+            
+            # Create a temporary directory for ansible-runner
+            with tempfile.TemporaryDirectory() as tmpdir:
+                # Set up the project directory structure
+                project_dir = os.path.join(tmpdir, 'project')
+                os.makedirs(project_dir)
+                
+                # Create a dynamic playbook for the role
+                playbook_name = 'role_execution.yml'
+                playbook_content = [
+                    {
+                        'name': f'Execute role {role} on {hosts}',
+                        'hosts': hosts,
+                        'roles': [role]
+                    }
+                ]
+                
+                playbook_path = os.path.join(project_dir, playbook_name)
+                with open(playbook_path, 'w', encoding='utf-8') as f:
+                    yaml.dump(playbook_content, f, default_flow_style=False)
+                
+                # Prepare runner arguments
+                runner_args = {
+                    'private_data_dir': tmpdir,
+                    'playbook': playbook_name,
+                    'quiet': False,
+                }
+                
+                # Add verbosity only if greater than 0
+                if verbose > 0:
+                    runner_args['verbosity'] = verbose
+                
+                # Add inventory if specified
+                if inventory:
+                    # Check if inventory is a path
+                    inventory_path = Path(inventory)
+                    if inventory_path.exists():
+                        # Copy inventory file to the private_data_dir
+                        inventory_dir = os.path.join(tmpdir, 'inventory')
+                        os.makedirs(inventory_dir)
+                        shutil.copy(str(inventory_path), os.path.join(inventory_dir, inventory_path.name))
+                        runner_args['inventory'] = inventory_path.name
+                    else:
+                        # Assume it's a comma-separated host list or inline inventory
+                        runner_args['inventory'] = inventory
+                
+                # Add extra variables
+                if extra_vars:
+                    runner_args['extravars'] = extra_vars
+                
+                # Add forks if specified
+                if forks is not None:
+                    if not isinstance(forks, int) or forks < 1:
+                        raise ValueError("forks must be a positive integer")
+                    runner_args['forks'] = forks
+                
+                # Build cmdline options for check and diff
+                cmdline_parts = []
+                if check:
+                    cmdline_parts.append("--check")
+                if diff:
+                    cmdline_parts.append("--diff")
+                
+                if cmdline_parts:
+                    runner_args['cmdline'] = ' '.join(cmdline_parts)
+                
+                # Add any additional kwargs (e.g., timeout, quiet)
+                allowed_kwargs = {'timeout', 'quiet', 'suppress_env_files', 
+                                 'process_isolation', 'container_image', 'roles_path'}
+                for key, value in kwargs.items():
+                    if key in allowed_kwargs:
+                        runner_args[key] = value
+                
+                # Run the role via the generated playbook
+                r = ansible_runner.run(**runner_args)
+                
+                # Collect stdout from events
+                stdout_lines = []
+                if hasattr(r, 'events'):
+                    for event in r.events:
+                        if 'stdout' in event and event['stdout']:
+                            stdout_lines.append(event['stdout'])
+                
+                stdout = '\n'.join(stdout_lines) if stdout_lines else ''
+                
+                # Prepare the result dictionary
+                output = {
+                    "success": r.status == 'successful',
+                    "status": r.status,
+                    "rc": r.rc,
+                    "stats": r.stats,
+                    "stdout": stdout
+                }
+                
+                return output
+                
+        except ValueError:
+            raise
+        except Exception as e:
+            raise RuntimeError(f"Error executing Ansible role: {e}")
