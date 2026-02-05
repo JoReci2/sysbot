@@ -1,0 +1,18 @@
+---
+# Tasks for test_role
+- name: Display role execution message
+  debug:
+    msg: "Test role is being executed on {{ inventory_hostname }}"
+
+- name: Show custom variable if provided
+  debug:
+    msg: "Custom variable: {{ custom_var | default('not provided') }}"
+  when: custom_var is defined
+
+- name: Set a fact
+  set_fact:
+    role_executed: "yes"
+
+- name: Confirm role completion
+  debug:
+    msg: "Test role execution completed successfully"
