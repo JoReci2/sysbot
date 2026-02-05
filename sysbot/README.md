@@ -554,9 +554,13 @@ The generated xUnit file includes:
 
 ### Documentation
 
-SysBot includes comprehensive Google-style docstrings for all modules, classes, and methods. You can generate and browse the documentation locally using pdoc3.
+SysBot includes comprehensive Google-style docstrings for all modules, classes, and methods.
 
-#### Viewing Documentation with pdoc3
+#### Online Documentation
+
+The complete documentation is available online at **[https://joreci2.github.io/sysbot/](https://joreci2.github.io/sysbot/)**
+
+#### Viewing Documentation Locally with pdoc3
 
 Install pdoc3 as a development dependency:
 
@@ -598,3 +602,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Author
 
 Thibault SCIRE - [GitHub](https://github.com/thibaultscire)
+
+## Links
+
+- **Documentation**: [https://joreci2.github.io/sysbot/](https://joreci2.github.io/sysbot/)
+- **PyPI**: [https://pypi.org/project/sysbot/](https://pypi.org/project/sysbot/)
+- **Repository**: [https://github.com/JoReci2/sysbot](https://github.com/JoReci2/sysbot)
+- **Issues**: [https://github.com/JoReci2/sysbot/issues](https://github.com/JoReci2/sysbot/issues)
