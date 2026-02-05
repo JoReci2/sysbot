@@ -336,9 +336,11 @@ class Ansible(ComponentBase):
             if diff:
                 command.append("--diff")
             
-            # Add verbosity if specified
+            # Add verbosity if specified (validate range)
             if verbose > 0:
-                command.append("-" + "v" * min(verbose, 4))
+                if verbose > 4:
+                    raise ValueError("Verbosity level must be between 0 and 4")
+                command.append("-" + "v" * verbose)
             
             # Add validated kwargs as command-line options
             for key, value in kwargs.items():
@@ -394,8 +396,8 @@ class Ansible(ComponentBase):
                                     stats[host] = host_stats
                     if stats:
                         output["stats"] = stats
-            except Exception:
-                # If stats parsing fails, just skip it
+            except (KeyError, IndexError, AttributeError):
+                # If stats parsing fails, just skip it - it's an optional feature
                 pass
             
             return output
