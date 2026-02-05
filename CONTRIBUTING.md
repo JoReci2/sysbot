@@ -671,14 +671,14 @@ Before publishing a release, ensure that:
 2. **Commit the version change**:
    ```bash
    git add setup.py
-   git commit -m "chore: bump version to vX.Y.Z"
+   git commit -m "chore: bump version to X.Y.Z"
    git push origin main
    ```
 
 3. **Create and push a version tag**:
    ```bash
-   git tag -a vX.Y.Z -m "Release version X.Y.Z"
-   git push origin vX.Y.Z
+   git tag -a X.Y.Z -m "Release version X.Y.Z"
+   git push origin X.Y.Z
    ```
 
 4. **Monitor the workflow**:
@@ -688,9 +688,9 @@ Before publishing a release, ensure that:
 
 #### Version Tag Format
 
-- Tags must start with `v` followed by the version number
-- Examples: `v0.2.0`, `v1.0.0`, `v2.1.3`
-- Use semantic versioning: `vMAJOR.MINOR.PATCH`
+- Tags must use semantic versioning format: `MAJOR.MINOR.PATCH`
+- Examples: `0.2.0`, `1.0.0`, `2.1.3`
+- Do not prefix tags with `v`
 
 #### Workflow Steps
 
