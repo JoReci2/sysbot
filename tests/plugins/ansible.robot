@@ -85,6 +85,6 @@ Execute Ansible role with verbose output
     Should Contain    ${result}[stdout]    TASK
 
 Execute Ansible role with inventory
-    ${result}=    Call Components    plugins.ansible.role    test_role    hosts=webservers    inventory=tests/.dataset/ansible_inventory.ini    roles_path=tests/.dataset/roles
+    ${result}=    Call Components    plugins.ansible.role    test_role    hosts=localhost    inventory=localhost,    roles_path=tests/.dataset/roles
     Should Be Equal    ${result}[success]    ${True}
     Should Be Equal As Integers    ${result}[rc]    0

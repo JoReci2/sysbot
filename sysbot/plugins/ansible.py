@@ -504,6 +504,18 @@ class Ansible(ComponentBase):
                 project_dir = os.path.join(tmpdir, 'project')
                 os.makedirs(project_dir)
                 
+                # Handle roles_path - copy roles to project directory
+                roles_path = kwargs.pop('roles_path', None)
+                if roles_path:
+                    roles_path_obj = Path(roles_path)
+                    if roles_path_obj.exists() and roles_path_obj.is_dir():
+                        # Copy the roles directory to the project directory
+                        dest_roles_dir = os.path.join(project_dir, 'roles')
+                        shutil.copytree(str(roles_path_obj), dest_roles_dir)
+                    elif roles_path_obj.exists():
+                        # If it's a file, assume it's a role tarball or similar - not handled
+                        raise ValueError(f"roles_path must be a directory: {roles_path}")
+                
                 # Create a dynamic playbook for the role
                 playbook_name = 'role_execution.yml'
                 playbook_content = [
@@ -565,7 +577,7 @@ class Ansible(ComponentBase):
                 
                 # Add any additional kwargs (e.g., timeout, quiet)
                 allowed_kwargs = {'timeout', 'quiet', 'suppress_env_files', 
-                                 'process_isolation', 'container_image', 'roles_path'}
+                                 'process_isolation', 'container_image'}
                 for key, value in kwargs.items():
                     if key in allowed_kwargs:
                         runner_args[key] = value
