@@ -9,6 +9,7 @@ import yaml
 import tempfile
 import shutil
 import os
+import re
 from pathlib import Path
 
 import ansible_runner
@@ -300,7 +301,6 @@ class Ansible(ComponentBase):
                         raise ValueError(f"Unsupported type for extra_var '{key}': {type(value)}")
             
             # Validate tags and skip_tags to prevent command injection
-            import re
             tag_pattern = re.compile(r'^[a-zA-Z0-9_,\-]+$')
             if tags and not tag_pattern.match(tags):
                 raise ValueError("tags parameter contains invalid characters. Only alphanumeric, underscore, hyphen, and comma are allowed.")
@@ -476,7 +476,6 @@ class Ansible(ComponentBase):
         """
         try:
             # Validate role name to prevent path traversal or injection
-            import re
             role_pattern = re.compile(r'^[a-zA-Z0-9_\-\.]+$')
             if not role_pattern.match(role):
                 raise ValueError("role parameter contains invalid characters. Only alphanumeric, underscore, hyphen, and dot are allowed.")
