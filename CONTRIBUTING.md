@@ -641,6 +641,72 @@ Robot Framework listeners are used differently:
 robot --listener sysbot.utils.robot.listener.mylistener.MyListener:arg1:arg2 tests/
 ```
 
+## Release Process
+
+### Publishing to PyPI
+
+SysBot uses an automated GitHub Actions workflow to publish releases to PyPI. The workflow is triggered automatically when a version tag is pushed to the repository.
+
+#### Prerequisites
+
+Before publishing a release, ensure that:
+
+1. **PyPI Trusted Publishing is configured** (recommended) or a PyPI API token is set up:
+   - For trusted publishing: Configure the publisher in PyPI project settings
+   - For API token: Add `PYPI_API_TOKEN` to repository secrets
+
+2. **Version number is updated** in `setup.py`:
+   ```python
+   version="X.Y.Z"  # Update this to the new version
+   ```
+
+#### Creating a Release
+
+1. **Update the version** in `setup.py`:
+   ```bash
+   # Edit setup.py and update the version field
+   vim setup.py
+   ```
+
+2. **Commit the version change**:
+   ```bash
+   git add setup.py
+   git commit -m "chore: bump version to vX.Y.Z"
+   git push origin main
+   ```
+
+3. **Create and push a version tag**:
+   ```bash
+   git tag -a vX.Y.Z -m "Release version X.Y.Z"
+   git push origin vX.Y.Z
+   ```
+
+4. **Monitor the workflow**:
+   - Go to the Actions tab in GitHub
+   - Watch the "Publish Python Package to PyPI" workflow
+   - The workflow will build and publish the package automatically
+
+#### Version Tag Format
+
+- Tags must start with `v` followed by the version number
+- Examples: `v0.2.0`, `v1.0.0`, `v2.1.3`
+- Use semantic versioning: `vMAJOR.MINOR.PATCH`
+
+#### Workflow Steps
+
+The automated workflow performs the following steps:
+
+1. **Build**: Creates both wheel (`.whl`) and source (`.tar.gz`) distributions
+2. **Publish**: Uploads the distributions to PyPI using trusted publishing
+
+#### Troubleshooting
+
+If the workflow fails:
+
+- **Authentication errors**: Verify PyPI trusted publishing is configured or API token is valid
+- **Version conflicts**: Ensure the version in `setup.py` hasn't already been published
+- **Build errors**: Check that all dependencies are correctly specified in `setup.py`
+
 ## Acknowledgments
 
 Thanks to all contributors who have helped improve SysBot!
