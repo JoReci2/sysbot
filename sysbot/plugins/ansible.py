@@ -247,12 +247,12 @@ class Ansible(ComponentBase):
             inventory: Path to the inventory file, comma-separated host list,
                       or dictionary/list representing inventory structure.
             limit: Limit execution to specific hosts or groups.
-            tags: Only run plays and tasks tagged with these values.
-            skip_tags: Skip plays and tasks tagged with these values.
+            tags: Only run plays and tasks tagged with these values (comma-separated).
+            skip_tags: Skip plays and tasks tagged with these values (comma-separated).
             extra_vars: Dictionary of extra variables to pass to the playbook.
             check: Run in check mode (dry-run), don't make any changes.
             diff: Show differences when changing small files and templates.
-            verbose: Increase verbosity level (0-5, where 0 is default).
+            verbose: Increase verbosity level (0-4, where 0 is default).
             forks: Control Ansible parallel concurrency.
             **kwargs: Additional ansible-runner options (e.g., timeout, quiet).
         
@@ -286,9 +286,9 @@ class Ansible(ComponentBase):
             if not playbook_path.exists():
                 raise FileNotFoundError(f"Ansible playbook file not found: {playbook_path}")
             
-            # Validate verbosity range
-            if verbose < 0 or verbose > 5:
-                raise ValueError("Verbosity level must be between 0 and 5")
+            # Validate verbosity range (Ansible supports 0-4, i.e., -v, -vv, -vvv, -vvvv)
+            if verbose < 0 or verbose > 4:
+                raise ValueError("Verbosity level must be between 0 and 4")
             
             # Validate extra_vars if provided
             if extra_vars is not None:
@@ -298,6 +298,14 @@ class Ansible(ComponentBase):
                 for key, value in extra_vars.items():
                     if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
                         raise ValueError(f"Unsupported type for extra_var '{key}': {type(value)}")
+            
+            # Validate tags and skip_tags to prevent command injection
+            import re
+            tag_pattern = re.compile(r'^[a-zA-Z0-9_,\-]+$')
+            if tags and not tag_pattern.match(tags):
+                raise ValueError("tags parameter contains invalid characters. Only alphanumeric, underscore, hyphen, and comma are allowed.")
+            if skip_tags and not tag_pattern.match(skip_tags):
+                raise ValueError("skip_tags parameter contains invalid characters. Only alphanumeric, underscore, hyphen, and comma are allowed.")
             
             # Create a temporary directory for ansible-runner
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -325,8 +333,11 @@ class Ansible(ComponentBase):
                     'private_data_dir': tmpdir,
                     'playbook': playbook_name,
                     'quiet': False,
-                    'verbosity': verbose if verbose > 0 else None,
                 }
+                
+                # Add verbosity only if greater than 0
+                if verbose > 0:
+                    runner_args['verbosity'] = verbose
                 
                 # Add inventory if specified
                 if inventory:
@@ -390,11 +401,12 @@ class Ansible(ComponentBase):
                 stdout = '\n'.join(stdout_lines) if stdout_lines else ''
                 
                 # Prepare the result dictionary
+                # ansible-runner always provides rc and status attributes
                 output = {
                     "success": r.status == 'successful',
                     "status": r.status,
                     "rc": r.rc,
-                    "stats": r.stats if hasattr(r, 'stats') else {},
+                    "stats": r.stats,
                     "stdout": stdout
                 }
                 
