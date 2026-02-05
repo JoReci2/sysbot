@@ -246,6 +246,7 @@ class Ansible(ComponentBase):
             diff: Show differences when changing small files and templates.
             verbose: Increase verbosity level (0-4, where 0 is default).
             **kwargs: Additional ansible-playbook command-line options.
+                     Supported options: become, become_user, forks, timeout
         
         Returns:
             Dictionary containing playbook execution results:
@@ -260,6 +261,7 @@ class Ansible(ComponentBase):
         Raises:
             FileNotFoundError: If the playbook file does not exist.
             RuntimeError: If there's an error executing the playbook.
+            ValueError: If invalid parameters are provided.
         
         Example:
             result = ansible.playbook(
@@ -276,14 +278,31 @@ class Ansible(ComponentBase):
             if not playbook_path.exists():
                 raise FileNotFoundError(f"Ansible playbook file not found: {playbook_path}")
             
+            # Allowlist of supported kwargs to prevent arbitrary command injection
+            ALLOWED_KWARGS = {
+                'become': bool,
+                'become_user': str,
+                'forks': int,
+                'timeout': int
+            }
+            
+            # Validate kwargs
+            for key in kwargs:
+                if key not in ALLOWED_KWARGS:
+                    raise ValueError(f"Unsupported option: {key}. Allowed options: {', '.join(ALLOWED_KWARGS.keys())}")
+            
             # Build the ansible-playbook command
             command = ["ansible-playbook"]
             
             # Add playbook file
             command.append(str(playbook_path))
             
-            # Add inventory if specified
+            # Add inventory if specified (validate it's a path or valid host pattern)
             if inventory:
+                inventory_path = Path(inventory)
+                # Allow either existing file paths or comma-separated host lists
+                if not (inventory_path.exists() or ',' in inventory):
+                    raise ValueError(f"Inventory must be an existing file or comma-separated host list: {inventory}")
                 command.extend(["-i", inventory])
             
             # Add limit if specified
@@ -299,7 +318,14 @@ class Ansible(ComponentBase):
                 command.extend(["--skip-tags", skip_tags])
             
             # Add extra variables if specified
+            # Use JSON format which is safer than direct string interpolation
             if extra_vars:
+                if not isinstance(extra_vars, dict):
+                    raise ValueError("extra_vars must be a dictionary")
+                # Validate that extra_vars only contains safe types
+                for key, value in extra_vars.items():
+                    if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
+                        raise ValueError(f"Unsupported type for extra_var '{key}': {type(value)}")
                 command.extend(["--extra-vars", json.dumps(extra_vars)])
             
             # Add check mode if specified
@@ -314,8 +340,12 @@ class Ansible(ComponentBase):
             if verbose > 0:
                 command.append("-" + "v" * min(verbose, 4))
             
-            # Add any additional kwargs as command-line options
+            # Add validated kwargs as command-line options
             for key, value in kwargs.items():
+                expected_type = ALLOWED_KWARGS[key]
+                if not isinstance(value, expected_type):
+                    raise ValueError(f"Option '{key}' expects type {expected_type.__name__}, got {type(value).__name__}")
+                
                 option_name = f"--{key.replace('_', '-')}"
                 if isinstance(value, bool):
                     if value:
@@ -371,6 +401,8 @@ class Ansible(ComponentBase):
             return output
             
         except FileNotFoundError:
+            raise
+        except ValueError:
             raise
         except subprocess.SubprocessError as e:
             raise RuntimeError(f"Error executing Ansible playbook: {e}")
