@@ -37,7 +37,7 @@ Load Ansible YAML inventory with secret
 Execute Ansible playbook without parameters
     ${result}=    Call Components    plugins.ansible.playbook    tests/.dataset/test_playbook.yml
     Should Be Equal    ${result}[success]    ${True}
-    Should Be Equal As Integers    ${result}[return_code]    0
+    Should Be Equal As Integers    ${result}[rc]    0
     Should Contain    ${result}[stdout]    Hello from Ansible playbook
 
 Execute Ansible playbook with extra variables
@@ -49,7 +49,7 @@ Execute Ansible playbook with extra variables
 Execute Ansible playbook in check mode
     ${result}=    Call Components    plugins.ansible.playbook    tests/.dataset/test_playbook.yml    check=${True}
     Should Be Equal    ${result}[success]    ${True}
-    Should Be Equal As Integers    ${result}[return_code]    0
+    Should Be Equal As Integers    ${result}[rc]    0
 
 Execute Ansible playbook with verbose output
     ${result}=    Call Components    plugins.ansible.playbook    tests/.dataset/test_playbook.yml    verbose=${1}

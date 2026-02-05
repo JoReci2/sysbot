@@ -3,12 +3,15 @@ Ansible Plugin Module
 
 This module provides functionality for loading and parsing Ansible inventory files.
 Supports both INI and YAML inventory formats with automatic format detection.
-Also provides functionality for executing Ansible playbooks.
+Also provides functionality for executing Ansible playbooks using ansible-runner.
 """
 import yaml
-import subprocess
-import json
+import tempfile
+import shutil
+import os
 from pathlib import Path
+
+import ansible_runner
 
 from sysbot.utils.engine import ComponentBase
 
@@ -18,8 +21,8 @@ class Ansible(ComponentBase):
     Ansible plugin for managing Ansible inventory data and executing playbooks.
     
     This class provides methods to load Ansible inventory files in both INI
-    and YAML formats, execute Ansible playbooks, and optionally store results
-    in the SysBot secrets cache.
+    and YAML formats, execute Ansible playbooks using ansible-runner, and 
+    optionally store results in the SysBot secrets cache.
     """
     
     def inventory(self, file: str, key: str = None) -> dict:
@@ -230,38 +233,43 @@ class Ansible(ComponentBase):
         check: bool = False,
         diff: bool = False,
         verbose: int = 0,
+        forks: int = None,
         **kwargs
     ) -> dict:
         """
-        Execute an Ansible playbook.
+        Execute an Ansible playbook using ansible-runner.
+        
+        This method uses the official ansible-runner library to execute playbooks,
+        providing better integration, event handling, and artifact management.
         
         Args:
             playbook: Path to the Ansible playbook file to execute.
-            inventory: Path to the inventory file or comma-separated host list.
+            inventory: Path to the inventory file, comma-separated host list,
+                      or dictionary/list representing inventory structure.
             limit: Limit execution to specific hosts or groups.
             tags: Only run plays and tasks tagged with these values.
             skip_tags: Skip plays and tasks tagged with these values.
             extra_vars: Dictionary of extra variables to pass to the playbook.
             check: Run in check mode (dry-run), don't make any changes.
             diff: Show differences when changing small files and templates.
-            verbose: Increase verbosity level (0-4, where 0 is default).
-            **kwargs: Additional ansible-playbook command-line options.
-                     Supported options: become, become_user, forks, timeout
+            verbose: Increase verbosity level (0-5, where 0 is default).
+            forks: Control Ansible parallel concurrency.
+            **kwargs: Additional ansible-runner options (e.g., timeout, quiet).
         
         Returns:
             Dictionary containing playbook execution results:
             {
                 "success": bool,
-                "return_code": int,
-                "stdout": str,
-                "stderr": str,
-                "stats": dict (if parseable from output)
+                "status": str (one of: successful, failed, timeout, canceled),
+                "rc": int (return code),
+                "stats": dict (playbook statistics per host),
+                "stdout": str (captured output)
             }
         
         Raises:
             FileNotFoundError: If the playbook file does not exist.
-            RuntimeError: If there's an error executing the playbook.
             ValueError: If invalid parameters are provided.
+            RuntimeError: If there's an error executing the playbook.
         
         Example:
             result = ansible.playbook(
@@ -278,136 +286,123 @@ class Ansible(ComponentBase):
             if not playbook_path.exists():
                 raise FileNotFoundError(f"Ansible playbook file not found: {playbook_path}")
             
-            # Allowlist of supported kwargs to prevent arbitrary command injection
-            ALLOWED_KWARGS = {
-                'become': bool,
-                'become_user': str,
-                'forks': int,
-                'timeout': int
-            }
+            # Validate verbosity range
+            if verbose < 0 or verbose > 5:
+                raise ValueError("Verbosity level must be between 0 and 5")
             
-            # Validate kwargs
-            for key in kwargs:
-                if key not in ALLOWED_KWARGS:
-                    raise ValueError(f"Unsupported option: {key}. Allowed options: {', '.join(ALLOWED_KWARGS.keys())}")
-            
-            # Build the ansible-playbook command
-            command = ["ansible-playbook"]
-            
-            # Add playbook file
-            command.append(str(playbook_path))
-            
-            # Add inventory if specified (validate it's a path or valid host pattern)
-            if inventory:
-                inventory_path = Path(inventory)
-                # Allow either existing file paths or comma-separated host lists
-                if not (inventory_path.exists() or ',' in inventory):
-                    raise ValueError(f"Inventory must be an existing file or comma-separated host list: {inventory}")
-                command.extend(["-i", inventory])
-            
-            # Add limit if specified
-            if limit:
-                command.extend(["--limit", limit])
-            
-            # Add tags if specified
-            if tags:
-                command.extend(["--tags", tags])
-            
-            # Add skip-tags if specified
-            if skip_tags:
-                command.extend(["--skip-tags", skip_tags])
-            
-            # Add extra variables if specified
-            # Use JSON format which is safer than direct string interpolation
-            if extra_vars:
+            # Validate extra_vars if provided
+            if extra_vars is not None:
                 if not isinstance(extra_vars, dict):
                     raise ValueError("extra_vars must be a dictionary")
                 # Validate that extra_vars only contains safe types
                 for key, value in extra_vars.items():
                     if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
                         raise ValueError(f"Unsupported type for extra_var '{key}': {type(value)}")
-                command.extend(["--extra-vars", json.dumps(extra_vars)])
             
-            # Add check mode if specified
-            if check:
-                command.append("--check")
-            
-            # Add diff mode if specified
-            if diff:
-                command.append("--diff")
-            
-            # Add verbosity if specified (validate range)
-            if verbose > 0:
-                if verbose > 4:
-                    raise ValueError("Verbosity level must be between 0 and 4")
-                command.append("-" + "v" * verbose)
-            
-            # Add validated kwargs as command-line options
-            for key, value in kwargs.items():
-                expected_type = ALLOWED_KWARGS[key]
-                if not isinstance(value, expected_type):
-                    raise ValueError(f"Option '{key}' expects type {expected_type.__name__}, got {type(value).__name__}")
+            # Create a temporary directory for ansible-runner
+            with tempfile.TemporaryDirectory() as tmpdir:
+                # Set up the project directory structure
+                project_dir = os.path.join(tmpdir, 'project')
+                os.makedirs(project_dir)
                 
-                option_name = f"--{key.replace('_', '-')}"
-                if isinstance(value, bool):
-                    if value:
-                        command.append(option_name)
-                else:
-                    command.extend([option_name, str(value)])
-            
-            # Execute the playbook
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                text=True
-            )
-            
-            # Prepare the result dictionary
-            output = {
-                "success": result.returncode == 0,
-                "return_code": result.returncode,
-                "stdout": result.stdout,
-                "stderr": result.stderr
-            }
-            
-            # Try to extract stats from output if available
-            try:
-                # Look for the PLAY RECAP section in the output
-                if "PLAY RECAP" in result.stdout:
-                    recap_section = result.stdout.split("PLAY RECAP")[1].strip()
-                    stats = {}
-                    for line in recap_section.split('\n'):
-                        line = line.strip()
-                        if ':' in line and '=' in line:
-                            # Parse lines like: "host : ok=2 changed=1 unreachable=0 failed=0"
-                            parts = line.split(':')
-                            if len(parts) >= 2:
-                                host = parts[0].strip()
-                                stat_parts = parts[1].strip().split()
-                                host_stats = {}
-                                for stat in stat_parts:
-                                    if '=' in stat:
-                                        key, value = stat.split('=')
-                                        try:
-                                            host_stats[key] = int(value)
-                                        except ValueError:
-                                            host_stats[key] = value
-                                if host_stats:
-                                    stats[host] = host_stats
-                    if stats:
-                        output["stats"] = stats
-            except (KeyError, IndexError, AttributeError):
-                # If stats parsing fails, just skip it - it's an optional feature
-                pass
-            
-            return output
-            
+                # Copy the playbook to the project directory
+                playbook_name = playbook_path.name
+                shutil.copy(str(playbook_path), os.path.join(project_dir, playbook_name))
+                
+                # If playbook references other files in the same directory, copy them too
+                playbook_dir = playbook_path.parent
+                if playbook_dir != Path('.'):
+                    for item in playbook_dir.iterdir():
+                        if item.is_file() and item != playbook_path:
+                            try:
+                                shutil.copy(str(item), project_dir)
+                            except Exception:
+                                # Skip files that can't be copied
+                                pass
+                
+                # Prepare runner arguments
+                runner_args = {
+                    'private_data_dir': tmpdir,
+                    'playbook': playbook_name,
+                    'quiet': False,
+                    'verbosity': verbose if verbose > 0 else None,
+                }
+                
+                # Add inventory if specified
+                if inventory:
+                    # Check if inventory is a path
+                    inventory_path = Path(inventory)
+                    if inventory_path.exists():
+                        # Copy inventory file to the private_data_dir
+                        inventory_dir = os.path.join(tmpdir, 'inventory')
+                        os.makedirs(inventory_dir)
+                        shutil.copy(str(inventory_path), os.path.join(inventory_dir, inventory_path.name))
+                        runner_args['inventory'] = inventory_path.name
+                    else:
+                        # Assume it's a comma-separated host list or inline inventory
+                        runner_args['inventory'] = inventory
+                
+                # Add limit if specified
+                if limit:
+                    runner_args['limit'] = limit
+                
+                # Add extra variables
+                if extra_vars:
+                    runner_args['extravars'] = extra_vars
+                
+                # Add forks if specified
+                if forks is not None:
+                    if not isinstance(forks, int) or forks < 1:
+                        raise ValueError("forks must be a positive integer")
+                    runner_args['forks'] = forks
+                
+                # Build cmdline options for tags, skip-tags, check, diff
+                cmdline_parts = []
+                if tags:
+                    cmdline_parts.append(f"--tags {tags}")
+                if skip_tags:
+                    cmdline_parts.append(f"--skip-tags {skip_tags}")
+                if check:
+                    cmdline_parts.append("--check")
+                if diff:
+                    cmdline_parts.append("--diff")
+                
+                if cmdline_parts:
+                    runner_args['cmdline'] = ' '.join(cmdline_parts)
+                
+                # Add any additional kwargs (e.g., timeout, quiet)
+                allowed_kwargs = {'timeout', 'quiet', 'suppress_env_files', 
+                                 'process_isolation', 'container_image'}
+                for key, value in kwargs.items():
+                    if key in allowed_kwargs:
+                        runner_args[key] = value
+                
+                # Run the playbook
+                r = ansible_runner.run(**runner_args)
+                
+                # Collect stdout from events
+                stdout_lines = []
+                if hasattr(r, 'events'):
+                    for event in r.events:
+                        if 'stdout' in event and event['stdout']:
+                            stdout_lines.append(event['stdout'])
+                
+                stdout = '\n'.join(stdout_lines) if stdout_lines else ''
+                
+                # Prepare the result dictionary
+                output = {
+                    "success": r.status == 'successful',
+                    "status": r.status,
+                    "rc": r.rc,
+                    "stats": r.stats if hasattr(r, 'stats') else {},
+                    "stdout": stdout
+                }
+                
+                return output
+                
         except FileNotFoundError:
             raise
         except ValueError:
             raise
-        except subprocess.SubprocessError as e:
-            raise RuntimeError(f"Error executing Ansible playbook: {e}")
         except Exception as e:
-            raise RuntimeError(f"Unexpected error executing Ansible playbook: {e}")
-
+            raise RuntimeError(f"Error executing Ansible playbook: {e}")
