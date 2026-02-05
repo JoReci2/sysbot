@@ -33,3 +33,31 @@ Load Ansible YAML inventory with secret
     ${webservers}=    Get Secret    ansible_yaml.groups.webservers
     Should Be Equal    ${webservers}[hosts][web1.example.com][ansible_host]    192.168.1.10
     Should Be Equal    ${webservers}[hosts][web1.example.com][ansible_user]    admin
+
+Execute Ansible playbook without parameters
+    ${result}=    Call Components    plugins.ansible.playbook    tests/.dataset/test_playbook.yml
+    Should Be Equal    ${result}[success]    ${True}
+    Should Be Equal As Integers    ${result}[return_code]    0
+    Should Contain    ${result}[stdout]    Hello from Ansible playbook
+
+Execute Ansible playbook with extra variables
+    ${extra_vars}=    Create Dictionary    version=1.2.3
+    ${result}=    Call Components    plugins.ansible.playbook    tests/.dataset/test_playbook.yml    extra_vars=${extra_vars}
+    Should Be Equal    ${result}[success]    ${True}
+    Should Contain    ${result}[stdout]    Version: 1.2.3
+
+Execute Ansible playbook in check mode
+    ${result}=    Call Components    plugins.ansible.playbook    tests/.dataset/test_playbook.yml    check=${True}
+    Should Be Equal    ${result}[success]    ${True}
+    Should Be Equal As Integers    ${result}[return_code]    0
+
+Execute Ansible playbook with verbose output
+    ${result}=    Call Components    plugins.ansible.playbook    tests/.dataset/test_playbook.yml    verbose=${1}
+    Should Be Equal    ${result}[success]    ${True}
+    Should Contain    ${result}[stdout]    TASK
+
+Execute Ansible playbook and check stats
+    ${result}=    Call Components    plugins.ansible.playbook    tests/.dataset/test_playbook.yml
+    Should Be Equal    ${result}[success]    ${True}
+    Dictionary Should Contain Key    ${result}    stats
+    Should Not Be Empty    ${result}[stats]

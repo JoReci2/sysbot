@@ -3,8 +3,11 @@ Ansible Plugin Module
 
 This module provides functionality for loading and parsing Ansible inventory files.
 Supports both INI and YAML inventory formats with automatic format detection.
+Also provides functionality for executing Ansible playbooks.
 """
 import yaml
+import subprocess
+import json
 from pathlib import Path
 
 from sysbot.utils.engine import ComponentBase
@@ -12,10 +15,11 @@ from sysbot.utils.engine import ComponentBase
 
 class Ansible(ComponentBase):
     """
-    Ansible inventory loader plugin for managing Ansible inventory data.
+    Ansible plugin for managing Ansible inventory data and executing playbooks.
     
     This class provides methods to load Ansible inventory files in both INI
-    and YAML formats and optionally store them in the SysBot secrets cache.
+    and YAML formats, execute Ansible playbooks, and optionally store results
+    in the SysBot secrets cache.
     """
     
     def inventory(self, file: str, key: str = None) -> dict:
@@ -214,3 +218,162 @@ class Ansible(ComponentBase):
             return {"groups": groups}
         except Exception as e:
             raise RuntimeError(f"Error processing INI inventory: {e}")
+
+    def playbook(
+        self,
+        playbook: str,
+        inventory: str = None,
+        limit: str = None,
+        tags: str = None,
+        skip_tags: str = None,
+        extra_vars: dict = None,
+        check: bool = False,
+        diff: bool = False,
+        verbose: int = 0,
+        **kwargs
+    ) -> dict:
+        """
+        Execute an Ansible playbook.
+        
+        Args:
+            playbook: Path to the Ansible playbook file to execute.
+            inventory: Path to the inventory file or comma-separated host list.
+            limit: Limit execution to specific hosts or groups.
+            tags: Only run plays and tasks tagged with these values.
+            skip_tags: Skip plays and tasks tagged with these values.
+            extra_vars: Dictionary of extra variables to pass to the playbook.
+            check: Run in check mode (dry-run), don't make any changes.
+            diff: Show differences when changing small files and templates.
+            verbose: Increase verbosity level (0-4, where 0 is default).
+            **kwargs: Additional ansible-playbook command-line options.
+        
+        Returns:
+            Dictionary containing playbook execution results:
+            {
+                "success": bool,
+                "return_code": int,
+                "stdout": str,
+                "stderr": str,
+                "stats": dict (if parseable from output)
+            }
+        
+        Raises:
+            FileNotFoundError: If the playbook file does not exist.
+            RuntimeError: If there's an error executing the playbook.
+        
+        Example:
+            result = ansible.playbook(
+                playbook="site.yml",
+                inventory="inventory.ini",
+                limit="webservers",
+                extra_vars={"version": "1.2.3"},
+                check=True
+            )
+        """
+        playbook_path = Path(playbook)
+        
+        try:
+            if not playbook_path.exists():
+                raise FileNotFoundError(f"Ansible playbook file not found: {playbook_path}")
+            
+            # Build the ansible-playbook command
+            command = ["ansible-playbook"]
+            
+            # Add playbook file
+            command.append(str(playbook_path))
+            
+            # Add inventory if specified
+            if inventory:
+                command.extend(["-i", inventory])
+            
+            # Add limit if specified
+            if limit:
+                command.extend(["--limit", limit])
+            
+            # Add tags if specified
+            if tags:
+                command.extend(["--tags", tags])
+            
+            # Add skip-tags if specified
+            if skip_tags:
+                command.extend(["--skip-tags", skip_tags])
+            
+            # Add extra variables if specified
+            if extra_vars:
+                command.extend(["--extra-vars", json.dumps(extra_vars)])
+            
+            # Add check mode if specified
+            if check:
+                command.append("--check")
+            
+            # Add diff mode if specified
+            if diff:
+                command.append("--diff")
+            
+            # Add verbosity if specified
+            if verbose > 0:
+                command.append("-" + "v" * min(verbose, 4))
+            
+            # Add any additional kwargs as command-line options
+            for key, value in kwargs.items():
+                option_name = f"--{key.replace('_', '-')}"
+                if isinstance(value, bool):
+                    if value:
+                        command.append(option_name)
+                else:
+                    command.extend([option_name, str(value)])
+            
+            # Execute the playbook
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True
+            )
+            
+            # Prepare the result dictionary
+            output = {
+                "success": result.returncode == 0,
+                "return_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr
+            }
+            
+            # Try to extract stats from output if available
+            try:
+                # Look for the PLAY RECAP section in the output
+                if "PLAY RECAP" in result.stdout:
+                    recap_section = result.stdout.split("PLAY RECAP")[1].strip()
+                    stats = {}
+                    for line in recap_section.split('\n'):
+                        line = line.strip()
+                        if ':' in line and '=' in line:
+                            # Parse lines like: "host : ok=2 changed=1 unreachable=0 failed=0"
+                            parts = line.split(':')
+                            if len(parts) >= 2:
+                                host = parts[0].strip()
+                                stat_parts = parts[1].strip().split()
+                                host_stats = {}
+                                for stat in stat_parts:
+                                    if '=' in stat:
+                                        key, value = stat.split('=')
+                                        try:
+                                            host_stats[key] = int(value)
+                                        except ValueError:
+                                            host_stats[key] = value
+                                if host_stats:
+                                    stats[host] = host_stats
+                    if stats:
+                        output["stats"] = stats
+            except Exception:
+                # If stats parsing fails, just skip it
+                pass
+            
+            return output
+            
+        except FileNotFoundError:
+            raise
+        except subprocess.SubprocessError as e:
+            raise RuntimeError(f"Error executing Ansible playbook: {e}")
+        except Exception as e:
+            raise RuntimeError(f"Unexpected error executing Ansible playbook: {e}")
+
