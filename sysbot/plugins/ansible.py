@@ -12,9 +12,16 @@ import os
 import re
 from pathlib import Path
 
-import ansible_runner
-
 from sysbot.utils.engine import ComponentBase
+
+# Try to import ansible_runner, but make it optional
+# ansible_runner depends on fcntl which is Unix-only and will fail on Windows
+try:
+    import ansible_runner
+    HAS_ANSIBLE_RUNNER = True
+except ImportError:
+    HAS_ANSIBLE_RUNNER = False
+    ansible_runner = None
 
 
 class Ansible(ComponentBase):
@@ -281,6 +288,12 @@ class Ansible(ComponentBase):
                 check=True
             )
         """
+        if not HAS_ANSIBLE_RUNNER:
+            raise RuntimeError(
+                "ansible-runner is not available. This functionality requires ansible-runner "
+                "which is not supported on Windows. Please use this feature on a Unix-like system."
+            )
+
         playbook_path = Path(playbook)
         
         try:
@@ -474,6 +487,12 @@ class Ansible(ComponentBase):
                 check=True
             )
         """
+        if not HAS_ANSIBLE_RUNNER:
+            raise RuntimeError(
+                "ansible-runner is not available. This functionality requires ansible-runner "
+                "which is not supported on Windows. Please use this feature on a Unix-like system."
+            )
+
         try:
             # Validate role name to prevent path traversal or injection
             role_pattern = re.compile(r'^[a-zA-Z0-9_\-\.]+$')
