@@ -4,10 +4,10 @@ SQLite Listener for Robot Framework BDD Database Integration
 This module provides a Robot Framework listener that stores test results in SQLite.
 
 Usage:
-    robot --listener sysbot.utils.robot.listener.sqlite.Sqlite:results.db:MyCampaign tests/
+    robot --listener sysbot.utils.robot.listener.sqlite.Sqlite:results.db:MyCampaign your_tests/
 
 Example:
-    robot --listener sysbot.utils.robot.listener.sqlite.Sqlite:results.db:TestRun1 tests/
+    robot --listener sysbot.utils.robot.listener.sqlite.Sqlite:results.db:TestRun1 your_tests/
 """
 
 import datetime

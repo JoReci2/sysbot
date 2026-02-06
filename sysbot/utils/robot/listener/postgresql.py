@@ -4,10 +4,10 @@ PostgreSQL Listener for Robot Framework BDD Database Integration
 This module provides a Robot Framework listener that stores test results in PostgreSQL.
 
 Usage:
-    robot --listener sysbot.utils.robot.listener.postgresql.Postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
+    robot --listener sysbot.utils.robot.listener.postgresql.Postgresql:postgresql://user:pass@localhost/testdb:MyCampaign your_tests/
 
 Example:
-    robot --listener sysbot.utils.robot.listener.postgresql.Postgresql:postgresql://postgres:password@localhost/test_results:Sprint42 tests/
+    robot --listener sysbot.utils.robot.listener.postgresql.Postgresql:postgresql://postgres:password@localhost/test_results:Sprint42 your_tests/
 
 Requirements:
     - psycopg2-binary package must be installed

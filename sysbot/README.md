@@ -315,7 +315,7 @@ SysBot is designed to work seamlessly with Robot Framework, providing powerful a
 ```robot
 *** Settings ***
 Library        sysbot.Sysbot
-Suite Setup       Call Components    plugins.data.yaml    tests/.dataset/connexion.yml    key=connexion
+Suite Setup       Call Components    plugins.data.yaml    /path/to/connexion.yml    key=connexion
 Suite Teardown    Close All Sessions
 
 *** Variables ***
@@ -429,16 +429,16 @@ Each listener is used directly with its specific class:
 
 ```bash
 # Store results in SQLite
-robot --listener sysbot.utils.robot.listener.sqlite.Sqlite:results.db:MyCampaign tests/
+robot --listener sysbot.utils.robot.listener.sqlite.Sqlite:results.db:MyCampaign your_tests/
 
 # Store results in MySQL
-robot --listener sysbot.utils.robot.listener.mysql.Mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
+robot --listener sysbot.utils.robot.listener.mysql.Mysql:mysql://user:pass@localhost/testdb:MyCampaign your_tests/
 
 # Store results in PostgreSQL
-robot --listener sysbot.utils.robot.listener.postgresql.Postgresql:postgresql://user:pass@localhost/testdb:MyCampaign tests/
+robot --listener sysbot.utils.robot.listener.postgresql.Postgresql:postgresql://user:pass@localhost/testdb:MyCampaign your_tests/
 
 # Store results in MongoDB
-robot --listener sysbot.utils.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/testdb:MyCampaign tests/
+robot --listener sysbot.utils.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/testdb:MyCampaign your_tests/
 ```
 
 ### Listener Parameters
@@ -524,7 +524,7 @@ polarion.generate_xunit(
 **Using Command Line:**
 ```bash
 # Run Robot Framework tests
-robot --outputdir results tests/
+robot --outputdir results your_tests/
 
 # Generate Polarion xUnit using Python
 python -c "from sysbot.utils.robot.polarion import Polarion; \
