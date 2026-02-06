@@ -264,79 +264,6 @@ class Hardware(ConnectorInterface):
         - Palo Alto: paloalto_panos
         - And many more (see netmiko documentation)
 
-    Usage Examples:
-        Basic usage with automatic device detection:
-
-        >>> from sysbot.Sysbot import Sysbot
-        >>> bot = Sysbot()
-        >>> bot.open_session(
-        ...     alias='my_switch',
-        ...     protocol='ssh',
-        ...     product='hardware',
-        ...     host='192.168.1.1',
-        ...     port=22,
-        ...     login='admin',
-        ...     password='password'
-        ... )
-        >>> output = bot.execute_command('my_switch', 'show version')
-        >>> print(output)
-        >>> bot.close_all_sessions()
-
-        With explicit device type (skips autodetection):
-
-        >>> bot.open_session(
-        ...     alias='my_switch',
-        ...     protocol='ssh',
-        ...     product='hardware',
-        ...     host='192.168.1.1',
-        ...     port=22,
-        ...     login='admin',
-        ...     password='password',
-        ...     device_type='cisco_nxos'
-        ... )
-
-        With enable mode for privileged commands:
-
-        >>> bot.open_session(
-        ...     alias='my_switch',
-        ...     protocol='ssh',
-        ...     product='hardware',
-        ...     host='192.168.1.1',
-        ...     port=22,
-        ...     login='admin',
-        ...     password='password',
-        ...     secret='enable_password',
-        ...     device_type='cisco_ios'
-        ... )
-
-        With custom timeouts:
-
-        >>> bot.open_session(
-        ...     alias='my_switch',
-        ...     protocol='ssh',
-        ...     product='hardware',
-        ...     host='192.168.1.1',
-        ...     port=22,
-        ...     login='admin',
-        ...     password='password',
-        ...     timeout=60,
-        ...     session_timeout=60
-        ... )
-
-        Robot Framework example:
-
-        >>> # Automatic detection
-        >>> Open Session    my_switch    ssh    hardware    192.168.1.1    22    admin    password
-        >>> ${output}=    Execute Command    my_switch    show version
-        >>> Log    ${output}
-        >>> Close All Sessions
-
-        Robot Framework with explicit device type:
-
-        >>> Open Session    my_switch    ssh    hardware    192.168.1.1    22    admin    password    device_type=cisco_ios
-        >>> ${output}=    Execute Command    my_switch    show running-config
-        >>> Close Session    my_switch
-
     Notes:
         - Autodetection adds a small overhead on first connection (creates temporary connection to detect type)
         - For production environments with known device types, consider specifying device_type explicitly
@@ -358,19 +285,6 @@ class Hardware(ConnectorInterface):
                 When set to "autodetect", the connector will automatically detect
                 the device type. Can be explicitly set to: cisco_ios, cisco_nxos,
                 cisco_asa, arista_eos, juniper_junos, hp_comware, etc.
-
-        Examples:
-            >>> # Default initialization with autodetect
-            >>> connector = Hardware()
-
-            >>> # Custom port
-            >>> connector = Hardware(port=2222)
-
-            >>> # Explicit device type (skips autodetection)
-            >>> connector = Hardware(device_type='cisco_nxos')
-
-            >>> # Custom port with explicit device type
-            >>> connector = Hardware(port=2222, device_type='arista_eos')
         """
         super().__init__()
         self.default_port = port
@@ -399,44 +313,6 @@ class Hardware(ConnectorInterface):
 
         Raises:
             Exception: If there is an error opening the session or autodetection fails.
-
-        Examples:
-            >>> # Automatic device detection (default)
-            >>> session = connector.open_session(
-            ...     host='192.168.1.1',
-            ...     port=22,
-            ...     login='admin',
-            ...     password='password'
-            ... )
-
-            >>> # Explicit device type
-            >>> session = connector.open_session(
-            ...     host='192.168.1.1',
-            ...     port=22,
-            ...     login='admin',
-            ...     password='password',
-            ...     device_type='cisco_ios'
-            ... )
-
-            >>> # With enable password for privileged mode
-            >>> session = connector.open_session(
-            ...     host='192.168.1.1',
-            ...     port=22,
-            ...     login='admin',
-            ...     password='password',
-            ...     secret='enable_password',
-            ...     device_type='cisco_ios'
-            ... )
-
-            >>> # With custom timeouts
-            >>> session = connector.open_session(
-            ...     host='192.168.1.1',
-            ...     port=22,
-            ...     login='admin',
-            ...     password='password',
-            ...     timeout=120,
-            ...     session_timeout=120
-            ... )
 
         Notes:
             - When device_type is "autodetect", a temporary connection is created
@@ -511,30 +387,6 @@ class Hardware(ConnectorInterface):
         Raises:
             Exception: If there is an error executing the command.
 
-        Examples:
-            >>> # Simple command execution
-            >>> output = connector.execute_command(session, 'show version')
-            >>> print(output)
-
-            >>> # Command with delay factor for slow devices
-            >>> output = connector.execute_command(
-            ...     session,
-            ...     'show tech-support',
-            ...     delay_factor=2
-            ... )
-
-            >>> # Command with custom expect string
-            >>> output = connector.execute_command(
-            ...     session,
-            ...     'show running-config',
-            ...     expect_string=r'#'
-            ... )
-
-            >>> # Multiple commands
-            >>> version = connector.execute_command(session, 'show version')
-            >>> interfaces = connector.execute_command(session, 'show ip interface brief')
-            >>> vlans = connector.execute_command(session, 'show vlan')
-
         Notes:
             - Commands are sent directly to the device CLI without shell wrapping.
             - The device's command prompt is automatically stripped from output.
@@ -556,25 +408,6 @@ class Hardware(ConnectorInterface):
 
         Raises:
             Exception: If there is an error closing the session.
-
-        Examples:
-            >>> # Close a single session
-            >>> connector.close_session(session)
-
-            >>> # Using with context (recommended pattern)
-            >>> session = None
-            >>> try:
-            ...     session = connector.open_session(
-            ...         host='192.168.1.1',
-            ...         port=22,
-            ...         login='admin',
-            ...         password='password'
-            ...     )
-            ...     output = connector.execute_command(session, 'show version')
-            ...     print(output)
-            ... finally:
-            ...     if session:
-            ...         connector.close_session(session)
 
         Notes:
             - Always close sessions when done to free resources.
