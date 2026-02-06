@@ -34,7 +34,7 @@ jobs:
 
       - name: Generate documentation
         run: |
-          pdoc --html --output-dir public sysbot
+          pdoc --html --output-dir public -c show_source_code=False sysbot
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
