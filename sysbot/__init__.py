@@ -31,6 +31,13 @@ included in this package directory.
 
 import os
 
+# Load version from setuptools_scm generated file
+try:
+    from ._version import __version__
+except ImportError:
+    # Fallback for development environments where version file doesn't exist
+    __version__ = "unknown"
+
 # Load README content for documentation
 _pkg_dir = os.path.dirname(__file__)
 _readme_path = os.path.join(_pkg_dir, 'README.md')
@@ -48,4 +55,4 @@ if os.path.exists(_readme_path):
         pass
 
 from .Sysbot import Sysbot
-__all__ = ['Sysbot']
+__all__ = ['Sysbot', '__version__']
