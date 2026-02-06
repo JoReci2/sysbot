@@ -107,17 +107,9 @@ def example_function(param1: str, param2: int) -> bool:
 * Write tests for any new functionality
 * Maintain high test coverage (>80%)
 * Use `robot framework` or `unittest` for testing
-* Place tests in the `tests/` folder
+* Tests are maintained in a separate repository: [sysbot-tests](https://github.com/JoReci2/sysbot-tests)
 
-Running tests:
-
-```bash
-# All tests
-robot -d tests/
-
-# Specific tests
-robot -d tests/test_specific.robot
-```
+For information on running tests, please refer to the [sysbot-tests repository](https://github.com/JoReci2/sysbot-tests).
 
 ## Pull Request Process
 
@@ -143,10 +135,10 @@ robot -d tests/test_specific.robot
 
 5. Ensure that:
 
-   * All tests pass
    * Code follows standards
    * Documentation is updated if necessary
    * Pull request has a clear description
+   * Tests pass in the [sysbot-tests](https://github.com/JoReci2/sysbot-tests) repository (if applicable)
 
 ### Commit Convention
 
@@ -157,7 +149,6 @@ Use Conventional Commits convention:
 * `docs:`: documentation
 * `style:`: formatting, missing semicolons, etc.
 * `refactor:`: code refactoring
-* `test:`: adding tests
 * `chore:`: maintenance
 
 ## Bug Reports
@@ -288,7 +279,6 @@ class Systemd(ComponentBase):
 * **Documentation**: Provide comprehensive docstrings for all public methods
 * **Error Handling**: Handle errors gracefully and provide meaningful error messages
 * **Dependencies**: Document any system dependencies or required commands
-* **Testing**: Write tests for your module functionality
 * **Scope**: Keep modules focused on a single responsibility
 
 ### Module Usage
@@ -611,7 +601,6 @@ Plugins are automatically registered when they are placed in the correct locatio
 * **Error Handling**: Handle errors gracefully with meaningful messages
 * **Dependencies**: Document any external dependencies (e.g., database drivers)
 * **Configuration**: Support configuration through initialization parameters
-* **Testing**: Write comprehensive tests for plugin functionality
 * **Versioning**: Consider API versioning for public plugins
 
 ### Using Plugins
@@ -635,10 +624,10 @@ bot.plugins.vault.dump_engine(
 )
 ```
 
-Robot Framework listeners are used differently:
+Robot Framework listeners are used with test files:
 
 ```bash
-robot --listener sysbot.utils.robot.listener.mylistener.MyListener:arg1:arg2 tests/
+robot --listener sysbot.utils.robot.listener.mylistener.MyListener:arg1:arg2 your_tests/
 ```
 
 ## Release Process

@@ -4,10 +4,10 @@ MySQL Listener for Robot Framework BDD Database Integration
 This module provides a Robot Framework listener that stores test results in MySQL.
 
 Usage:
-    robot --listener sysbot.utils.robot.listener.mysql.Mysql:mysql://user:pass@localhost/testdb:MyCampaign tests/
+    robot --listener sysbot.utils.robot.listener.mysql.Mysql:mysql://user:pass@localhost/testdb:MyCampaign your_tests/
 
 Example:
-    robot --listener sysbot.utils.robot.listener.mysql.Mysql:mysql://root:password@localhost/test_results:Sprint42 tests/
+    robot --listener sysbot.utils.robot.listener.mysql.Mysql:mysql://root:password@localhost/test_results:Sprint42 your_tests/
 
 Requirements:
     - mysql-connector-python package must be installed
