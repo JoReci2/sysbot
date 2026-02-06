@@ -293,7 +293,7 @@ class Ansible(ComponentBase):
                 "ansible-runner is not available. This functionality requires ansible-runner "
                 "which is not supported on Windows. Please use this feature on a Unix-like system."
             )
-        
+
         playbook_path = Path(playbook)
         
         try:
@@ -492,7 +492,7 @@ class Ansible(ComponentBase):
                 "ansible-runner is not available. This functionality requires ansible-runner "
                 "which is not supported on Windows. Please use this feature on a Unix-like system."
             )
-        
+
         try:
             # Validate role name to prevent path traversal or injection
             role_pattern = re.compile(r'^[a-zA-Z0-9_\-\.]+$')
