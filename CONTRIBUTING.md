@@ -647,6 +647,8 @@ robot --listener sysbot.utils.robot.listener.mylistener.MyListener:arg1:arg2 tes
 
 SysBot uses an automated GitHub Actions workflow to publish releases to PyPI. The workflow is triggered automatically when a version tag is pushed to the repository.
 
+**Important**: SysBot uses `setuptools_scm` for automatic versioning. The package version is automatically determined from git tags, so you **do not need to manually update the version** in `setup.py`.
+
 #### Prerequisites
 
 Before publishing a release, ensure that:
@@ -655,33 +657,24 @@ Before publishing a release, ensure that:
    - For trusted publishing: Configure the publisher in PyPI project settings
    - For API token: Add `PYPI_API_TOKEN` to repository secrets
 
-2. **Version number is updated** in `setup.py`:
-   ```python
-   version="X.Y.Z"  # Update this to the new version
-   ```
-
 #### Creating a Release
 
-1. **Update the version** in `setup.py`:
+1. **Ensure your changes are committed and pushed**:
    ```bash
-   # Edit setup.py and update the version field
-   vim setup.py
-   ```
-
-2. **Commit the version change**:
-   ```bash
-   git add setup.py
-   git commit -m "chore: bump version to X.Y.Z"
+   git add .
+   git commit -m "Your changes description"
    git push origin main
    ```
 
-3. **Create and push a version tag**:
+2. **Create and push a version tag**:
    ```bash
    git tag -a X.Y.Z -m "Release version X.Y.Z"
    git push origin X.Y.Z
    ```
 
-4. **Monitor the workflow**:
+   The version in the tag will automatically be used as the package version.
+
+3. **Monitor the workflow**:
    - Go to the Actions tab in GitHub
    - Watch the "Publish Python Package to PyPI" workflow
    - The workflow will build and publish the package automatically
@@ -691,21 +684,32 @@ Before publishing a release, ensure that:
 - Tags must use semantic versioning format: `MAJOR.MINOR.PATCH`
 - Examples: `0.2.0`, `1.0.0`, `2.1.3`
 - Do not prefix tags with `v`
+- The exact tag version will be used as the package version on PyPI
+
+#### Automatic Versioning with setuptools_scm
+
+SysBot uses `setuptools_scm` to automatically determine the package version from git tags:
+
+- **Tagged commits**: Use the exact tag version (e.g., tag `0.2.0` → package version `0.2.0`)
+- **Development commits**: Use a development version (e.g., `0.2.1.dev5+g1234abcd`)
+- The version is embedded in the package at build time and accessible via `sysbot.__version__`
 
 #### Workflow Steps
 
 The automated workflow performs the following steps:
 
-1. **Build**: Creates both wheel (`.whl`) and source (`.tar.gz`) distributions
-2. **Publish**: Uploads the distributions to PyPI using trusted publishing
+1. **Checkout**: Fetches the full git history to enable version detection
+2. **Build**: Creates both wheel (`.whl`) and source (`.tar.gz`) distributions with the version from the git tag
+3. **Publish**: Uploads the distributions to PyPI using trusted publishing
 
 #### Troubleshooting
 
 If the workflow fails:
 
 - **Authentication errors**: Verify PyPI trusted publishing is configured or API token is valid
-- **Version conflicts**: Ensure the version in `setup.py` hasn't already been published
+- **Version conflicts**: Ensure the version tag hasn't already been published to PyPI
 - **Build errors**: Check that all dependencies are correctly specified in `setup.py`
+- **Version detection errors**: Ensure the git tag follows the semantic versioning format (X.Y.Z) without a 'v' prefix
 
 ## Acknowledgments
 

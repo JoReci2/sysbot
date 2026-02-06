@@ -20,3 +20,6 @@ documentation.pdf
 release_notes.md
 final_release_notes.md
 test_results.db
+
+# setuptools_scm generated version file
+sysbot/_version.py
