@@ -8,8 +8,14 @@ with Robot Framework and various database systems.
 from setuptools import setup, find_packages
 
 # Read the README file for long description
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
+try:
+    with open("README.md", "r", encoding="utf-8") as fh:
+        long_description = fh.read()
+except FileNotFoundError:
+    long_description = """SysBot is a comprehensive library designed for system test automation. 
+    It provides secure connection management (SSH, WinRM), secret handling 
+    capabilities, and seamless integration with various technologies including Redfish 
+    and remote system management. Perfect for DevOps teams looking to automate infrastructure tests workflows."""
 
 setup(
     name="sysbot",
@@ -51,7 +57,6 @@ setup(
         "Documentation": "https://joreci2.github.io/sysbot/",
         "Source": "https://github.com/JoReci2/sysbot",
         "Bug Tracker": "https://github.com/JoReci2/sysbot/issues",
-        "PyPI": "https://pypi.org/project/sysbot/",
     },
     keywords=[
         "automation",
