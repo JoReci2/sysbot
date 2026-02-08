@@ -3,6 +3,7 @@ __pycache__/
 .asciidoctor/
 dist/
 *.egg-info/
+.eggs/
 .DS_Store
 *.html
 
