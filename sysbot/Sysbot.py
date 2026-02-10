@@ -57,11 +57,9 @@ class Sysbot(metaclass=ComponentMeta):
         """
         if components is None:
             all_modules = ComponentLoader.discover_all_components(__file__, "modules")
-            all_module = ComponentLoader.discover_all_components(__file__, "module")
             all_plugins = ComponentLoader.discover_all_components(__file__, "plugins")
             components = []
             components.extend([f"modules.{module}" for module in all_modules])
-            components.extend([f"module.{module}" for module in all_module])
             components.extend([f"plugins.{plugin}" for plugin in all_plugins])
         ComponentLoader.load_components(self, components)
         self._cache = Cache("No sessions created")
