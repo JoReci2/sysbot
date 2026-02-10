@@ -20,7 +20,47 @@ class Harvester(ComponentBase):
     This class provides methods to interact with Rancher Harvester systems using REST API
     via the HTTP connector with API Key or Basic authentication.
     All methods require an alias to identify the established HTTP session.
+    
+    Example:
+        Basic usage with API key authentication::
+        
+            import sysbot
+            
+            bot = sysbot.Sysbot(['modules.virtualization.harvester'])
+            
+            # Open session with API key
+            bot.open_session(
+                "harvester",
+                "http",
+                "apikey",
+                "harvester.example.com",
+                443,
+                apikey="your-api-key-here"
+            )
+            
+            # Get cluster version
+            version = bot.modules.virtualization.harvester.get_version("harvester")
+            
+            # List virtual machines
+            vms = bot.modules.virtualization.harvester.list_virtual_machines("harvester")
+            
+            # Get specific VM
+            vm = bot.modules.virtualization.harvester.get_virtual_machine("harvester", "my-vm")
+            
+            bot.close_session("harvester")
     """
+    
+    def _parse_response(self, response):
+        """
+        Parse HTTP response and decode JSON.
+        
+        Args:
+            response: The raw HTTP response bytes.
+            
+        Returns:
+            Parsed JSON object (dict or list).
+        """
+        return json.loads(response.decode())
 
     def get_version(self, alias: str, **kwargs) -> dict:
         """
@@ -33,7 +73,7 @@ class Harvester(ComponentBase):
             dict: Version information.
         """
         response = self.execute_command(alias, "/v1/harvesterhci.io.settings/server-version", options={"method": "GET"}, **kwargs)
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def list_virtual_machines(self, alias: str, namespace: str = "default", **kwargs) -> dict:
         """
@@ -52,7 +92,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def get_virtual_machine(self, alias: str, name: str, namespace: str = "default", **kwargs) -> dict:
         """
@@ -72,7 +112,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def list_vm_instances(self, alias: str, namespace: str = "default", **kwargs) -> dict:
         """
@@ -91,7 +131,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def get_vm_instance(self, alias: str, name: str, namespace: str = "default", **kwargs) -> dict:
         """
@@ -111,7 +151,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def list_images(self, alias: str, namespace: str = "default", **kwargs) -> dict:
         """
@@ -130,7 +170,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def get_image(self, alias: str, name: str, namespace: str = "default", **kwargs) -> dict:
         """
@@ -150,18 +190,18 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
-    def list_volumes(self, alias: str, namespace: str = "default", **kwargs) -> dict:
+    def list_volume_claims(self, alias: str, namespace: str = "default", **kwargs) -> dict:
         """
-        List all persistent volumes in a namespace.
+        List all persistent volume claims in a namespace.
 
         Args:
             alias (str): The session alias for the Harvester connection.
             namespace (str): Kubernetes namespace (default: "default").
 
         Returns:
-            dict: List of persistent volumes.
+            dict: List of persistent volume claims.
         """
         response = self.execute_command(
             alias,
@@ -169,19 +209,19 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
-    def get_volume(self, alias: str, name: str, namespace: str = "default", **kwargs) -> dict:
+    def get_volume_claim(self, alias: str, name: str, namespace: str = "default", **kwargs) -> dict:
         """
-        Get details of a specific persistent volume.
+        Get details of a specific persistent volume claim.
 
         Args:
             alias (str): The session alias for the Harvester connection.
-            name (str): Volume name.
+            name (str): Volume claim name.
             namespace (str): Kubernetes namespace (default: "default").
 
         Returns:
-            dict: Volume details.
+            dict: Volume claim details.
         """
         response = self.execute_command(
             alias,
@@ -189,7 +229,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def list_networks(self, alias: str, namespace: str = "default", **kwargs) -> dict:
         """
@@ -208,7 +248,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def get_network(self, alias: str, name: str, namespace: str = "default", **kwargs) -> dict:
         """
@@ -228,7 +268,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def list_nodes(self, alias: str, **kwargs) -> dict:
         """
@@ -246,7 +286,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def get_node(self, alias: str, name: str, **kwargs) -> dict:
         """
@@ -265,7 +305,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def list_namespaces(self, alias: str, **kwargs) -> dict:
         """
@@ -283,7 +323,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def get_cluster_info(self, alias: str, **kwargs) -> dict:
         """
@@ -301,7 +341,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def list_settings(self, alias: str, **kwargs) -> dict:
         """
@@ -319,7 +359,7 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
 
     def get_setting(self, alias: str, name: str, **kwargs) -> dict:
         """
@@ -338,4 +378,4 @@ class Harvester(ComponentBase):
             options={"method": "GET"},
             **kwargs
         )
-        return json.loads(response.decode())
+        return self._parse_response(response)
