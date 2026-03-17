@@ -6,7 +6,6 @@ RHEL/Fedora-based Linux systems, including repository management and package
 operations.
 """
 from sysbot.utils.engine import ComponentBase
-import json
 import configparser
 from io import StringIO
 
@@ -14,7 +13,7 @@ from io import StringIO
 class Dnf(ComponentBase):
     """DNF package manager operations class for RHEL/Fedora-based systems."""
 
-    def repolist(self, alias: str, **kwargs) -> dict:
+    def repolist(self, alias: str, **kwargs) -> list:
         """
         Get list of DNF repositories.
 
@@ -23,10 +22,27 @@ class Dnf(ComponentBase):
             **kwargs: Additional command execution options.
 
         Returns:
-            Dictionary containing repository information in JSON format.
+            List of dictionaries containing repository information,
+            each with 'id' and 'name' keys.
         """
-        output = self.execute_command(alias, "dnf repolist --json", **kwargs)
-        return json.loads(output)
+        output = self.execute_command(alias, "dnf repolist", **kwargs)
+        repos = []
+        # Locate the header line (e.g. "repo id    repo name") and parse
+        # only the lines that follow it, skipping any metadata lines printed
+        # before the table (e.g. "Last metadata expiration check: …").
+        header_found = False
+        for line in output.splitlines():
+            if not header_found:
+                if line.lstrip().lower().startswith("repo id"):
+                    header_found = True
+                continue
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(None, 1)
+            if parts:
+                repos.append({"id": parts[0], "name": parts[1].strip() if len(parts) > 1 else ""})
+        return repos
 
     def repofile(self, alias: str, file: str, **kwargs) -> dict:
         """
