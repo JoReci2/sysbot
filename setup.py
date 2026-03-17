@@ -26,7 +26,6 @@ setup(
     install_requires=[
         "robotframework",
         "paramiko",
-        "sshtunnel",
         "netmiko",
         "redfish",
         "pywinrm",

@@ -26,11 +26,116 @@ import base64
 import os
 import json
 import importlib
-from sshtunnel import SSHTunnelForwarder
+import select
+import socket
+import threading
+import paramiko
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, List
 from cryptography.fernet import Fernet
+
+
+class SSHTunnel:
+    """
+    A lightweight SSH tunnel implementation using paramiko, replacing the
+    unmaintained sshtunnel library which is incompatible with paramiko >= 3.x
+    (paramiko removed DSSKey in version 3.0).
+    """
+
+    def __init__(
+        self,
+        ssh_address_or_host,
+        remote_bind_address,
+        ssh_username=None,
+        ssh_password=None,
+    ):
+        self._ssh_host, self._ssh_port = ssh_address_or_host
+        self._remote_host, self._remote_port = remote_bind_address
+        self._ssh_username = ssh_username
+        self._ssh_password = ssh_password
+        self._transport = None
+        self._server_socket = None
+        self._local_bind_port = None
+        self._stop_event = threading.Event()
+        self._accept_thread = None
+
+    @property
+    def local_bind_port(self):
+        return self._local_bind_port
+
+    def start(self):
+        self._transport = paramiko.Transport((self._ssh_host, self._ssh_port))
+        self._transport.connect(
+            username=self._ssh_username, password=self._ssh_password
+        )
+
+        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._server_socket.bind(("127.0.0.1", 0))
+        self._local_bind_port = self._server_socket.getsockname()[1]
+        self._server_socket.listen(5)
+
+        self._accept_thread = threading.Thread(
+            target=self._accept_loop, daemon=True
+        )
+        self._accept_thread.start()
+
+    def _accept_loop(self):
+        while not self._stop_event.is_set():
+            self._server_socket.settimeout(1.0)
+            try:
+                client_sock, addr = self._server_socket.accept()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            try:
+                channel = self._transport.open_channel(
+                    "direct-tcpip",
+                    (self._remote_host, self._remote_port),
+                    addr,
+                )
+            except paramiko.SSHException:
+                client_sock.close()
+                continue
+            t = threading.Thread(
+                target=self._forward_data,
+                args=(client_sock, channel),
+                daemon=True,
+            )
+            t.start()
+
+    def _forward_data(self, client_sock, channel):
+        try:
+            while not self._stop_event.is_set():
+                r, _, _ = select.select([client_sock, channel], [], [], 1.0)
+                if client_sock in r:
+                    data = client_sock.recv(4096)
+                    if not data:
+                        break
+                    channel.sendall(data)
+                if channel in r:
+                    data = channel.recv(4096)
+                    if not data:
+                        break
+                    client_sock.sendall(data)
+        finally:
+            client_sock.close()
+            channel.close()
+
+    def stop(self):
+        self._stop_event.set()
+        if self._server_socket:
+            try:
+                self._server_socket.close()
+            except OSError:
+                pass
+        if self._transport:
+            try:
+                self._transport.close()
+            except paramiko.SSHException:
+                pass
 
 
 class ConnectorInterface(ABC):
@@ -205,7 +310,7 @@ class TunnelingManager:
                     int(tunnel_config[index + 1]["port"]),
                 )
             )
-            tunnel = SSHTunnelForwarder(
+            tunnel = SSHTunnel(
                 ssh_address_or_host=ssh_address_or_host,
                 remote_bind_address=remote_bind_address,
                 ssh_username=config["username"],
