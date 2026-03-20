@@ -115,7 +115,7 @@ class Apikey(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None, api_key=None, 
-                     api_key_header="X-API-Key", api_key_in_query=False):
+                     api_key_header="X-API-Key", api_key_in_query=False, verify_ssl=True):
         """
         Opens a session with API key authentication.
 
@@ -127,6 +127,8 @@ class Apikey(BaseHttp):
             api_key (str): The API key.
             api_key_header (str): Header name for API key (default: "X-API-Key").
             api_key_in_query (bool): If True, send API key as query parameter instead of header.
+            verify_ssl (bool): Whether to verify SSL certificates (default: True).
+                Set to False to disable SSL verification for self-signed certificates.
 
         Returns:
             dict: Session configuration.
@@ -140,7 +142,8 @@ class Apikey(BaseHttp):
             "api_key": api_key,
             "api_key_header": api_key_header,
             "api_key_in_query": api_key_in_query,
-            "use_https": self.use_https
+            "use_https": self.use_https,
+            "verify_ssl": verify_ssl
         }
 
     def execute_command(self, session, command, options=None):
@@ -168,7 +171,7 @@ class Apikey(BaseHttp):
         params = options.get("params", {}) if options else {}
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
-        verify = options.get("verify", True) if options else True
+        verify = options.get("verify", session.get("verify_ssl", True)) if options else session.get("verify_ssl", True)
         
         if session.get("api_key_in_query"):
             params[session["api_key_header"]] = session["api_key"]
@@ -212,7 +215,7 @@ class Basicauth(BaseHttp):
         """
         super().__init__(port, use_https)
 
-    def open_session(self, host, port=None, login=None, password=None):
+    def open_session(self, host, port=None, login=None, password=None, verify_ssl=True):
         """
         Opens a session with Basic authentication.
 
@@ -221,6 +224,8 @@ class Basicauth(BaseHttp):
             port (int): Port. If None, uses default_port.
             login (str): Username.
             password (str): Password.
+            verify_ssl (bool): Whether to verify SSL certificates (default: True).
+                Set to False to disable SSL verification for self-signed certificates.
 
         Returns:
             dict: Session configuration.
@@ -233,7 +238,8 @@ class Basicauth(BaseHttp):
             "port": port,
             "login": login,
             "password": password,
-            "use_https": self.use_https
+            "use_https": self.use_https,
+            "verify_ssl": verify_ssl
         }
 
     def execute_command(self, session, command, options=None):
@@ -261,7 +267,7 @@ class Basicauth(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
-        verify = options.get("verify", True) if options else True
+        verify = options.get("verify", session.get("verify_ssl", True)) if options else session.get("verify_ssl", True)
         
         auth = HTTPBasicAuth(session["login"], session["password"])
         
@@ -305,7 +311,8 @@ class Oauth1(BaseHttp):
 
     def open_session(self, host, port=None, login=None, password=None, 
                      client_key=None, client_secret=None, 
-                     resource_owner_key=None, resource_owner_secret=None):
+                     resource_owner_key=None, resource_owner_secret=None,
+                     verify_ssl=True):
         """
         Opens a session with OAuth 1.0 authentication.
 
@@ -318,6 +325,8 @@ class Oauth1(BaseHttp):
             client_secret (str): OAuth consumer secret.
             resource_owner_key (str): OAuth token.
             resource_owner_secret (str): OAuth token secret.
+            verify_ssl (bool): Whether to verify SSL certificates (default: True).
+                Set to False to disable SSL verification for self-signed certificates.
 
         Returns:
             dict: Session configuration.
@@ -332,7 +341,8 @@ class Oauth1(BaseHttp):
             "client_secret": client_secret,
             "resource_owner_key": resource_owner_key,
             "resource_owner_secret": resource_owner_secret,
-            "use_https": self.use_https
+            "use_https": self.use_https,
+            "verify_ssl": verify_ssl
         }
 
     def execute_command(self, session, command, options=None):
@@ -360,7 +370,7 @@ class Oauth1(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
-        verify = options.get("verify", True) if options else True
+        verify = options.get("verify", session.get("verify_ssl", True)) if options else session.get("verify_ssl", True)
         
         auth = OAuth1(
             session["client_key"],
@@ -409,7 +419,7 @@ class Oauth2(BaseHttp):
 
     def open_session(self, host, port=None, login=None, password=None,
                      client_id=None, client_secret=None, token_url=None,
-                     access_token=None, refresh_token=None):
+                     access_token=None, refresh_token=None, verify_ssl=True):
         """
         Opens a session with OAuth 2.0 authentication.
 
@@ -423,6 +433,8 @@ class Oauth2(BaseHttp):
             token_url (str): URL to obtain tokens.
             access_token (str): Existing access token (optional).
             refresh_token (str): Refresh token (optional).
+            verify_ssl (bool): Whether to verify SSL certificates (default: True).
+                Set to False to disable SSL verification for self-signed certificates.
 
         Returns:
             dict: Session configuration.
@@ -438,7 +450,8 @@ class Oauth2(BaseHttp):
             "token_url": token_url,
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "use_https": self.use_https
+            "use_https": self.use_https,
+            "verify_ssl": verify_ssl
         }
         
         # If access_token is not provided, try to get one
@@ -482,7 +495,7 @@ class Oauth2(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
-        verify = options.get("verify", True) if options else True
+        verify = options.get("verify", session.get("verify_ssl", True)) if options else session.get("verify_ssl", True)
         
         # Add Bearer token to headers
         headers["Authorization"] = f"Bearer {session['access_token']}"
@@ -526,7 +539,7 @@ class Jwt(BaseHttp):
 
     def open_session(self, host, port=None, login=None, password=None,
                      secret_key=None, algorithm="HS256", token=None,
-                     payload=None, expiration_minutes=60):
+                     payload=None, expiration_minutes=60, verify_ssl=True):
         """
         Opens a session with JWT authentication.
 
@@ -540,6 +553,8 @@ class Jwt(BaseHttp):
             token (str): Existing JWT token (optional).
             payload (dict): Custom JWT payload (optional).
             expiration_minutes (int): Token expiration time in minutes (default: 60).
+            verify_ssl (bool): Whether to verify SSL certificates (default: True).
+                Set to False to disable SSL verification for self-signed certificates.
 
         Returns:
             dict: Session configuration.
@@ -567,7 +582,8 @@ class Jwt(BaseHttp):
             "token": token,
             "secret_key": secret_key,
             "algorithm": algorithm,
-            "use_https": self.use_https
+            "use_https": self.use_https,
+            "verify_ssl": verify_ssl
         }
 
     def execute_command(self, session, command, options=None):
@@ -589,7 +605,7 @@ class Jwt(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
-        verify = options.get("verify", True) if options else True
+        verify = options.get("verify", session.get("verify_ssl", True)) if options else session.get("verify_ssl", True)
         
         # Add JWT to headers
         headers["Authorization"] = f"Bearer {session['token']}"
@@ -634,7 +650,7 @@ class Saml(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None,
-                     saml_token=None, saml_header="X-SAML-Token"):
+                     saml_token=None, saml_header="X-SAML-Token", verify_ssl=True):
         """
         Opens a session with SAML authentication.
 
@@ -645,6 +661,8 @@ class Saml(BaseHttp):
             password (str): Not used (for compatibility).
             saml_token (str): SAML assertion/token.
             saml_header (str): Header name for SAML token (default: X-SAML-Token).
+            verify_ssl (bool): Whether to verify SSL certificates (default: True).
+                Set to False to disable SSL verification for self-signed certificates.
 
         Returns:
             dict: Session configuration.
@@ -657,7 +675,8 @@ class Saml(BaseHttp):
             "port": port,
             "saml_token": saml_token,
             "saml_header": saml_header,
-            "use_https": self.use_https
+            "use_https": self.use_https,
+            "verify_ssl": verify_ssl
         }
 
     def execute_command(self, session, command, options=None):
@@ -679,7 +698,7 @@ class Saml(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
-        verify = options.get("verify", True) if options else True
+        verify = options.get("verify", session.get("verify_ssl", True)) if options else session.get("verify_ssl", True)
         
         # Add SAML token to headers
         headers[session["saml_header"]] = session["saml_token"]
@@ -724,7 +743,7 @@ class Hmac(BaseHttp):
     def open_session(self, host, port=None, login=None, password=None,
                      secret_key=None, algorithm="sha256", 
                      signature_header="X-Signature", 
-                     timestamp_header="X-Timestamp"):
+                     timestamp_header="X-Timestamp", verify_ssl=True):
         """
         Opens a session with HMAC authentication.
 
@@ -737,6 +756,8 @@ class Hmac(BaseHttp):
             algorithm (str): Hash algorithm (sha256, sha1, sha512, etc.).
             signature_header (str): Header name for signature (default: X-Signature).
             timestamp_header (str): Header name for timestamp (default: X-Timestamp).
+            verify_ssl (bool): Whether to verify SSL certificates (default: True).
+                Set to False to disable SSL verification for self-signed certificates.
 
         Returns:
             dict: Session configuration.
@@ -752,7 +773,8 @@ class Hmac(BaseHttp):
             "algorithm": algorithm,
             "signature_header": signature_header,
             "timestamp_header": timestamp_header,
-            "use_https": self.use_https
+            "use_https": self.use_https,
+            "verify_ssl": verify_ssl
         }
 
     def _generate_signature(self, secret_key, algorithm, method, path, timestamp, body=""):
@@ -812,7 +834,7 @@ class Hmac(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
-        verify = options.get("verify", True) if options else True
+        verify = options.get("verify", session.get("verify_ssl", True)) if options else session.get("verify_ssl", True)
         
         # Generate timestamp
         timestamp = str(int(datetime.now(timezone.utc).timestamp()))
@@ -877,7 +899,7 @@ class Certificate(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None,
-                     cert_file=None, key_file=None, ca_bundle=None):
+                     cert_file=None, key_file=None, ca_bundle=None, verify_ssl=True):
         """
         Opens a session with client certificate authentication.
 
@@ -889,6 +911,9 @@ class Certificate(BaseHttp):
             cert_file (str): Path to client certificate file.
             key_file (str): Path to private key file (optional, can be in cert_file).
             ca_bundle (str): Path to CA bundle for server verification (optional).
+            verify_ssl (bool): Whether to verify SSL certificates (default: True).
+                Set to False to disable SSL verification for self-signed certificates.
+                If ca_bundle is provided, it takes precedence over verify_ssl.
 
         Returns:
             dict: Session configuration.
@@ -903,7 +928,8 @@ class Certificate(BaseHttp):
             "key_file": key_file,
             "ca_bundle": ca_bundle,
             "key_password": password,
-            "use_https": self.use_https
+            "use_https": self.use_https,
+            "verify_ssl": verify_ssl
         }
 
     def execute_command(self, session, command, options=None):
@@ -933,14 +959,13 @@ class Certificate(BaseHttp):
             cert = session["cert_file"]
         
         # Determine verification setting
-        # If ca_bundle is provided, use it; otherwise default to True for security
-        # Can be overridden via options
+        # Priority: options["verify"] > ca_bundle > verify_ssl session setting
         if options and "verify" in options:
             verify = options["verify"]
         elif session.get("ca_bundle"):
             verify = session["ca_bundle"]
         else:
-            verify = True
+            verify = session.get("verify_ssl", True)
         
         try:
             response = requests.request(
@@ -986,7 +1011,7 @@ class Openidconnect(BaseHttp):
     def open_session(self, host, port=None, login=None, password=None,
                      client_id=None, client_secret=None, 
                      discovery_url=None, token_endpoint=None,
-                     id_token=None, access_token=None):
+                     id_token=None, access_token=None, verify_ssl=True):
         """
         Opens a session with OpenID Connect authentication.
 
@@ -1001,6 +1026,8 @@ class Openidconnect(BaseHttp):
             token_endpoint (str): Token endpoint URL (optional).
             id_token (str): Existing ID token (optional).
             access_token (str): Existing access token (optional).
+            verify_ssl (bool): Whether to verify SSL certificates (default: True).
+                Set to False to disable SSL verification for self-signed certificates.
 
         Returns:
             dict: Session configuration.
@@ -1017,7 +1044,8 @@ class Openidconnect(BaseHttp):
             "token_endpoint": token_endpoint,
             "id_token": id_token,
             "access_token": access_token,
-            "use_https": self.use_https
+            "use_https": self.use_https,
+            "verify_ssl": verify_ssl
         }
         
         # If tokens not provided, try to get them
@@ -1064,7 +1092,7 @@ class Openidconnect(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
-        verify = options.get("verify", True) if options else True
+        verify = options.get("verify", session.get("verify_ssl", True)) if options else session.get("verify_ssl", True)
         
         # Add Bearer token to headers (prefer access_token)
         token = session.get("access_token") or session.get("id_token")
