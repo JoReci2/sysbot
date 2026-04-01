@@ -7,6 +7,7 @@ operations.
 """
 from sysbot.utils.engine import ComponentBase
 import configparser
+import shlex
 from io import StringIO
 
 
@@ -61,3 +62,83 @@ class Dnf(ComponentBase):
         config.read_file(StringIO(output))
         data = {section: dict(config.items(section)) for section in config.sections()}
         return data
+
+    def clean(self, alias: str, **kwargs) -> str:
+        """
+        Clean all cached DNF data.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Command output string.
+        """
+        return self.execute_command(alias, "dnf clean all", **kwargs)
+
+    def makecache(self, alias: str, **kwargs) -> str:
+        """
+        Update the DNF package metadata cache.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Command output string.
+        """
+        return self.execute_command(alias, "dnf makecache", **kwargs)
+
+    def list_available(self, alias: str, **kwargs) -> list:
+        """
+        List all available DNF packages.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing package information,
+            each with 'name', 'version', and 'repository' keys.
+        """
+        output = self.execute_command(alias, "dnf list available", **kwargs)
+        packages = []
+        header_found = False
+        for line in output.splitlines():
+            if not header_found:
+                if line.lstrip().lower().startswith("available packages"):
+                    header_found = True
+                continue
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split()
+            if len(parts) >= 3:
+                packages.append(
+                    {"name": parts[0], "version": parts[1], "repository": parts[2]}
+                )
+        return packages
+
+    def search(self, alias: str, keyword: str, **kwargs) -> list:
+        """
+        Search for DNF packages matching a keyword.
+
+        Args:
+            alias: Session alias for the connection.
+            keyword: Search term to look up in package names and summaries.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing matching package information,
+            each with 'name' and 'summary' keys.
+        """
+        output = self.execute_command(alias, f"dnf search {shlex.quote(keyword)}", **kwargs)
+        packages = []
+        for line in output.splitlines():
+            line = line.strip()
+            if not line or line.startswith("=") or line.lower().startswith("last metadata"):
+                continue
+            if " : " in line:
+                name, summary = line.split(" : ", 1)
+                packages.append({"name": name.strip(), "summary": summary.strip()})
+        return packages
