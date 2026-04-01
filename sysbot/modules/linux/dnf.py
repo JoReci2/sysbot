@@ -63,7 +63,7 @@ class Dnf(ComponentBase):
         data = {section: dict(config.items(section)) for section in config.sections()}
         return data
 
-    def clean(self, alias: str, **kwargs) -> str:
+    def clean(self, alias: str, **kwargs) -> int:
         """
         Clean all cached DNF data.
 
@@ -72,11 +72,12 @@ class Dnf(ComponentBase):
             **kwargs: Additional command execution options.
 
         Returns:
-            Command output string.
+            Exit code of the command (0 on success, non-zero on failure).
         """
-        return self.execute_command(alias, "dnf clean all", **kwargs)
+        output = self.execute_command(alias, "dnf clean all ; echo $?", **kwargs)
+        return int(output.strip().splitlines()[-1])
 
-    def makecache(self, alias: str, **kwargs) -> str:
+    def makecache(self, alias: str, **kwargs) -> int:
         """
         Update the DNF package metadata cache.
 
@@ -85,39 +86,31 @@ class Dnf(ComponentBase):
             **kwargs: Additional command execution options.
 
         Returns:
-            Command output string.
+            Exit code of the command (0 on success, non-zero on failure).
         """
-        return self.execute_command(alias, "dnf makecache", **kwargs)
+        output = self.execute_command(alias, "dnf makecache ; echo $?", **kwargs)
+        return int(output.strip().splitlines()[-1])
 
-    def list_available(self, alias: str, **kwargs) -> list:
+    def install_assumeno(self, alias: str, package: str, **kwargs) -> int:
         """
-        List all available DNF packages.
+        Test installation and dependency resolution for a package without applying changes.
+
+        Runs ``dnf install -y --assumeno`` to perform a dry-run that resolves all
+        dependencies and reports what would be installed, without modifying the system.
 
         Args:
             alias: Session alias for the connection.
+            package: Name of the package to test.
             **kwargs: Additional command execution options.
 
         Returns:
-            List of dictionaries containing package information,
-            each with 'name', 'version', and 'repository' keys.
+            Exit code of the command (0 if dependencies can be resolved,
+            non-zero otherwise).
         """
-        output = self.execute_command(alias, "dnf list available", **kwargs)
-        packages = []
-        header_found = False
-        for line in output.splitlines():
-            if not header_found:
-                if line.lstrip().lower().startswith("available packages"):
-                    header_found = True
-                continue
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split()
-            if len(parts) >= 3:
-                packages.append(
-                    {"name": parts[0], "version": parts[1], "repository": parts[2]}
-                )
-        return packages
+        output = self.execute_command(
+            alias, f"dnf install -y --assumeno {shlex.quote(package)} ; echo $?", **kwargs
+        )
+        return int(output.strip().splitlines()[-1])
 
     def search(self, alias: str, keyword: str, **kwargs) -> list:
         """
