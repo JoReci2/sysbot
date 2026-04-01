@@ -7,6 +7,7 @@ operations.
 """
 from sysbot.utils.engine import ComponentBase
 import configparser
+import shlex
 from io import StringIO
 
 
@@ -61,3 +62,76 @@ class Dnf(ComponentBase):
         config.read_file(StringIO(output))
         data = {section: dict(config.items(section)) for section in config.sections()}
         return data
+
+    def clean(self, alias: str, **kwargs) -> int:
+        """
+        Clean all cached DNF data.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Exit code of the command (0 on success, non-zero on failure).
+        """
+        output = self.execute_command(alias, "dnf clean all ; echo $?", **kwargs)
+        return int(output.strip().splitlines()[-1])
+
+    def makecache(self, alias: str, **kwargs) -> int:
+        """
+        Update the DNF package metadata cache.
+
+        Args:
+            alias: Session alias for the connection.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Exit code of the command (0 on success, non-zero on failure).
+        """
+        output = self.execute_command(alias, "dnf makecache ; echo $?", **kwargs)
+        return int(output.strip().splitlines()[-1])
+
+    def install_assumeno(self, alias: str, package: str, **kwargs) -> int:
+        """
+        Test installation and dependency resolution for a package without applying changes.
+
+        Runs ``dnf install -y --assumeno`` to perform a dry-run that resolves all
+        dependencies and reports what would be installed, without modifying the system.
+
+        Args:
+            alias: Session alias for the connection.
+            package: Name of the package to test.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            Exit code of the command (0 if dependencies can be resolved,
+            non-zero otherwise).
+        """
+        output = self.execute_command(
+            alias, f"dnf install -y --assumeno {shlex.quote(package)} ; echo $?", **kwargs
+        )
+        return int(output.strip().splitlines()[-1])
+
+    def search(self, alias: str, keyword: str, **kwargs) -> list:
+        """
+        Search for DNF packages matching a keyword.
+
+        Args:
+            alias: Session alias for the connection.
+            keyword: Search term to look up in package names and summaries.
+            **kwargs: Additional command execution options.
+
+        Returns:
+            List of dictionaries containing matching package information,
+            each with 'name' and 'summary' keys.
+        """
+        output = self.execute_command(alias, f"dnf search {shlex.quote(keyword)}", **kwargs)
+        packages = []
+        for line in output.splitlines():
+            line = line.strip()
+            if not line or line.startswith("=") or line.lower().startswith("last metadata"):
+                continue
+            if " : " in line:
+                name, summary = line.split(" : ", 1)
+                packages.append({"name": name.strip(), "summary": summary.strip()})
+        return packages
