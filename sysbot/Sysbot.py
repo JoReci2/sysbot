@@ -38,7 +38,13 @@ class Sysbot(metaclass=ComponentMeta):
     executing commands, and interacting with various system modules and plugins.
     It supports multiple protocols (SSH, WinRM, Socket, Local) and can manage
     tunneling configurations for complex network setups.
+
+    Attributes:
+        ROBOT_LIBRARY_SCOPE: Robot Framework library scope set to GLOBAL.
+        ROBOT_LIBRARY_DOC_FORMAT: Documentation format set to reST.
     """
+    ROBOT_LIBRARY_SCOPE = "GLOBAL"
+    ROBOT_LIBRARY_DOC_FORMAT = "reST"
 
     def __init__(self, components=None):
         """

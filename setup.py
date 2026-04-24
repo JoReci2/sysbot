@@ -3,7 +3,7 @@ Setup script for SysBot package.
 
 SysBot is a comprehensive library for system test automation with support for
 multiple protocols (SSH, WinRM, HTTP, Socket), secret management, and integration
-with various database systems.
+with Robot Framework and various database systems.
 """
 from setuptools import setup, find_packages
 
@@ -24,6 +24,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
+        "robotframework",
         "paramiko",
         "netmiko",
         "redfish",
@@ -47,7 +48,7 @@ setup(
     },
     author="Thibault SCIRE",
     author_email="thibault.scire@outlook.com",
-    description="System test automation library with support for SSH, WinRM, HTTP, and databases",
+    description="System test automation library with support for SSH, WinRM, HTTP, databases, and Robot Framework integration",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/JoReci2/sysbot",
@@ -62,6 +63,7 @@ setup(
         "system-testing",
         "ssh",
         "winrm",
+        "robot-framework",
         "redfish",
         "devops",
         "infrastructure",
@@ -89,6 +91,8 @@ setup(
         "Topic :: Software Development :: Quality Assurance",
         "Topic :: System :: Systems Administration",
         "Topic :: Software Development :: Libraries :: Python Modules",
+        "Framework :: Robot Framework",
+        "Framework :: Robot Framework :: Library",
     ],
     license="MIT",
     license_files=["LICENSE"],
