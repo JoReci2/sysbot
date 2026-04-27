@@ -7,8 +7,6 @@
 - [Quickstart](#quickstart)
 - [RobotFramework Usage](#robotframework-usage)
 - [UnitTest Usage](#unittest-usage)
-- [Listener Usage](#listener-usage)
-- [Polarion Integration](#polarion-integration)
 - [Additional Resources](#additional-resources)
 - [License](#license)
 - [Author](#author)
@@ -26,8 +24,6 @@ SysBot is a system test tool that provides a unified interface for connecting to
 - **Modular Architecture**: Dynamic components loading and discovery (modules and plugins)
 - **Connection Management**: Robust session caching and lifecycle management
 - **Secret Management**: Secure storage and retrieval of sensitive data
-- **Database Listeners**: Store test results in SQLite, MySQL, PostgreSQL, or MongoDB
-- **Polarion Integration**: Generate Polarion-compatible xUnit reports for ALM/QA integration
 
 ### Architecture
 
@@ -54,20 +50,9 @@ sysbot/
 pip install sysbot
 ```
 
-### Optional Dependencies
-
-For specific features, you can install additional dependencies:
+### Install with development dependency
 
 ```bash
-# Install with all database support
-pip install sysbot[all_databases]
-
-# Install with specific database support
-pip install sysbot[mysql]        # MySQL support only
-pip install sysbot[postgresql]   # PostgreSQL support only
-pip install sysbot[mongodb]      # MongoDB support only
-
-# Install with development dependency
 pip install sysbot[dev]
 ```
 
@@ -411,144 +396,6 @@ class TestLinuxModules(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 ```
-
-## Listener Usage
-
-SysBot includes Robot Framework listener plugins that can store test results in various databases. Each database type has its own independent, self-contained listener. The listeners create a hierarchical structure: Campaign → Suite → Test Case → Keyword.
-
-### Available Listeners
-
-- **SQLite**: Lightweight file-based database, perfect for local testing
-- **MySQL**: Popular relational database for team environments
-- **PostgreSQL**: Enterprise-grade relational database
-- **MongoDB**: NoSQL document database for flexible schemas
-
-### Usage with Robot Framework
-
-Each listener is used directly with its specific class:
-
-```bash
-# Store results in SQLite
-robot --listener sysbot.utils.robot.listener.sqlite.Sqlite:results.db:MyCampaign your_tests/
-
-# Store results in MySQL
-robot --listener sysbot.utils.robot.listener.mysql.Mysql:mysql://user:pass@localhost/testdb:MyCampaign your_tests/
-
-# Store results in PostgreSQL
-robot --listener sysbot.utils.robot.listener.postgresql.Postgresql:postgresql://user:pass@localhost/testdb:MyCampaign your_tests/
-
-# Store results in MongoDB
-robot --listener sysbot.utils.robot.listener.mongodb.Mongodb:mongodb://localhost:27017/testdb:MyCampaign your_tests/
-```
-
-### Listener Parameters
-
-The listener accepts two parameters:
-1. **Database Connection**: Connection string or path to database
-2. **Campaign Name**: Name of the test campaign for organizing results
-
-### Data Structure
-
-The listeners store test execution data in a hierarchical format:
-
-- **Campaign**: Top-level container for test executions
-  - **Suite**: Test suite information
-    - **Test Case**: Individual test cases
-      - **Keyword**: Keywords executed within tests
-
-Each level stores relevant metadata including:
-- Execution timestamps
-- Status (PASS/FAIL)
-- Error messages
-- Statistics
-
-### Installation Requirements
-
-```bash
-# Install with all database support
-pip install sysbot[all_databases]
-
-# Or install specific database support
-pip install sysbot[mysql]        # MySQL support only
-pip install sysbot[postgresql]   # PostgreSQL support only
-pip install sysbot[mongodb]      # MongoDB support only
-```
-
-## Polarion Integration
-
-SysBot includes a Polarion plugin that enables integration with Siemens Polarion ALM/QA for test result management. The plugin provides:
-
-- **xUnit Post-processor**: Converts Robot Framework output to Polarion-compatible xUnit XML using rebot
-- **Test Case Mapping**: Links Robot Framework tests to Polarion test cases via tags
-- **Custom Properties**: Supports Polarion custom fields and metadata
-
-### Linking Tests to Polarion
-
-Use tags in your Robot Framework tests to establish links with Polarion test cases:
-
-```robot
-*** Test Cases ***
-Login Functionality Test
-    [Documentation]    Validates user login with valid credentials
-    [Tags]    polarion-id:TEST-001    polarion-title:Login Test    polarion-priority:High
-    # Test steps...
-
-User Management Test
-    [Documentation]    Test user creation and deletion
-    [Tags]    polarion-id:TEST-002    polarion-testEnvironment:Production
-    # Test steps...
-```
-
-### Tag Format
-
-- `polarion-id:TEST-XXX` - Links to Polarion test case ID (required for mapping)
-- `polarion-title:Test Name` - Sets Polarion test case title
-- `polarion-{property}:{value}` - Custom Polarion properties (e.g., `polarion-priority:High`, `polarion-assignee:jdoe`)
-
-### Generating Polarion-Compatible xUnit
-
-**Using Python API:**
-```python
-from sysbot.utils.robot.polarion import Polarion
-
-polarion = Polarion()
-polarion.generate_xunit(
-    output_xml='output.xml',
-    xunit_file='polarion_results.xml',
-    project_id='MYPROJECT',
-    test_run_id='RUN-001',
-    custom_properties={'environment': 'test', 'version': '1.0'}
-)
-```
-
-**Using Command Line:**
-```bash
-# Run Robot Framework tests
-robot --outputdir results your_tests/
-
-# Generate Polarion xUnit using Python
-python -c "from sysbot.utils.robot.polarion import Polarion; \
-    polarion = Polarion(); \
-    polarion.generate_xunit('results/output.xml', 'results/polarion.xml', \
-    project_id='PROJ', test_run_id='RUN-001')"
-```
-
-### Importing into Polarion
-
-Once you have the Polarion-compatible xUnit file:
-
-1. **Manual Import**: Use Polarion's UI to import the xUnit file
-2. **Scheduled Import**: Configure Polarion's scheduled xUnit importer
-3. **API Import**: Use tools like `dump2polarion` or Polarion's REST API
-
-### Generated xUnit Content
-
-The generated xUnit file includes:
-- Test case IDs for proper mapping to existing Polarion test cases
-- Test execution results (pass/fail/error)
-- Execution time and timestamps
-- Custom properties for filtering and reporting
-- Project and test run associations
 
 ## Additional Resources
 
