@@ -105,6 +105,17 @@ class Sysbot(metaclass=ComponentMeta):
         tunnels = []
         self._protocol = TunnelingManager.get_protocol(protocol, product)
         self._remote_port = int(port)
+        if protocol.lower() == "http" and "skip_verify" in kwargs:
+            skip_verify = kwargs.pop("skip_verify")
+            if isinstance(skip_verify, str):
+                skip_verify = skip_verify.strip().lower() in (
+                    "1",
+                    "true",
+                    "yes",
+                    "on",
+                )
+            if "verify_ssl" not in kwargs:
+                kwargs["verify_ssl"] = not bool(skip_verify)
         try:
             if tunnel_config:
                 try:
