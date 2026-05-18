@@ -26,6 +26,7 @@ ALLOWED_HASH_ALGORITHMS = {
     "sha512": hashlib.sha512,
     "md5": hashlib.md5
 }
+VERIFY_SSL_DEFAULT = object()
 
 
 class BaseHttp(ConnectorInterface):
@@ -60,6 +61,21 @@ class BaseHttp(ConnectorInterface):
         """
         protocol = "https" if self.use_https else "http"
         return f"{protocol}://{host}:{port}{endpoint}"
+
+    @staticmethod
+    def _to_bool(value):
+        """Convert bool-like values to boolean."""
+        if isinstance(value, str):
+            return value.strip().lower() in ("1", "true", "yes", "on")
+        return bool(value)
+
+    def _resolve_verify_ssl(self, verify_ssl=VERIFY_SSL_DEFAULT, skip_verify=None):
+        """Resolve SSL verification with skip_verify alias support."""
+        if verify_ssl is not VERIFY_SSL_DEFAULT:
+            return verify_ssl
+        if skip_verify is None:
+            return True
+        return not self._to_bool(skip_verify)
 
     def _make_request(self, method, url, auth=None, headers=None, params=None, data=None, json=None, verify=True):
         """
@@ -114,8 +130,9 @@ class Apikey(BaseHttp):
         """
         super().__init__(port, use_https)
 
-    def open_session(self, host, port=None, login=None, password=None, api_key=None, 
-                     api_key_header="X-API-Key", api_key_in_query=False, verify_ssl=True):
+    def open_session(self, host, port=None, login=None, password=None, api_key=None,
+                     api_key_header="X-API-Key", api_key_in_query=False, verify_ssl=VERIFY_SSL_DEFAULT,
+                     skip_verify=None):
         """
         Opens a session with API key authentication.
 
@@ -143,7 +160,7 @@ class Apikey(BaseHttp):
             "api_key_header": api_key_header,
             "api_key_in_query": api_key_in_query,
             "use_https": self.use_https,
-            "verify_ssl": verify_ssl
+            "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
     def execute_command(self, session, command, options=None):
@@ -215,7 +232,8 @@ class Basicauth(BaseHttp):
         """
         super().__init__(port, use_https)
 
-    def open_session(self, host, port=None, login=None, password=None, verify_ssl=True):
+    def open_session(self, host, port=None, login=None, password=None, verify_ssl=VERIFY_SSL_DEFAULT,
+                     skip_verify=None):
         """
         Opens a session with Basic authentication.
 
@@ -239,7 +257,7 @@ class Basicauth(BaseHttp):
             "login": login,
             "password": password,
             "use_https": self.use_https,
-            "verify_ssl": verify_ssl
+            "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
     def execute_command(self, session, command, options=None):
@@ -309,10 +327,10 @@ class Oauth1(BaseHttp):
         """
         super().__init__(port, use_https)
 
-    def open_session(self, host, port=None, login=None, password=None, 
-                     client_key=None, client_secret=None, 
+    def open_session(self, host, port=None, login=None, password=None,
+                     client_key=None, client_secret=None,
                      resource_owner_key=None, resource_owner_secret=None,
-                     verify_ssl=True):
+                     verify_ssl=VERIFY_SSL_DEFAULT, skip_verify=None):
         """
         Opens a session with OAuth 1.0 authentication.
 
@@ -342,7 +360,7 @@ class Oauth1(BaseHttp):
             "resource_owner_key": resource_owner_key,
             "resource_owner_secret": resource_owner_secret,
             "use_https": self.use_https,
-            "verify_ssl": verify_ssl
+            "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
     def execute_command(self, session, command, options=None):
@@ -419,7 +437,8 @@ class Oauth2(BaseHttp):
 
     def open_session(self, host, port=None, login=None, password=None,
                      client_id=None, client_secret=None, token_url=None,
-                     access_token=None, refresh_token=None, verify_ssl=True):
+                     access_token=None, refresh_token=None, verify_ssl=VERIFY_SSL_DEFAULT,
+                     skip_verify=None):
         """
         Opens a session with OAuth 2.0 authentication.
 
@@ -451,7 +470,7 @@ class Oauth2(BaseHttp):
             "access_token": access_token,
             "refresh_token": refresh_token,
             "use_https": self.use_https,
-            "verify_ssl": verify_ssl
+            "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
         
         # If access_token is not provided, try to get one
@@ -539,7 +558,8 @@ class Jwt(BaseHttp):
 
     def open_session(self, host, port=None, login=None, password=None,
                      secret_key=None, algorithm="HS256", token=None,
-                     payload=None, expiration_minutes=60, verify_ssl=True):
+                     payload=None, expiration_minutes=60, verify_ssl=VERIFY_SSL_DEFAULT,
+                     skip_verify=None):
         """
         Opens a session with JWT authentication.
 
@@ -583,7 +603,7 @@ class Jwt(BaseHttp):
             "secret_key": secret_key,
             "algorithm": algorithm,
             "use_https": self.use_https,
-            "verify_ssl": verify_ssl
+            "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
     def execute_command(self, session, command, options=None):
@@ -650,7 +670,8 @@ class Saml(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None,
-                     saml_token=None, saml_header="X-SAML-Token", verify_ssl=True):
+                     saml_token=None, saml_header="X-SAML-Token", verify_ssl=VERIFY_SSL_DEFAULT,
+                     skip_verify=None):
         """
         Opens a session with SAML authentication.
 
@@ -676,7 +697,7 @@ class Saml(BaseHttp):
             "saml_token": saml_token,
             "saml_header": saml_header,
             "use_https": self.use_https,
-            "verify_ssl": verify_ssl
+            "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
     def execute_command(self, session, command, options=None):
@@ -741,9 +762,10 @@ class Hmac(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None,
-                     secret_key=None, algorithm="sha256", 
-                     signature_header="X-Signature", 
-                     timestamp_header="X-Timestamp", verify_ssl=True):
+                     secret_key=None, algorithm="sha256",
+                     signature_header="X-Signature",
+                     timestamp_header="X-Timestamp", verify_ssl=VERIFY_SSL_DEFAULT,
+                     skip_verify=None):
         """
         Opens a session with HMAC authentication.
 
@@ -774,7 +796,7 @@ class Hmac(BaseHttp):
             "signature_header": signature_header,
             "timestamp_header": timestamp_header,
             "use_https": self.use_https,
-            "verify_ssl": verify_ssl
+            "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
     def _generate_signature(self, secret_key, algorithm, method, path, timestamp, body=""):
@@ -899,7 +921,8 @@ class Certificate(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None,
-                     cert_file=None, key_file=None, ca_bundle=None, verify_ssl=True):
+                     cert_file=None, key_file=None, ca_bundle=None, verify_ssl=VERIFY_SSL_DEFAULT,
+                     skip_verify=None):
         """
         Opens a session with client certificate authentication.
 
@@ -929,7 +952,7 @@ class Certificate(BaseHttp):
             "ca_bundle": ca_bundle,
             "key_password": password,
             "use_https": self.use_https,
-            "verify_ssl": verify_ssl
+            "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
     def execute_command(self, session, command, options=None):
@@ -1009,9 +1032,10 @@ class Openidconnect(BaseHttp):
         super().__init__(port, use_https)
 
     def open_session(self, host, port=None, login=None, password=None,
-                     client_id=None, client_secret=None, 
+                     client_id=None, client_secret=None,
                      discovery_url=None, token_endpoint=None,
-                     id_token=None, access_token=None, verify_ssl=True):
+                     id_token=None, access_token=None, verify_ssl=VERIFY_SSL_DEFAULT,
+                     skip_verify=None):
         """
         Opens a session with OpenID Connect authentication.
 
@@ -1045,7 +1069,7 @@ class Openidconnect(BaseHttp):
             "id_token": id_token,
             "access_token": access_token,
             "use_https": self.use_https,
-            "verify_ssl": verify_ssl
+            "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
         
         # If tokens not provided, try to get them
