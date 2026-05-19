@@ -66,7 +66,7 @@ class Sysbot(metaclass=ComponentMeta):
         self._protocol = None
 
     @staticmethod
-    def _normalize_bool_kwarg(value):
+    def _normalize_string_to_bool(value):
         if isinstance(value, str):
             lowered = value.strip().lower()
             if lowered in {"false", "0", "no", "off"}:
@@ -117,7 +117,7 @@ class Sysbot(metaclass=ComponentMeta):
         self._remote_port = int(port)
         try:
             if "verify_ssl" in kwargs:
-                kwargs["verify_ssl"] = self._normalize_bool_kwarg(kwargs["verify_ssl"])
+                kwargs["verify_ssl"] = self._normalize_string_to_bool(kwargs["verify_ssl"])
             if tunnel_config:
                 try:
                     if type(tunnel_config) is str:
