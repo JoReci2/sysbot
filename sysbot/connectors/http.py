@@ -68,6 +68,9 @@ class BaseHttp(ConnectorInterface):
 
         Args:
             verify: requests-style verify value (bool or CA bundle path).
+                Also accepts string booleans: "false", "0", "no", "off",
+                "true", "1", "yes", "on" (case-insensitive). Any other
+                string is kept as-is and treated as a CA bundle path by requests.
 
         Returns:
             bool|str: Normalized verify value.
