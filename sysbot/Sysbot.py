@@ -128,11 +128,8 @@ class Sysbot(metaclass=ComponentMeta):
                         "username": login,
                         "password": password,
                     }
-                TunnelingManager.nested_tunnel(
-                    self._protocol, tunnel_config, target_config
-                )
                 connection = TunnelingManager.nested_tunnel(
-                    self._protocol, tunnel_config, target_config
+                    self._protocol, tunnel_config, target_config, **kwargs
                 )
                 tunnels = connection["tunnels"]
             else:
