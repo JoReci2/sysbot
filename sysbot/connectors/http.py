@@ -67,10 +67,12 @@ class BaseHttp(ConnectorInterface):
         Normalize SSL verification values coming from external inputs.
 
         Args:
-            verify: requests-style verify value (bool or CA bundle path).
+            verify: requests-style verify value (bool, int-like bool, None,
+                or CA bundle path).
                 Also accepts string booleans: "false", "0", "no", "off",
                 "true", "1", "yes", "on" (case-insensitive). Any other
                 string is kept as-is and treated as a CA bundle path by requests.
+                Non-string values are returned unchanged.
 
         Returns:
             bool|str: Normalized verify value.
