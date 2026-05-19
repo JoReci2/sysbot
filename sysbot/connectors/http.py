@@ -67,7 +67,7 @@ class BaseHttp(ConnectorInterface):
         Normalize SSL verification values coming from external inputs.
 
         Args:
-            verify: requests-style verify value (bool, int-like bool, None,
+            verify: requests-style verify value (bool, integer, None,
                 or CA bundle path).
                 Also accepts string booleans: "false", "0", "no", "off",
                 "true", "1", "yes", "on" (case-insensitive). Any other
@@ -89,6 +89,7 @@ class BaseHttp(ConnectorInterface):
                 return False
             if lowered in {"true", "1", "yes", "on"}:
                 return True
+            # Keep any other string for requests CA bundle path handling.
         return verify
 
     def _make_request(self, method, url, auth=None, headers=None, params=None, data=None, json=None, verify=True):
