@@ -67,6 +67,12 @@ class Sysbot(metaclass=ComponentMeta):
 
     @staticmethod
     def _normalize_string_to_bool(value):
+        """
+        Convert common string boolean values to bool.
+
+        Unknown strings are preserved to avoid breaking connector-specific
+        values such as CA bundle paths.
+        """
         if isinstance(value, str):
             lowered = value.strip().lower()
             if lowered in {"false", "0", "no", "off"}:
