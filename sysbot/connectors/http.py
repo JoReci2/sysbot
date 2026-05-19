@@ -35,19 +35,7 @@ class BaseHttp(ConnectorInterface):
     This class should not be used directly but extended by authentication-specific classes.
     """
 
-    def __init__(self, port=443, use_https=True):
-        """
-        Initialize base HTTP connector.
-
-        Args:
-            port (int): Default port (default: 443 for HTTPS, 80 for HTTP).
-            use_https (bool): Whether to use HTTPS (default: True).
-        """
-        super().__init__()
-        self.default_port = port
-        self.use_https = use_https
-
-    def _build_url(self, host, port, endpoint):
+    def _build_url(self, host, port, endpoint, use_https=True):
         """
         Build the full URL for the request.
 
@@ -55,11 +43,12 @@ class BaseHttp(ConnectorInterface):
             host (str): Hostname or IP address.
             port (int): Port number.
             endpoint (str): API endpoint path.
+            use_https (bool): Whether to use HTTPS (True) or HTTP (False).
 
         Returns:
             str: The full URL.
         """
-        protocol = "https" if self.use_https else "http"
+        protocol = "https" if use_https else "http"
         return f"{protocol}://{host}:{port}{endpoint}"
 
     @staticmethod
@@ -130,17 +119,7 @@ class Apikey(BaseHttp):
     Supports API keys in headers or query parameters.
     """
 
-    def __init__(self, port=443, use_https=True):
-        """
-        Initialize API Key authentication connector.
-
-        Args:
-            port (int): Default port (default: 443).
-            use_https (bool): Whether to use HTTPS (default: True).
-        """
-        super().__init__(port, use_https)
-
-    def open_session(self, host, port=None, login=None, password=None, api_key=None,
+    def open_session(self, host, port=None, login=None, password=None, api_key=None, use_https=True,
                      api_key_header="X-API-Key", api_key_in_query=False, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
                      skip_verify=None):
         """
@@ -148,7 +127,7 @@ class Apikey(BaseHttp):
 
         Args:
             host (str): Hostname or IP address.
-            port (int): Port. If None, uses default_port.
+            port (int): Port. If None, uses 443 for HTTPS or 80 for HTTP.
             login (str): Not used for API key auth (for compatibility).
             password (str): Not used for API key auth (for compatibility).
             api_key (str): The API key.
@@ -161,7 +140,7 @@ class Apikey(BaseHttp):
             dict: Session configuration.
         """
         if port is None:
-            port = self.default_port
+            port = 443 if use_https else 80
         
         return {
             "host": host,
@@ -169,7 +148,7 @@ class Apikey(BaseHttp):
             "api_key": api_key,
             "api_key_header": api_key_header,
             "api_key_in_query": api_key_in_query,
-            "use_https": self.use_https,
+            "use_https": use_https,
             "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
@@ -191,7 +170,7 @@ class Apikey(BaseHttp):
         Returns:
             bytes: Response content.
         """
-        url = self._build_url(session["host"], session["port"], command)
+        url = self._build_url(session["host"], session["port"], command, session.get("use_https", True))
         
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers", {}) if options else {}
@@ -232,24 +211,14 @@ class Basicauth(BaseHttp):
     HTTP connector with Basic Authentication (username/password).
     """
 
-    def __init__(self, port=443, use_https=True):
-        """
-        Initialize Basic Auth connector.
-
-        Args:
-            port (int): Default port (default: 443).
-            use_https (bool): Whether to use HTTPS (default: True).
-        """
-        super().__init__(port, use_https)
-
-    def open_session(self, host, port=None, login=None, password=None, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
+    def open_session(self, host, port=None, login=None, password=None, use_https=True, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
                      skip_verify=None):
         """
         Opens a session with Basic authentication.
 
         Args:
             host (str): Hostname or IP address.
-            port (int): Port. If None, uses default_port.
+            port (int): Port. If None, uses 443 for HTTPS or 80 for HTTP.
             login (str): Username.
             password (str): Password.
             verify_ssl (bool): Whether to verify SSL certificates (default: True).
@@ -259,14 +228,14 @@ class Basicauth(BaseHttp):
             dict: Session configuration.
         """
         if port is None:
-            port = self.default_port
+            port = 443 if use_https else 80
         
         return {
             "host": host,
             "port": port,
             "login": login,
             "password": password,
-            "use_https": self.use_https,
+            "use_https": use_https,
             "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
@@ -288,7 +257,7 @@ class Basicauth(BaseHttp):
         Returns:
             bytes: Response content.
         """
-        url = self._build_url(session["host"], session["port"], command)
+        url = self._build_url(session["host"], session["port"], command, session.get("use_https", True))
         
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers") if options else None
@@ -327,26 +296,16 @@ class Oauth1(BaseHttp):
     HTTP connector with OAuth 1.0 authentication.
     """
 
-    def __init__(self, port=443, use_https=True):
-        """
-        Initialize OAuth 1.0 connector.
-
-        Args:
-            port (int): Default port (default: 443).
-            use_https (bool): Whether to use HTTPS (default: True).
-        """
-        super().__init__(port, use_https)
-
     def open_session(self, host, port=None, login=None, password=None,
                      client_key=None, client_secret=None,
                      resource_owner_key=None, resource_owner_secret=None,
-                     verify_ssl=_VERIFY_SSL_UNSET_SENTINEL, skip_verify=None):
+                     use_https=True, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL, skip_verify=None):
         """
         Opens a session with OAuth 1.0 authentication.
 
         Args:
             host (str): Hostname or IP address.
-            port (int): Port. If None, uses default_port.
+            port (int): Port. If None, uses 443 for HTTPS or 80 for HTTP.
             login (str): Not used (for compatibility).
             password (str): Not used (for compatibility).
             client_key (str): OAuth consumer key.
@@ -360,7 +319,7 @@ class Oauth1(BaseHttp):
             dict: Session configuration.
         """
         if port is None:
-            port = self.default_port
+            port = 443 if use_https else 80
         
         return {
             "host": host,
@@ -369,7 +328,7 @@ class Oauth1(BaseHttp):
             "client_secret": client_secret,
             "resource_owner_key": resource_owner_key,
             "resource_owner_secret": resource_owner_secret,
-            "use_https": self.use_https,
+            "use_https": use_https,
             "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
@@ -391,7 +350,7 @@ class Oauth1(BaseHttp):
         Returns:
             bytes: Response content.
         """
-        url = self._build_url(session["host"], session["port"], command)
+        url = self._build_url(session["host"], session["port"], command, session.get("use_https", True))
         
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers") if options else None
@@ -435,26 +394,16 @@ class Oauth2(BaseHttp):
     HTTP connector with OAuth 2.0 authentication.
     """
 
-    def __init__(self, port=443, use_https=True):
-        """
-        Initialize OAuth 2.0 connector.
-
-        Args:
-            port (int): Default port (default: 443).
-            use_https (bool): Whether to use HTTPS (default: True).
-        """
-        super().__init__(port, use_https)
-
     def open_session(self, host, port=None, login=None, password=None,
                      client_id=None, client_secret=None, token_url=None,
-                     access_token=None, refresh_token=None, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
+                     access_token=None, refresh_token=None, use_https=True, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
                      skip_verify=None):
         """
         Opens a session with OAuth 2.0 authentication.
 
         Args:
             host (str): Hostname or IP address.
-            port (int): Port. If None, uses default_port.
+            port (int): Port. If None, uses 443 for HTTPS or 80 for HTTP.
             login (str): Not used (for compatibility).
             password (str): Not used (for compatibility).
             client_id (str): OAuth 2.0 client ID.
@@ -469,7 +418,7 @@ class Oauth2(BaseHttp):
             dict: Session configuration.
         """
         if port is None:
-            port = self.default_port
+            port = 443 if use_https else 80
         
         session_data = {
             "host": host,
@@ -479,7 +428,7 @@ class Oauth2(BaseHttp):
             "token_url": token_url,
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "use_https": self.use_https,
+            "use_https": use_https,
             "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
         
@@ -517,7 +466,7 @@ class Oauth2(BaseHttp):
         Returns:
             bytes: Response content.
         """
-        url = self._build_url(session["host"], session["port"], command)
+        url = self._build_url(session["host"], session["port"], command, session.get("use_https", True))
         
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers", {}) if options else {}
@@ -556,26 +505,16 @@ class Jwt(BaseHttp):
     HTTP connector with JWT (JSON Web Token) authentication.
     """
 
-    def __init__(self, port=443, use_https=True):
-        """
-        Initialize JWT connector.
-
-        Args:
-            port (int): Default port (default: 443).
-            use_https (bool): Whether to use HTTPS (default: True).
-        """
-        super().__init__(port, use_https)
-
     def open_session(self, host, port=None, login=None, password=None,
                      secret_key=None, algorithm="HS256", token=None,
-                     payload=None, expiration_minutes=60, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
+                     payload=None, expiration_minutes=60, use_https=True, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
                      skip_verify=None):
         """
         Opens a session with JWT authentication.
 
         Args:
             host (str): Hostname or IP address.
-            port (int): Port. If None, uses default_port.
+            port (int): Port. If None, uses 443 for HTTPS or 80 for HTTP.
             login (str): Username to include in JWT payload (optional).
             password (str): Not used (for compatibility).
             secret_key (str): Secret key for signing JWT.
@@ -590,7 +529,7 @@ class Jwt(BaseHttp):
             dict: Session configuration.
         """
         if port is None:
-            port = self.default_port
+            port = 443 if use_https else 80
         
         # Generate token if not provided
         if not token and secret_key:
@@ -612,7 +551,7 @@ class Jwt(BaseHttp):
             "token": token,
             "secret_key": secret_key,
             "algorithm": algorithm,
-            "use_https": self.use_https,
+            "use_https": use_https,
             "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
@@ -628,7 +567,7 @@ class Jwt(BaseHttp):
         Returns:
             bytes: Response content.
         """
-        url = self._build_url(session["host"], session["port"], command)
+        url = self._build_url(session["host"], session["port"], command, session.get("use_https", True))
         
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers", {}) if options else {}
@@ -669,25 +608,15 @@ class Saml(BaseHttp):
     This implementation supports using SAML assertions/tokens.
     """
 
-    def __init__(self, port=443, use_https=True):
-        """
-        Initialize SAML connector.
-
-        Args:
-            port (int): Default port (default: 443).
-            use_https (bool): Whether to use HTTPS (default: True).
-        """
-        super().__init__(port, use_https)
-
     def open_session(self, host, port=None, login=None, password=None,
-                     saml_token=None, saml_header="X-SAML-Token", verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
+                     saml_token=None, saml_header="X-SAML-Token", use_https=True, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
                      skip_verify=None):
         """
         Opens a session with SAML authentication.
 
         Args:
             host (str): Hostname or IP address.
-            port (int): Port. If None, uses default_port.
+            port (int): Port. If None, uses 443 for HTTPS or 80 for HTTP.
             login (str): Not used (for compatibility).
             password (str): Not used (for compatibility).
             saml_token (str): SAML assertion/token.
@@ -699,14 +628,14 @@ class Saml(BaseHttp):
             dict: Session configuration.
         """
         if port is None:
-            port = self.default_port
+            port = 443 if use_https else 80
         
         return {
             "host": host,
             "port": port,
             "saml_token": saml_token,
             "saml_header": saml_header,
-            "use_https": self.use_https,
+            "use_https": use_https,
             "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
@@ -722,7 +651,7 @@ class Saml(BaseHttp):
         Returns:
             bytes: Response content.
         """
-        url = self._build_url(session["host"], session["port"], command)
+        url = self._build_url(session["host"], session["port"], command, session.get("use_https", True))
         
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers", {}) if options else {}
@@ -761,27 +690,17 @@ class Hmac(BaseHttp):
     HTTP connector with HMAC authentication.
     """
 
-    def __init__(self, port=443, use_https=True):
-        """
-        Initialize HMAC connector.
-
-        Args:
-            port (int): Default port (default: 443).
-            use_https (bool): Whether to use HTTPS (default: True).
-        """
-        super().__init__(port, use_https)
-
     def open_session(self, host, port=None, login=None, password=None,
                      secret_key=None, algorithm="sha256",
                      signature_header="X-Signature",
-                     timestamp_header="X-Timestamp", verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
+                     timestamp_header="X-Timestamp", use_https=True, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
                      skip_verify=None):
         """
         Opens a session with HMAC authentication.
 
         Args:
             host (str): Hostname or IP address.
-            port (int): Port. If None, uses default_port.
+            port (int): Port. If None, uses 443 for HTTPS or 80 for HTTP.
             login (str): Access key/client ID.
             password (str): Not used (for compatibility).
             secret_key (str): Secret key for HMAC signing.
@@ -795,7 +714,7 @@ class Hmac(BaseHttp):
             dict: Session configuration.
         """
         if port is None:
-            port = self.default_port
+            port = 443 if use_https else 80
         
         return {
             "host": host,
@@ -805,7 +724,7 @@ class Hmac(BaseHttp):
             "algorithm": algorithm,
             "signature_header": signature_header,
             "timestamp_header": timestamp_header,
-            "use_https": self.use_https,
+            "use_https": use_https,
             "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
@@ -859,7 +778,7 @@ class Hmac(BaseHttp):
         Returns:
             bytes: Response content.
         """
-        url = self._build_url(session["host"], session["port"], command)
+        url = self._build_url(session["host"], session["port"], command, session.get("use_https", True))
         
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers", {}) if options else {}
@@ -920,25 +839,15 @@ class Certificate(BaseHttp):
     HTTP connector with Client Certificate authentication (mutual TLS).
     """
 
-    def __init__(self, port=443, use_https=True):
-        """
-        Initialize Certificate connector.
-
-        Args:
-            port (int): Default port (default: 443).
-            use_https (bool): Whether to use HTTPS (default: True).
-        """
-        super().__init__(port, use_https)
-
     def open_session(self, host, port=None, login=None, password=None,
-                     cert_file=None, key_file=None, ca_bundle=None, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
+                     cert_file=None, key_file=None, ca_bundle=None, use_https=True, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
                      skip_verify=None):
         """
         Opens a session with client certificate authentication.
 
         Args:
             host (str): Hostname or IP address.
-            port (int): Port. If None, uses default_port.
+            port (int): Port. If None, uses 443 for HTTPS or 80 for HTTP.
             login (str): Not used (for compatibility).
             password (str): Password for encrypted key file (optional).
             cert_file (str): Path to client certificate file.
@@ -952,7 +861,7 @@ class Certificate(BaseHttp):
             dict: Session configuration.
         """
         if port is None:
-            port = self.default_port
+            port = 443 if use_https else 80
         
         return {
             "host": host,
@@ -961,7 +870,7 @@ class Certificate(BaseHttp):
             "key_file": key_file,
             "ca_bundle": ca_bundle,
             "key_password": password,
-            "use_https": self.use_https,
+            "use_https": use_https,
             "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
 
@@ -977,7 +886,7 @@ class Certificate(BaseHttp):
         Returns:
             bytes: Response content.
         """
-        url = self._build_url(session["host"], session["port"], command)
+        url = self._build_url(session["host"], session["port"], command, session.get("use_https", True))
         
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers") if options else None
@@ -1031,27 +940,17 @@ class Openidconnect(BaseHttp):
     HTTP connector with OpenID Connect authentication.
     """
 
-    def __init__(self, port=443, use_https=True):
-        """
-        Initialize OpenID Connect connector.
-
-        Args:
-            port (int): Default port (default: 443).
-            use_https (bool): Whether to use HTTPS (default: True).
-        """
-        super().__init__(port, use_https)
-
     def open_session(self, host, port=None, login=None, password=None,
                      client_id=None, client_secret=None,
                      discovery_url=None, token_endpoint=None,
-                     id_token=None, access_token=None, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
+                     id_token=None, access_token=None, use_https=True, verify_ssl=_VERIFY_SSL_UNSET_SENTINEL,
                      skip_verify=None):
         """
         Opens a session with OpenID Connect authentication.
 
         Args:
             host (str): Hostname or IP address.
-            port (int): Port. If None, uses default_port.
+            port (int): Port. If None, uses 443 for HTTPS or 80 for HTTP.
             login (str): Username for authentication (optional).
             password (str): Password for authentication (optional).
             client_id (str): OpenID Connect client ID.
@@ -1067,7 +966,7 @@ class Openidconnect(BaseHttp):
             dict: Session configuration.
         """
         if port is None:
-            port = self.default_port
+            port = 443 if use_https else 80
         
         session_data = {
             "host": host,
@@ -1078,7 +977,7 @@ class Openidconnect(BaseHttp):
             "token_endpoint": token_endpoint,
             "id_token": id_token,
             "access_token": access_token,
-            "use_https": self.use_https,
+            "use_https": use_https,
             "verify_ssl": self._resolve_verify_ssl(verify_ssl, skip_verify)
         }
         
@@ -1119,7 +1018,7 @@ class Openidconnect(BaseHttp):
         Returns:
             bytes: Response content.
         """
-        url = self._build_url(session["host"], session["port"], command)
+        url = self._build_url(session["host"], session["port"], command, session.get("use_https", True))
         
         method = options.get("method", "GET") if options else "GET"
         headers = options.get("headers", {}) if options else {}
