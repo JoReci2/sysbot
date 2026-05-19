@@ -70,8 +70,15 @@ class Sysbot(metaclass=ComponentMeta):
         """
         Convert common string boolean values to bool.
 
+        Args:
+            value: Input value to normalize.
+
         Unknown strings are preserved to avoid breaking connector-specific
         values such as CA bundle paths.
+
+        Returns:
+            bool|Any: Parsed boolean for known string values, otherwise
+                original input value.
         """
         if isinstance(value, str):
             lowered = value.strip().lower()
