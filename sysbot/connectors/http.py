@@ -72,11 +72,17 @@ class BaseHttp(ConnectorInterface):
                 Also accepts string booleans: "false", "0", "no", "off",
                 "true", "1", "yes", "on" (case-insensitive). Any other
                 string is kept as-is and treated as a CA bundle path by requests.
-                Non-string values are returned unchanged.
+                None is normalized to True and integers are normalized to bool.
 
         Returns:
             bool|str: Normalized verify value.
         """
+        if verify is None:
+            return True
+        if isinstance(verify, bool):
+            return verify
+        if isinstance(verify, int):
+            return bool(verify)
         if isinstance(verify, str):
             lowered = verify.strip().lower()
             if lowered in {"false", "0", "no", "off"}:
