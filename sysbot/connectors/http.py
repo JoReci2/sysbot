@@ -61,37 +61,6 @@ class BaseHttp(ConnectorInterface):
         protocol = "https" if self.use_https else "http"
         return f"{protocol}://{host}:{port}{endpoint}"
 
-    @staticmethod
-    def _normalize_verify(verify):
-        """
-        Normalize SSL verification values coming from external inputs.
-
-        Args:
-            verify: requests-style verify value (bool, integer, None,
-                or CA bundle path).
-                Also accepts string booleans: "false", "0", "no", "off",
-                "true", "1", "yes", "on" (case-insensitive). Any other
-                string is kept as-is and treated as a CA bundle path by requests.
-                None is normalized to True and integers are normalized to bool.
-
-        Returns:
-            bool|str: Normalized verify value.
-        """
-        if verify is None:
-            return True
-        if isinstance(verify, bool):
-            return verify
-        if isinstance(verify, int):
-            return bool(verify)
-        if isinstance(verify, str):
-            lowered = verify.strip().lower()
-            if lowered in {"false", "0", "no", "off"}:
-                return False
-            if lowered in {"true", "1", "yes", "on"}:
-                return True
-            # Keep any other string for requests CA bundle path handling.
-        return verify
-
     def _make_request(self, method, url, auth=None, headers=None, params=None, data=None, json=None, verify=True):
         """
         Make an HTTP request with error handling.
@@ -112,7 +81,6 @@ class BaseHttp(ConnectorInterface):
         Raises:
             Exception: If the request fails.
         """
-        verify = self._normalize_verify(verify)
         try:
             response = requests.request(
                 method=method.upper(),
@@ -493,8 +461,7 @@ class Oauth2(BaseHttp):
                 token = oauth.fetch_token(
                     token_url=token_url,
                     client_id=client_id,
-                    client_secret=client_secret,
-                    verify=self._normalize_verify(verify_ssl)
+                    client_secret=client_secret
                 )
                 session_data["access_token"] = token.get("access_token")
                 session_data["refresh_token"] = token.get("refresh_token")
@@ -999,7 +966,6 @@ class Certificate(BaseHttp):
             verify = session["ca_bundle"]
         else:
             verify = session.get("verify_ssl", True)
-        verify = self._normalize_verify(verify)
         
         try:
             response = requests.request(
@@ -1096,11 +1062,7 @@ class Openidconnect(BaseHttp):
                     token_data["username"] = login
                     token_data["password"] = password
                 
-                response = requests.post(
-                    token_endpoint,
-                    data=token_data,
-                    verify=self._normalize_verify(verify_ssl)
-                )
+                response = requests.post(token_endpoint, data=token_data)
                 response.raise_for_status()
                 tokens = response.json()
                 
