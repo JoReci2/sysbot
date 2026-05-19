@@ -283,7 +283,12 @@ class TunnelingManager:
 
     @staticmethod
     def nested_tunnel(
-        protocol, tunnel_config, target_config, index=0, previous_tunnels=None
+        protocol,
+        tunnel_config,
+        target_config,
+        index=0,
+        previous_tunnels=None,
+        **kwargs,
     ):
         if previous_tunnels is None:
             previous_tunnels = []
@@ -294,6 +299,7 @@ class TunnelingManager:
                     previous_tunnels[-1].local_bind_port,
                     target_config["username"],
                     target_config["password"],
+                    **kwargs,
                 )
                 return {"session": session, "tunnels": previous_tunnels}
             config = tunnel_config[index]
@@ -319,7 +325,12 @@ class TunnelingManager:
             tunnel.start()
             previous_tunnels.append(tunnel)
             return TunnelingManager.nested_tunnel(
-                protocol, tunnel_config, target_config, index + 1, previous_tunnels
+                protocol,
+                tunnel_config,
+                target_config,
+                index + 1,
+                previous_tunnels,
+                **kwargs,
             )
         except Exception as e:
             for tunnel in reversed(previous_tunnels):

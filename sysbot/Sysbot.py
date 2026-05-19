@@ -65,6 +65,29 @@ class Sysbot(metaclass=ComponentMeta):
         self._cache = Cache("No sessions created")
         self._protocol = None
 
+    @staticmethod
+    def _normalize_string_to_bool(value):
+        """
+        Convert common string boolean values to bool.
+
+        Args:
+            value: Input value to normalize.
+
+        Unknown strings are preserved to avoid breaking connector-specific
+        values such as CA bundle paths.
+
+        Returns:
+            bool|Any: Parsed boolean for known string values, otherwise
+                original input value.
+        """
+        if isinstance(value, str):
+            lowered = value.strip().lower()
+            if lowered in {"false", "0", "no", "off"}:
+                return False
+            if lowered in {"true", "1", "yes", "on"}:
+                return True
+        return value
+
     def open_session(
         self,
         alias: str,
@@ -106,6 +129,8 @@ class Sysbot(metaclass=ComponentMeta):
         self._protocol = TunnelingManager.get_protocol(protocol, product)
         self._remote_port = int(port)
         try:
+            if "verify_ssl" in kwargs:
+                kwargs["verify_ssl"] = self._normalize_string_to_bool(kwargs["verify_ssl"])
             if tunnel_config:
                 try:
                     if type(tunnel_config) is str:
@@ -128,11 +153,8 @@ class Sysbot(metaclass=ComponentMeta):
                         "username": login,
                         "password": password,
                     }
-                TunnelingManager.nested_tunnel(
-                    self._protocol, tunnel_config, target_config
-                )
                 connection = TunnelingManager.nested_tunnel(
-                    self._protocol, tunnel_config, target_config
+                    self._protocol, tunnel_config, target_config, **kwargs
                 )
                 tunnels = connection["tunnels"]
             else:
