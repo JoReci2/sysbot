@@ -461,7 +461,8 @@ class Oauth2(BaseHttp):
                 token = oauth.fetch_token(
                     token_url=token_url,
                     client_id=client_id,
-                    client_secret=client_secret
+                    client_secret=client_secret,
+                    verify=verify_ssl
                 )
                 session_data["access_token"] = token.get("access_token")
                 session_data["refresh_token"] = token.get("refresh_token")
@@ -1062,7 +1063,7 @@ class Openidconnect(BaseHttp):
                     token_data["username"] = login
                     token_data["password"] = password
                 
-                response = requests.post(token_endpoint, data=token_data)
+                response = requests.post(token_endpoint, data=token_data, verify=verify_ssl)
                 response.raise_for_status()
                 tokens = response.json()
                 
