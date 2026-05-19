@@ -65,6 +65,16 @@ class Sysbot(metaclass=ComponentMeta):
         self._cache = Cache("No sessions created")
         self._protocol = None
 
+    @staticmethod
+    def _normalize_bool_kwarg(value):
+        if isinstance(value, str):
+            lowered = value.strip().lower()
+            if lowered in {"false", "0", "no", "off"}:
+                return False
+            if lowered in {"true", "1", "yes", "on"}:
+                return True
+        return value
+
     def open_session(
         self,
         alias: str,
@@ -106,6 +116,8 @@ class Sysbot(metaclass=ComponentMeta):
         self._protocol = TunnelingManager.get_protocol(protocol, product)
         self._remote_port = int(port)
         try:
+            if "verify_ssl" in kwargs:
+                kwargs["verify_ssl"] = self._normalize_bool_kwarg(kwargs["verify_ssl"])
             if tunnel_config:
                 try:
                     if type(tunnel_config) is str:
