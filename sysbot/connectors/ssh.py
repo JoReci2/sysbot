@@ -89,9 +89,9 @@ class SshConnectorBase(ConnectorInterface):
             str: Command output.
 
         Raises:
-            NotImplementedError: If called on the base class directly.
+            NotImplementedError: Implemented by subclasses.
         """
-        raise NotImplementedError("Subclasses must implement execute_command")
+        pass
 
 
 class Bash(SshConnectorBase):
