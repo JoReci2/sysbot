@@ -13,15 +13,14 @@ from netmiko.ssh_autodetect import SSHDetect
 from sysbot.utils.engine import ConnectorInterface
 
 
-class Bash(ConnectorInterface):
+class _BaseSshConnector(ConnectorInterface):
     """
-    This class provides methods for interacting with systems using SSH (Secure Shell).
-    It uses the paramiko library to establish and manage SSH connections.
+    Shared SSH connector behavior for Paramiko-based implementations.
     """
 
     def __init__(self, port=22):
         """
-        Initialize SSH Bash connector with default port.
+        Initialize SSH connector with default port.
 
         Args:
             port (int): Default SSH port (default: 22).
@@ -54,6 +53,28 @@ class Bash(ConnectorInterface):
             return client
         except Exception as e:
             raise Exception(f"Failed to open SSH session: {str(e)}")
+
+    def close_session(self, session):
+        """
+        Closes an open SSH session.
+
+        Args:
+            session (paramiko.SSHClient): The SSH client session to close.
+
+        Raises:
+            Exception: If there is an error closing the session.
+        """
+        try:
+            session.close()
+        except Exception as e:
+            raise Exception(f"Failed to close SSH session: {str(e)}")
+
+
+class Bash(_BaseSshConnector):
+    """
+    This class provides methods for interacting with systems using SSH (Secure Shell).
+    It uses the paramiko library to establish and manage SSH connections.
+    """
 
     def execute_command(self, session, command, runas=False, password=None):
         """
@@ -98,64 +119,13 @@ class Bash(ConnectorInterface):
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
 
-    def close_session(self, session):
-        """
-        Closes an open SSH session.
 
-        Args:
-            session (paramiko.SSHClient): The SSH client session to close.
-
-        Raises:
-            Exception: If there is an error closing the session.
-        """
-        try:
-            session.close()
-        except Exception as e:
-            raise Exception(f"Failed to close SSH session: {str(e)}")
-
-
-class Powershell(ConnectorInterface):
+class Powershell(_BaseSshConnector):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell)
     with PowerShell commands.
     It uses the paramiko library to establish and manage SSH connections.
     """
-
-    def __init__(self, port=22):
-        """
-        Initialize SSH PowerShell connector with default port.
-
-        Args:
-            port (int): Default SSH port (default: 22).
-        """
-        super().__init__()
-        self.default_port = port
-
-    def open_session(self, host, port=None, login=None, password=None):
-        """
-        Opens an SSH session to a system.
-
-        Args:
-            host (str): Hostname or IP address of the target system.
-            port (int): Port of the SSH service. If None, uses default_port.
-            login (str): Username for the session.
-            password (str): Password for the session.
-
-        Returns:
-            paramiko.SSHClient: An authenticated SSH client session.
-
-        Raises:
-            Exception: If there is an error opening the session.
-        """
-        if port is None:
-            port = self.default_port
-        try:
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(host, port=port, username=login, password=password)
-            return client
-        except Exception as e:
-            raise Exception(f"Failed to open SSH session: {str(e)}")
 
     def execute_command(self, session, command, runas=False, username=None, password=None):
         """
@@ -220,22 +190,6 @@ $credential = New-Object System.Management.Automation.PSCredential('{username}',
             return output
         except Exception as e:
             raise Exception(f"Failed to execute command: {str(e)}")
-
-    def close_session(self, session):
-        """
-        Closes an open SSH session.
-
-        Args:
-            session (paramiko.SSHClient): The SSH client session to close.
-
-        Raises:
-            Exception: If there is an error closing the session.
-        """
-        try:
-            session.close()
-        except Exception as e:
-            raise Exception(f"Failed to close SSH session: {str(e)}")
-
 
 class Hardware(ConnectorInterface):
     """
