@@ -87,7 +87,7 @@ class SshConnectorBase(ConnectorInterface):
 
         Returns:
             str: Command output.
-        
+
         Raises:
             NotImplementedError: If called on the base class directly.
         """
