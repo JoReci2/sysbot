@@ -6,8 +6,8 @@ It supports both Bash and PowerShell execution over SSH using the paramiko
 library for establishing and managing secure connections, as well as hardware
 network device connections using the netmiko library for non-standard SSH interfaces.
 """
-from abc import abstractmethod
 import base64
+from abc import abstractmethod
 
 import paramiko
 from netmiko import ConnectHandler
@@ -91,7 +91,7 @@ class SshConnectorBase(ConnectorInterface):
         Raises:
             NotImplementedError: If called on the base class directly.
         """
-        raise NotImplementedError
+        raise NotImplementedError("Subclasses must implement execute_command")
 
 
 class Bash(SshConnectorBase):
