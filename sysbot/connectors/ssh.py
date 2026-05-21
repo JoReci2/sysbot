@@ -15,7 +15,7 @@ from netmiko.ssh_autodetect import SSHDetect
 from sysbot.utils.engine import ConnectorInterface
 
 
-class _SshConnectorBase(ConnectorInterface):
+class SshConnectorBase(ConnectorInterface):
     """
     Base class with shared Paramiko SSH session lifecycle behavior.
 
@@ -87,12 +87,14 @@ class _SshConnectorBase(ConnectorInterface):
 
         Returns:
             str: Command output.
-
+        
+        Raises:
+            NotImplementedError: If called on the base class directly.
         """
-        pass
+        raise NotImplementedError
 
 
-class Bash(_SshConnectorBase):
+class Bash(SshConnectorBase):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell).
     It uses the paramiko library to establish and manage SSH connections.
@@ -142,7 +144,7 @@ class Bash(_SshConnectorBase):
             raise Exception(f"Failed to execute command: {str(e)}")
 
 
-class Powershell(_SshConnectorBase):
+class Powershell(SshConnectorBase):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell)
     with PowerShell commands.
