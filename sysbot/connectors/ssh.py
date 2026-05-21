@@ -87,9 +87,6 @@ class SshConnectorBase(ConnectorInterface):
 
         Returns:
             str: Command output.
-
-        Raises:
-            NotImplementedError: Implemented by subclasses.
         """
         pass
 
