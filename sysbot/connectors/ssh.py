@@ -6,8 +6,8 @@ It supports both Bash and PowerShell execution over SSH using the paramiko
 library for establishing and managing secure connections, as well as hardware
 network device connections using the netmiko library for non-standard SSH interfaces.
 """
-import base64
 from abc import abstractmethod
+import base64
 
 import paramiko
 from netmiko import ConnectHandler
@@ -15,7 +15,7 @@ from netmiko.ssh_autodetect import SSHDetect
 from sysbot.utils.engine import ConnectorInterface
 
 
-class _BaseSshConnector(ConnectorInterface):
+class _SshConnectorBase(ConnectorInterface):
     """
     Base class with shared Paramiko SSH session lifecycle behavior.
 
@@ -88,13 +88,11 @@ class _BaseSshConnector(ConnectorInterface):
         Returns:
             str: Command output.
 
-        Raises:
-            NotImplementedError: Always, subclasses must provide implementation.
         """
-        raise NotImplementedError
+        pass
 
 
-class Bash(_BaseSshConnector):
+class Bash(_SshConnectorBase):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell).
     It uses the paramiko library to establish and manage SSH connections.
@@ -144,7 +142,7 @@ class Bash(_BaseSshConnector):
             raise Exception(f"Failed to execute command: {str(e)}")
 
 
-class Powershell(_BaseSshConnector):
+class Powershell(_SshConnectorBase):
     """
     This class provides methods for interacting with systems using SSH (Secure Shell)
     with PowerShell commands.
