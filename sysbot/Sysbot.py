@@ -94,7 +94,7 @@ class Sysbot(metaclass=ComponentMeta):
         protocol: str,
         product: str,
         host: str,
-        port: int,
+        port: str,
         login: str = None,
         password: str = None,
         tunnel_config=None,
@@ -127,7 +127,6 @@ class Sysbot(metaclass=ComponentMeta):
         """
         tunnels = []
         self._protocol = TunnelingManager.get_protocol(protocol, product)
-        self._remote_port = int(port)
         try:
             if "verify_ssl" in kwargs:
                 kwargs["verify_ssl"] = self._normalize_string_to_bool(kwargs["verify_ssl"])
@@ -142,14 +141,14 @@ class Sysbot(metaclass=ComponentMeta):
                 if is_secret:
                     target_config = {
                         "ip": self._cache.secrets.get(host),
-                        "port": int(self._remote_port),
+                        "port": int(self._cache.secrets.get(port)),
                         "username": self._cache.secrets.get(login),
                         "password": self._cache.secrets.get(password),
                     }
                 else:
                     target_config = {
                         "ip": host,
-                        "port": int(self._remote_port),
+                        "port": int(port),
                         "username": login,
                         "password": password,
                     }
@@ -161,14 +160,14 @@ class Sysbot(metaclass=ComponentMeta):
                 if is_secret:
                     session = self._protocol.open_session(
                         self._cache.secrets.get(host),
-                        int(self._remote_port),
+                        int(self._cache.secrets.get(port)),
                         self._cache.secrets.get(login),
                         self._cache.secrets.get(password),
                         **kwargs
                     )
                 else:
                     session = self._protocol.open_session(
-                        host, int(self._remote_port), login, password, **kwargs
+                        host, int(port), login, password, **kwargs
                     )
                 if not session:
                     raise Exception("Failed to open direct session")
