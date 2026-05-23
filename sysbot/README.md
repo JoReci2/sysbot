@@ -193,50 +193,6 @@ SysBot provides local execution connectors that allow running commands directly 
 - Testing without remote systems
 - Avoiding connection overhead for local operations
 
-**Local Bash Execution:**
-```python
-import sysbot
-
-bot = sysbot.Sysbot()
-
-# Open a local bash session (no actual connection is made)
-bot.open_session(
-    alias="local_bash",
-    protocol="local",
-    product="bash",
-    host="localhost",  # Required but not used
-    port=0  # Required but not used
-)
-
-# Execute commands locally
-result = bot.execute_command("local_bash", "ls -la")
-print(result)
-
-bot.close_session("local_bash")
-```
-
-**Local PowerShell Execution:**
-```python
-import sysbot
-
-bot = sysbot.Sysbot()
-
-# Open a local PowerShell session (no actual connection is made)
-bot.open_session(
-    alias="local_ps",
-    protocol="local",
-    product="powershell",
-    host="localhost",  # Required but not used
-    port=0  # Required but not used
-)
-
-# Execute PowerShell commands locally
-result = bot.execute_command("local_ps", "Get-Process | Select-Object -First 5")
-print(result)
-
-bot.close_session("local_ps")
-```
-
 #### HTTP/HTTPS
 
 SysBot provides a generic HTTP/HTTPS connector with support for 9 authentication methods.
@@ -251,38 +207,6 @@ SysBot provides a generic HTTP/HTTPS connector with support for 9 authentication
 7. **HMAC (`hmac`)** - HMAC signature-based authentication
 8. **Certificate (`certificate`)** - Client certificate authentication (mutual TLS)
 9. **OpenID Connect (`openidconnect`)** - OpenID Connect authentication
-
-**Usage Examples:**
-
-Basic Authentication:
-```python
-bot.open_session(
-    alias="my_api",
-    protocol="http",
-    product="basicauth",
-    host="api.example.com",
-    port=443,
-    login="username",
-    password="password"
-)
-
-result = bot.execute_command("my_api", "/users", options={"method": "GET"})
-```
-
-API Key Authentication:
-```python
-bot.open_session(
-    alias="my_api",
-    protocol="http",
-    product="apikey",
-    host="api.example.com",
-    port=443,
-    api_key="your-api-key-here",
-    api_key_header="X-API-Key"  # Custom header name (optional)
-)
-
-result = bot.execute_command("my_api", "/data", options={"method": "GET"})
-```
 
 #### WinRM
 - **Powershell**: Native Windows Remote Management support
@@ -316,7 +240,7 @@ Open Session without secret
     Close All Sessions
 
 Open Session with secret
-    Open Session    target    ssh    bash    connexion.host    ${PORT}   connexion.username    connexion.password   is_secret=True
+    Open Session    target    ssh    bash    connexion.host    connexion.port   connexion.username    connexion.password   is_secret=True
     Close All Sessions
 ```
 
