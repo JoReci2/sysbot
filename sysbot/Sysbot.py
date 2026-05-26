@@ -94,7 +94,7 @@ class Sysbot(metaclass=ComponentMeta):
         protocol: str,
         product: str,
         host: str,
-        port: str,
+        port: str | int,
         login: str = None,
         password: str = None,
         tunnel_config=None,
@@ -133,9 +133,12 @@ class Sysbot(metaclass=ComponentMeta):
             if tunnel_config:
                 try:
                     if type(tunnel_config) is str:
-                        tunnel_config = json.loads(
-                            self._cache.secrets.get(tunnel_config)
-                        )
+                        try:
+                            tunnel_config = json.loads(
+                                self._cache.secrets.get(tunnel_config)
+                            )
+                        except:
+                            tunnel_config = self._cache.secrets.get(tunnel_config)
                 except Exception as e:
                     raise Exception(f"Error during importing tunnel as json: {e}")
                 if is_secret:
