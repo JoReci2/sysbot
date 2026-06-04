@@ -103,6 +103,12 @@ class TokenRefreshStrategy(ABC):
                 return None
         return None
 
+    @staticmethod
+    def _require_values(**values):
+        missing = [key for key, value in values.items() if not value]
+        if missing:
+            raise Exception(f"Missing required refresh parameters: {', '.join(missing)}")
+
 
 class OAuth2RefreshStrategy(TokenRefreshStrategy):
     """OAuth2 token refresh using refresh_token grant."""
@@ -120,8 +126,12 @@ class OAuth2RefreshStrategy(TokenRefreshStrategy):
 
     def refresh(self, session):
         refresh_token = session.get("refresh_token")
-        if not all([refresh_token, self.token_url, self.client_id, self.client_secret]):
-            raise Exception("OAuth2 refresh requires refresh_token, token_url, client_id and client_secret")
+        self._require_values(
+            refresh_token=refresh_token,
+            token_url=self.token_url,
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+        )
 
         oauth = OAuth2Session(client_id=self.client_id)
         token = oauth.refresh_token(
@@ -194,8 +204,12 @@ class OidcRefreshStrategy(OAuth2RefreshStrategy):
 
     def refresh(self, session):
         refresh_token = session.get("refresh_token")
-        if not all([refresh_token, self.token_url, self.client_id, self.client_secret]):
-            raise Exception("OIDC refresh requires refresh_token, token_url, client_id and client_secret")
+        self._require_values(
+            refresh_token=refresh_token,
+            token_url=self.token_url,
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+        )
 
         oauth = OAuth2Session(client_id=self.client_id)
         token = oauth.refresh_token(
@@ -260,7 +274,10 @@ class BaseHttp(ConnectorInterface):
         try:
             refresh_strategy = getattr(session, "refresh_strategy", None)
             if refresh_strategy and refresh_strategy.is_expired(session):
-                refresh_strategy.refresh(session)
+                try:
+                    refresh_strategy.refresh(session)
+                except Exception as e:
+                    raise Exception(f"Token refresh failed: {str(e)}")
 
             self._apply_auth_headers(session, headers, request_kwargs)
 
@@ -811,9 +828,18 @@ class Openidconnect(BaseHttp):
                     token_data["username"] = login
                     token_data["password"] = password
 
-                response = requests.post(token_endpoint, data=token_data, verify=verify_ssl, timeout=self.request_timeout)
-                response.raise_for_status()
-                tokens = response.json()
+                temp_session = self._create_http_session()
+                try:
+                    response = temp_session.post(
+                        token_endpoint,
+                        data=token_data,
+                        verify=verify_ssl,
+                        timeout=self.request_timeout,
+                    )
+                    response.raise_for_status()
+                    tokens = response.json()
+                finally:
+                    temp_session.close()
 
                 session_data["access_token"] = tokens.get("access_token")
                 session_data["id_token"] = tokens.get("id_token")
