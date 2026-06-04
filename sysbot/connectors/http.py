@@ -294,6 +294,143 @@ class Basicauth(BaseHttp):
         pass
 
 
+class Redfish(BaseHttp):
+    """
+    HTTP connector with Redfish session authentication.
+    """
+    DEFAULT_SESSION_ENDPOINT = "/redfish/v1/SessionService/Sessions"
+
+    def __init__(self, port=443, use_https=True):
+        """
+        Initialize Redfish connector.
+
+        Args:
+            port (int): Default port (default: 443).
+            use_https (bool): Whether to use HTTPS (default: True).
+        """
+        super().__init__(port, use_https)
+
+    def open_session(self, host, port=None, login=None, password=None, verify_ssl=True, session_endpoint=None):
+        """
+        Authenticate with Redfish SessionService and return session settings.
+
+        Args:
+            host (str): Hostname or IP address.
+            port (int): Port. If None, uses default_port.
+            login (str): Username.
+            password (str): Password.
+            verify_ssl (bool): Whether to verify SSL certificates (default: True).
+                Set to False to disable SSL verification for self-signed certificates.
+            session_endpoint (str): Redfish session endpoint.
+
+        Returns:
+            dict: Session configuration.
+        """
+        if port is None:
+            port = self.default_port
+
+        if session_endpoint is None:
+            session_endpoint = self.DEFAULT_SESSION_ENDPOINT
+
+        missing = [name for name, val in [("login", login), ("password", password)] if val is None]
+        if missing:
+            raise ValueError(
+                f"Redfish authentication missing required parameter(s): {', '.join(missing)}"
+            )
+
+        session_url = self._build_url(host, port, session_endpoint)
+        response = self._make_request(
+            method="POST",
+            url=session_url,
+            headers={"Content-Type": "application/json"},
+            json={"UserName": login, "Password": password},
+            verify=verify_ssl
+        )
+
+        token = response.headers.get("X-Auth-Token")
+        if not token:
+            raise RuntimeError(
+                f"Redfish authentication failed: X-Auth-Token not found in response headers "
+                f"(status={response.status_code}, body={response.text})"
+            )
+
+        return {
+            "host": host,
+            "port": port,
+            "login": login,
+            "password": password,
+            "auth_token": token,
+            "session_uri": response.headers.get("Location"),
+            "use_https": self.use_https,
+            "verify_ssl": verify_ssl
+        }
+
+    def execute_command(self, session, command, options=None):
+        """
+        Execute an authenticated Redfish request using the stored X-Auth-Token.
+
+        Args:
+            session (dict): Session configuration.
+            command (str): API endpoint path.
+            options (dict): Optional request parameters:
+                - method (str): HTTP method (default: GET)
+                - params (dict): URL query parameters
+                - headers (dict): HTTP headers
+                - data: Request body data
+                - json: JSON request body
+                - verify (bool): Verify SSL certificates (default: True)
+
+        Returns:
+            bytes: Response content.
+        """
+        url = self._build_url(session["host"], session["port"], command)
+
+        method = options.get("method", "GET") if options else "GET"
+        headers = dict(options.get("headers", {})) if options else {}
+        params = options.get("params") if options else None
+        data = options.get("data") if options else None
+        json_data = options.get("json") if options else None
+        default_verify = session.get("verify_ssl", True)
+        verify = options.get("verify", default_verify) if options else default_verify
+
+        headers["X-Auth-Token"] = session["auth_token"]
+
+        response = self._make_request(
+            method=method,
+            url=url,
+            headers=headers,
+            params=params,
+            data=data,
+            json=json_data,
+            verify=verify
+        )
+
+        return response.content
+
+    def close_session(self, session):
+        """
+        Close the Redfish session if the session URI is available.
+
+        Args:
+            session (dict): Session configuration.
+        """
+        session_uri = session.get("session_uri")
+        if not session_uri:
+            return
+
+        if session_uri.startswith(("http://", "https://")):
+            session_url = session_uri
+        else:
+            session_url = self._build_url(session["host"], session["port"], session_uri)
+
+        self._make_request(
+            method="DELETE",
+            url=session_url,
+            headers={"X-Auth-Token": session["auth_token"]},
+            verify=session.get("verify_ssl", True)
+        )
+
+
 class Oauth1(BaseHttp):
     """
     HTTP connector with OAuth 1.0 authentication.

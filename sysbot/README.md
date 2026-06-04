@@ -195,18 +195,19 @@ SysBot provides local execution connectors that allow running commands directly 
 
 #### HTTP/HTTPS
 
-SysBot provides a generic HTTP/HTTPS connector with support for 9 authentication methods.
+SysBot provides a generic HTTP/HTTPS connector with support for 10 authentication methods.
 
 **Supported Authentication Methods:**
 1. **API Key (`apikey`)** - API Key authentication via headers or query parameters
 2. **Basic Auth (`basicauth`)** - Standard HTTP Basic Authentication
-3. **OAuth 1.0 (`oauth1`)** - OAuth 1.0 authentication (RFC 5849)
-4. **OAuth 2.0 (`oauth2`)** - OAuth 2.0 Bearer token authentication
-5. **JWT (`jwt`)** - JSON Web Token authentication with automatic token generation
-6. **SAML (`saml`)** - SAML assertion/token authentication
-7. **HMAC (`hmac`)** - HMAC signature-based authentication
-8. **Certificate (`certificate`)** - Client certificate authentication (mutual TLS)
-9. **OpenID Connect (`openidconnect`)** - OpenID Connect authentication
+3. **Redfish (`redfish`)** - Redfish Session Service token authentication
+4. **OAuth 1.0 (`oauth1`)** - OAuth 1.0 authentication (RFC 5849)
+5. **OAuth 2.0 (`oauth2`)** - OAuth 2.0 Bearer token authentication
+6. **JWT (`jwt`)** - JSON Web Token authentication with automatic token generation
+7. **SAML (`saml`)** - SAML assertion/token authentication
+8. **HMAC (`hmac`)** - HMAC signature-based authentication
+9. **Certificate (`certificate`)** - Client certificate authentication (mutual TLS)
+10. **OpenID Connect (`openidconnect`)** - OpenID Connect authentication
 
 #### WinRM
 - **Powershell**: Native Windows Remote Management support
