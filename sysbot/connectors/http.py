@@ -10,6 +10,7 @@ import base64
 import hashlib
 import hmac
 import json
+import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 
@@ -242,6 +243,7 @@ class BaseHttp(ConnectorInterface):
         self.request_timeout = request_timeout
 
     def _create_http_session(self):
+        logging.getLogger("urllib3.util.retry").setLevel(logging.ERROR)
         http_session = requests.Session()
         retry_strategy = Retry(
             total=3,
