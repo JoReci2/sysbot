@@ -404,7 +404,10 @@ To register a new connector with SysBot:
 
 ### Example: HTTP Connector
 
-The HTTP Basic Auth connector is a good reference implementation. This is a simplified version showing the core logic. The actual implementation in the codebase uses helper methods from the BaseHttp parent class:
+The HTTP Basic Auth connector is a good reference implementation. This is a simplified
+version showing the core logic. The actual implementation in the codebase uses helper
+methods from the `BaseHttp` parent class, including persistent `requests.Session`
+management and automatic request handling through `_make_request(...)`.
 
 ```python
 # sysbot/connectors/http.py (Basicauth class - simplified example)
@@ -437,7 +440,7 @@ class Basicauth(ConnectorInterface):
             password (str): Password.
         
         Returns:
-            dict: Session configuration containing connection details.
+            dict: Session-like configuration object (dict-compatible in production).
         """
         if port is None:
             port = self.default_port
