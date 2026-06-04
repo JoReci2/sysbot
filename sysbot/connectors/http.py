@@ -22,6 +22,9 @@ from urllib3.util.retry import Retry
 
 from sysbot.utils.engine import ConnectorInterface
 
+# Silence urllib3 retry warnings while preserving retry behavior.
+logging.getLogger("urllib3.util.retry").setLevel(logging.ERROR)
+
 # Whitelist of allowed hash algorithms for HMAC
 ALLOWED_HASH_ALGORITHMS = {
     "sha1": hashlib.sha1,
@@ -243,7 +246,6 @@ class BaseHttp(ConnectorInterface):
         self.request_timeout = request_timeout
 
     def _create_http_session(self):
-        logging.getLogger("urllib3.util.retry").setLevel(logging.ERROR)
         http_session = requests.Session()
         retry_strategy = Retry(
             total=3,
