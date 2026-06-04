@@ -202,7 +202,7 @@ SysBot provides a generic HTTP/HTTPS connector with support for 10 authenticatio
 2. **Basic Auth (`basicauth`)** - Standard HTTP Basic Authentication
 3. **Redfish (`redfish`)** - Redfish Session Service token authentication
 4. **OAuth 1.0 (`oauth1`)** - OAuth 1.0 authentication (RFC 5849)
-5. **OAuth 2.0 (`oauth2`)** - OAuth 2.0 Bearer authentication
+5. **OAuth 2.0 (`oauth2`)** - OAuth 2.0 Bearer token authentication
 6. **JWT (`jwt`)** - JSON Web Token authentication with automatic token generation
 7. **SAML (`saml`)** - SAML assertion/token authentication
 8. **HMAC (`hmac`)** - HMAC signature-based authentication

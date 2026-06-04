@@ -298,6 +298,7 @@ class Redfish(BaseHttp):
     """
     HTTP connector with Redfish session authentication.
     """
+    DEFAULT_SESSION_ENDPOINT = "/redfish/v1/SessionService/Sessions"
 
     def __init__(self, port=443, use_https=True):
         """
@@ -309,9 +310,9 @@ class Redfish(BaseHttp):
         """
         super().__init__(port, use_https)
 
-    def open_session(self, host, port=None, login=None, password=None, verify_ssl=True, session_endpoint="/redfish/v1/SessionService/Sessions"):
+    def open_session(self, host, port=None, login=None, password=None, verify_ssl=True, session_endpoint=None):
         """
-        Opens a session with Redfish session authentication.
+        Authenticate with Redfish SessionService and return session settings.
 
         Args:
             host (str): Hostname or IP address.
@@ -328,8 +329,14 @@ class Redfish(BaseHttp):
         if port is None:
             port = self.default_port
 
-        if login is None or password is None:
-            raise Exception("Redfish authentication requires login and password")
+        if session_endpoint is None:
+            session_endpoint = self.DEFAULT_SESSION_ENDPOINT
+
+        missing = [name for name, val in [("login", login), ("password", password)] if val is None]
+        if missing:
+            raise ValueError(
+                f"Redfish authentication missing required parameter(s): {', '.join(missing)}"
+            )
 
         session_url = self._build_url(host, port, session_endpoint)
         response = self._make_request(
@@ -342,7 +349,10 @@ class Redfish(BaseHttp):
 
         token = response.headers.get("X-Auth-Token")
         if not token:
-            raise Exception("Redfish authentication failed: X-Auth-Token not found in response headers")
+            raise RuntimeError(
+                f"Redfish authentication failed: X-Auth-Token not found in response headers "
+                f"(status={response.status_code}, body={response.text})"
+            )
 
         return {
             "host": host,
@@ -357,7 +367,7 @@ class Redfish(BaseHttp):
 
     def execute_command(self, session, command, options=None):
         """
-        Execute an HTTP request with Redfish session authentication.
+        Execute an authenticated Redfish request using the stored X-Auth-Token.
 
         Args:
             session (dict): Session configuration.
@@ -380,7 +390,8 @@ class Redfish(BaseHttp):
         params = options.get("params") if options else None
         data = options.get("data") if options else None
         json_data = options.get("json") if options else None
-        verify = options.get("verify", session.get("verify_ssl", True)) if options else session.get("verify_ssl", True)
+        default_verify = session.get("verify_ssl", True)
+        verify = options.get("verify", default_verify) if options else default_verify
 
         headers["X-Auth-Token"] = session["auth_token"]
 
@@ -407,8 +418,9 @@ class Redfish(BaseHttp):
         if not session_uri:
             return
 
-        session_url = session_uri
-        if not session_uri.startswith(("http://", "https://")):
+        if session_uri.startswith(("http://", "https://")):
+            session_url = session_uri
+        else:
             session_url = self._build_url(session["host"], session["port"], session_uri)
 
         self._make_request(
